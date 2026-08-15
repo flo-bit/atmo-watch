@@ -14,24 +14,3 @@ export const oauthLogin = command(
 );
 
 export const oauthLogout = command(() => atproto.api.logout());
-
-const COLLECTION = 'xyz.statusphere.status';
-
-export const setStatus = command(v.string(), async (status) => {
-	const { locals } = getRequestEvent();
-	if (!locals.client || !locals.did) error(401, 'Not signed in');
-
-	await locals.client.post('com.atproto.repo.putRecord', {
-		input: {
-			repo: locals.did,
-			collection: COLLECTION,
-			rkey: createTID(),
-			record: {
-				$type: COLLECTION,
-				status,
-				createdAt: new Date().toISOString()
-			}
-		}
-	});
-	return { ok: true };
-});

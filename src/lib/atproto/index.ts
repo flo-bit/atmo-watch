@@ -3,13 +3,16 @@ import '@atcute/atproto';
 import { createAtprotoAuth } from '@svelte-atproto/oauth/server';
 import { cloudflareKV } from '@svelte-atproto/oauth/server/stores/cloudflare';
 import { env } from '$env/dynamic/private';
+import { contrail } from '$lib/contrail';
 
 // To enable signup, add: signupPDS: 'https://your-pds.example/'
 export const atproto = createAtprotoAuth({
 	origin: env.ORIGIN,
 	cookieSecret: env.COOKIE_SECRET,
 	clientAssertionKey: env.CLIENT_ASSERTION_KEY,
-	scope: 'atproto repo:xyz.statusphere.status',
+	scope:
+		'atproto repo:social.popfeed.feed.review repo:social.popfeed.feed.comment repo:social.popfeed.feed.like repo:social.popfeed.feed.list repo:social.popfeed.feed.listItem ' +
+		contrail.scope,
 	sessions: cloudflareKV('OAUTH_SESSIONS'),
 	states: cloudflareKV('OAUTH_STATES', { ttl: 600 })
 });

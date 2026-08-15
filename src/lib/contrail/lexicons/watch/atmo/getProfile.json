@@ -58,7 +58,8 @@
           "type": "string"
         },
         "value": {
-          "type": "unknown"
+          "ref": "app.bsky.actor.profile#main",
+          "type": "ref"
         }
       },
       "required": [

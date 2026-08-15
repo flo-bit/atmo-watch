@@ -5,7 +5,7 @@ export default {
     serviceDid: null,
     scope: null,
     collections: [
-      "social.popfeed.actor.profile",
+      "app.bsky.actor.profile",
       "social.popfeed.feed.comment",
       "social.popfeed.feed.like",
       "social.popfeed.feed.list",

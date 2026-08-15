@@ -5,7 +5,7 @@
 	import Footer from './_components/Footer.svelte';
 	import ReviewDialog from './_components/ReviewDialog.svelte';
 
-	let { children } = $props();
+	let { data, children } = $props();
 
 	onMount(() => reviewLibrary.load());
 </script>
@@ -17,5 +17,5 @@
 	<Footer />
 </div>
 
-<AppMenu />
+<AppMenu did={data.did} />
 <ReviewDialog />

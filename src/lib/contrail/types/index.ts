@@ -1,3 +1,6 @@
+export * as AppBskyActorProfile from "./types/app/bsky/actor/profile.js";
+export * as ComAtprotoLabelDefs from "./types/com/atproto/label/defs.js";
+export * as ComAtprotoRepoStrongRef from "./types/com/atproto/repo/strongRef.js";
 export * as SocialPopfeedActorProfile from "./types/social/popfeed/actor/profile.js";
 export * as SocialPopfeedFeedComment from "./types/social/popfeed/feed/comment.js";
 export * as SocialPopfeedFeedLike from "./types/social/popfeed/feed/like.js";
