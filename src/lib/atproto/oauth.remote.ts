@@ -1,8 +1,6 @@
-import { command, getRequestEvent } from '$app/server';
-import { error } from '@sveltejs/kit';
+import { command } from '$app/server';
 import * as v from 'valibot';
 import { atproto } from '$lib/atproto';
-import { createTID } from '@svelte-atproto/oauth/helper';
 
 export const oauthLogin = command(
 	v.object({

@@ -3,6 +3,7 @@ import { defineConfig } from 'vitest/config';
 import { playwright } from '@vitest/browser-playwright';
 import adapter from '@sveltejs/adapter-auto';
 import { sveltekit } from '@sveltejs/kit/vite';
+import { sveltekitOG } from '@ethercorps/sveltekit-og/plugin';
 
 export default defineConfig({
 	server: { host: '127.0.0.1' },
@@ -23,7 +24,8 @@ export default defineConfig({
 			experimental: {
 				remoteFunctions: true
 			}
-		})
+		}),
+		sveltekitOG()
 	],
 	test: {
 		expect: { requireAssertions: true },

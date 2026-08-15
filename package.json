@@ -52,6 +52,7 @@
 		"@atcute/client": "^5.1.1",
 		"@atcute/lexicons": "^2.0.3",
 		"@atmo-dev/contrail": "^0.17.0",
+		"@ethercorps/sveltekit-og": "^4.3.0",
 		"@foxui/core": "^0.9.1",
 		"@foxui/social": "^0.8.10",
 		"@lorenzopant/tmdb": "^1.25.3",
