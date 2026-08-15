@@ -16,7 +16,6 @@
 			id: `${item.tmdbId}-${slugify(item.title)}`
 		})
 	);
-	let watched = $derived(false);
 </script>
 
 <div class="group relative">
@@ -31,14 +30,6 @@
 				loading="lazy"
 			/>
 		{/if}
-		{#if watched}
-			<div
-				class="absolute top-1.5 right-1.5 z-10 inline-flex items-center gap-1 rounded-full bg-zinc-900/80 px-1.5 py-0.5 text-[9px] leading-none font-medium text-zinc-300 ring-1 ring-zinc-500/20 backdrop-blur-sm"
-			>
-				watched
-			</div>
-		{/if}
-
 		{#if rating !== undefined}
 			<div class="absolute inset-0 bg-linear-to-b from-transparent via-black/10 to-black/70"></div>
 			<div class="absolute right-0 bottom-2 left-0 flex justify-center">

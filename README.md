@@ -33,18 +33,30 @@ npm run dev -- --open
 
 The public Contrail API is a separate Cloudflare Worker under [`api/`](api/README.md). Use `pnpm api:dev`, `pnpm api:check`, and `pnpm api:deploy` from the repository root.
 
-## Cloudflare KV
+## Cloudflare deployment
 
-Bind a Cloudflare KV namespace as `MEDIA_CACHE` to cache TMDB and OMDb data. Without the binding, external data is fetched normally.
+The web app uses `@sveltejs/adapter-cloudflare` and the Worker configuration in
+[`wrangler.jsonc`](wrangler.jsonc). It has dedicated `atmo-watch` KV namespaces bound as:
 
-## Building
+- `OAUTH_SESSIONS`
+- `OAUTH_STATES`
+- `MEDIA_CACHE`
 
-To create a production version of your app:
+`MEDIA_CACHE` caches TMDB and OMDb data. The other two namespaces store AT Protocol OAuth state and sessions.
+
+Before the first deployment, configure the private runtime values without adding them to `wrangler.jsonc`:
 
 ```sh
-npm run build
+pnpm exec wrangler secret put COOKIE_SECRET
+pnpm exec wrangler secret put CLIENT_ASSERTION_KEY
+pnpm exec wrangler secret put TMDB_ACCESS_TOKEN
+pnpm exec wrangler secret put OMDB_API_KEY # optional
 ```
 
-You can preview the production build with `npm run preview`.
+`ORIGIN` is configured as `https://atmo.watch` in `wrangler.jsonc`. Build, preview, or deploy with:
 
-> To deploy your app, you may need to install an [adapter](https://svelte.dev/docs/kit/adapters) for your target environment.
+```sh
+pnpm build
+pnpm preview
+pnpm deploy
+```

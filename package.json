@@ -10,6 +10,7 @@
 		"dev": "vite dev",
 		"build": "vite build",
 		"preview": "vite preview",
+		"deploy": "pnpm run build && wrangler deploy",
 		"api:dev": "pnpm --dir api dev",
 		"api:check": "pnpm --dir api check",
 		"api:deploy": "pnpm --dir api deploy",
@@ -25,7 +26,7 @@
 	"devDependencies": {
 		"@eslint/js": "^10.0.1",
 		"@playwright/test": "^1.60.0",
-		"@sveltejs/adapter-auto": "^7.0.1",
+		"@sveltejs/adapter-cloudflare": "^7.2.9",
 		"@sveltejs/kit": "^2.63.0",
 		"@sveltejs/vite-plugin-svelte": "^7.1.2",
 		"@tailwindcss/forms": "^0.5.11",
@@ -48,7 +49,8 @@
 		"typescript-eslint": "^8.60.1",
 		"vite": "^8.0.16",
 		"vitest": "^4.1.8",
-		"vitest-browser-svelte": "^2.1.1"
+		"vitest-browser-svelte": "^2.1.1",
+		"wrangler": "^4.123.0"
 	},
 	"dependencies": {
 		"@atcute/atproto": "^4.0.0",

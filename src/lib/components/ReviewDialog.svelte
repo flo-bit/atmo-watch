@@ -1,42 +1,65 @@
 <script lang="ts">
+	import { invalidateAll } from '$app/navigation';
 	import { Dialog } from 'bits-ui';
+	import { X } from '@lucide/svelte';
 	import { posterUrl } from '$lib/images';
-	import { getReviewStorageKey, reviewDialog, reviewLibrary } from '$lib/review.svelte';
-	import { mediaKey } from '$lib/utils';
+	import { reviewDialog } from '$lib/review.svelte';
+	import { loadReviewDraft, saveReviewRecord } from '$lib/review-write.remote';
 	import RatingInput from './RatingInput.svelte';
-
-	type SavedReview = {
-		rating: number;
-		ratingScale?: 10;
-		review: string;
-		watched?: boolean;
-	};
 
 	let rating = $state(0);
 	let review = $state('');
-	let watched = $state(true);
+	let containsSpoilers = $state(false);
+	let loading = $state(false);
+	let saving = $state(false);
 	let saved = $state(false);
-	let storageKey = $derived(reviewDialog.item ? getReviewStorageKey(reviewDialog.item) : '');
+	let reviewError = $state('');
 
 	$effect(() => {
-		const key = storageKey;
-		if (!reviewDialog.open || !key) return;
+		const item = reviewDialog.item;
+		if (!reviewDialog.open || !item) return;
 
-		let stored: SavedReview | undefined;
-		try {
-			stored = JSON.parse(localStorage.getItem(key) ?? 'null') as SavedReview | undefined;
-		} catch {
-			stored = undefined;
-		}
-
-		rating = stored?.rating ? (stored.ratingScale === 10 ? stored.rating : stored.rating * 2) : 0;
-		review = stored?.review ?? '';
-		watched = stored?.watched ?? true;
+		rating = 0;
+		review = '';
+		containsSpoilers = false;
+		loading = true;
+		saving = false;
 		saved = false;
+		reviewError = '';
+
+		let cancelled = false;
+		void loadReviewDraft({
+			creativeWorkType: item.creativeWorkType,
+			tmdbId: item.tmdbId
+		})
+			.then((draft) => {
+				if (cancelled || !draft) return;
+				rating = draft.rating;
+				review = draft.text;
+				containsSpoilers = draft.containsSpoilers;
+			})
+			.catch((cause) => {
+				if (cancelled) return;
+				reviewError = cause instanceof Error ? cause.message : 'Could not load your review.';
+			})
+			.finally(() => {
+				if (!cancelled) loading = false;
+			});
+
+		return () => {
+			cancelled = true;
+		};
 	});
 
+	function markChanged() {
+		saved = false;
+		reviewError = '';
+	}
+
 	function handleRatingShortcut(event: KeyboardEvent) {
-		if (!reviewDialog.open || event.metaKey || event.ctrlKey || event.altKey) return;
+		if (!reviewDialog.open || loading || saving || event.metaKey || event.ctrlKey || event.altKey) {
+			return;
+		}
 		if (!/^[1-9]$/.test(event.key)) return;
 
 		const target = event.target;
@@ -50,19 +73,38 @@
 
 		event.preventDefault();
 		rating = Number(event.key);
-		saved = false;
+		markChanged();
 	}
 
-	function saveReview() {
-		if (!storageKey || rating === 0) return;
+	async function saveReview() {
+		const item = reviewDialog.item;
+		if (!item || rating === 0 || loading || saving) return;
 
-		localStorage.setItem(
-			storageKey,
-			JSON.stringify({ rating, ratingScale: 10, review: review.trim(), watched })
-		);
-		if (reviewDialog.item) reviewLibrary.setWatched(mediaKey(reviewDialog.item), watched);
-		saved = true;
-		window.setTimeout(() => reviewDialog.hide(), 350);
+		saving = true;
+		saved = false;
+		reviewError = '';
+
+		try {
+			const imageUrl = posterUrl(item.poster, 'w500');
+			await saveReviewRecord({
+				media: {
+					creativeWorkType: item.creativeWorkType,
+					tmdbId: item.tmdbId,
+					title: item.title,
+					...(imageUrl ? { posterUrl: imageUrl } : {})
+				},
+				rating,
+				text: review,
+				containsSpoilers
+			});
+			saved = true;
+			void invalidateAll();
+			window.setTimeout(() => reviewDialog.hide(), 500);
+		} catch (cause) {
+			reviewError = cause instanceof Error ? cause.message : 'Could not save review.';
+		} finally {
+			saving = false;
+		}
 	}
 </script>
 
@@ -82,66 +124,69 @@
 			<Dialog.Close
 				class="absolute top-3 right-3 inline-flex size-7 items-center justify-center rounded-full text-base-400 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70"
 			>
-				<svg
-					class="size-4"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="1.5"
-					aria-hidden="true"
-				>
-					<path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
-				</svg>
+				<X class="size-4" strokeWidth={1.5} aria-hidden="true" />
 				<span class="sr-only">Close review</span>
 			</Dialog.Close>
 
 			{#if reviewDialog.item}
-				<div class="mt-5 flex items-center gap-4">
-					<div class="h-24 w-16 shrink-0 overflow-hidden rounded-md bg-base-900">
-						{#if reviewDialog.item.poster}
-							<img
-								src={posterUrl(reviewDialog.item.poster, 'w185')}
-								alt="Poster for {reviewDialog.item.title}"
-								class="size-full object-cover"
-							/>
-						{/if}
-					</div>
-					<div class="min-w-0">
-						<div class="truncate font-semibold">{reviewDialog.item.title}</div>
-						<div class="mt-2">
-							<RatingInput bind:value={rating} onchange={() => (saved = false)} />
+				<div class:opacity-60={loading} class="mt-5">
+					<div class="flex items-center gap-4">
+						<div class="h-24 w-16 shrink-0 overflow-hidden rounded-md bg-base-900">
+							{#if reviewDialog.item.poster}
+								<img
+									src={posterUrl(reviewDialog.item.poster, 'w185')}
+									alt="Poster for {reviewDialog.item.title}"
+									class="size-full object-cover"
+								/>
+							{/if}
+						</div>
+						<div class="min-w-0">
+							<div class="truncate font-semibold">{reviewDialog.item.title}</div>
+							<div
+								class:pointer-events-none={loading || saving}
+								class="mt-2"
+								aria-disabled={loading || saving}
+							>
+								<RatingInput bind:value={rating} onchange={markChanged} />
+							</div>
 						</div>
 					</div>
+
+					<label for="review-text" class="sr-only">Review</label>
+					<textarea
+						id="review-text"
+						bind:value={review}
+						oninput={markChanged}
+						disabled={loading || saving}
+						rows="4"
+						maxlength="1000"
+						placeholder="write a review (optional)"
+						class="mt-4 block w-full resize-none rounded-lg border border-white/10 bg-base-900 px-3 py-2 text-sm text-white outline-none placeholder:text-base-500 focus:border-white/25 focus:ring-0 disabled:cursor-wait"
+					></textarea>
+
+					<label class="mt-3 flex w-fit cursor-pointer items-center gap-2 text-xs text-base-300">
+						<input
+							type="checkbox"
+							bind:checked={containsSpoilers}
+							onchange={markChanged}
+							disabled={loading || saving}
+							class="size-4 rounded border-base-700 bg-base-900 text-accent-500 focus:ring-2 focus:ring-accent-500/40 focus:ring-offset-0"
+						/>
+						contains spoilers
+					</label>
 				</div>
 
-				<label class="mt-4 flex w-fit cursor-pointer items-center gap-2 text-xs text-base-300">
-					<input
-						type="checkbox"
-						bind:checked={watched}
-						onchange={() => (saved = false)}
-						class="size-4 rounded border-base-700 bg-base-900 text-accent-500 focus:ring-2 focus:ring-accent-500/40 focus:ring-offset-0"
-					/>
-					mark as watched
-				</label>
-
-				<label for="review-text" class="sr-only">Review</label>
-				<textarea
-					id="review-text"
-					bind:value={review}
-					oninput={() => (saved = false)}
-					rows="4"
-					maxlength="1000"
-					placeholder="write a review (optional)"
-					class="mt-4 block w-full resize-none rounded-lg border border-white/10 bg-base-900 px-3 py-2 text-sm text-white outline-none placeholder:text-base-500 focus:border-white/25 focus:ring-0"
-				></textarea>
+				{#if reviewError}
+					<p class="mt-3 text-sm text-red-300" role="alert">{reviewError}</p>
+				{/if}
 
 				<button
 					type="button"
 					onclick={saveReview}
-					disabled={rating === 0}
+					disabled={rating === 0 || loading || saving || saved}
 					class="mt-4 inline-flex h-9 w-full items-center justify-center rounded-lg border border-accent-900 bg-accent-950/80 text-sm font-semibold text-accent-300 transition-colors hover:bg-accent-950 disabled:cursor-not-allowed disabled:opacity-40"
 				>
-					{saved ? 'saved' : 'save review'}
+					{loading ? 'loading…' : saving ? 'saving…' : saved ? 'saved' : 'save review'}
 				</button>
 			{/if}
 		</Dialog.Content>
