@@ -29,6 +29,10 @@ npm run dev
 npm run dev -- --open
 ```
 
+## Cloudflare KV
+
+Bind a Cloudflare KV namespace as `MEDIA_CACHE` to cache TMDB and OMDb data. Without the binding, external data is fetched normally.
+
 ## Building
 
 To create a production version of your app:

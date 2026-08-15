@@ -3,8 +3,8 @@
   "version": 1,
   "endpoint": "http://127.0.0.1:8787",
   "namespace": "watch.atmo",
-  "contractDigest": "sha256:401ce47ba01fb8c1ba1c34821782214c2c95eb1752784630f064c659dd6b1b0f",
-  "lexiconDigest": "sha256:c979563d792495eda7062f0a4748b83d3724ba5b0d98991de0d7868092eda8b7",
+  "contractDigest": "sha256:cb70003452bdb5fe4baf2c5c41f932a52ebf74ddc6d03ed3d833d0e34cc452ad",
+  "lexiconDigest": "sha256:fc63a6640eaff6cb71b35045fbb5c8ec3f8b178a64bae46c9512bc0bc0aeb73b",
   "methods": [
     "watch.atmo.comment.getRecord",
     "watch.atmo.comment.listRecords",

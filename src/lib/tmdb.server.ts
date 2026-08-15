@@ -1,13 +1,16 @@
 import { env } from '$env/dynamic/private';
+import { cachePublicData, getPublicDataCache } from '$lib/cache.server';
 import {
 	TMDB,
 	TMDBError,
 	type Cast,
 	type MediaWatchProviders,
 	type MovieDetails,
+	type MovieDetailsWithAppends,
 	type MovieResultItem,
 	type PersonCombinedCastCredit,
 	type PersonDetails as TmdbPersonDetails,
+	type TVDetailsWithAppends,
 	type TVSeriesDetails,
 	type TVSeriesResultItem,
 	type VideoItem,
@@ -36,6 +39,12 @@ const MEDIA_APPENDS: ['credits', 'recommendations', 'external_ids', 'videos', 'w
 ];
 const PERSON_APPENDS: ['combined_credits'] = ['combined_credits'];
 
+const HOUR = 60 * 60;
+const WEEK = 7 * 24 * HOUR;
+const MEDIA_DATA_TTL = WEEK;
+const DISCOVERY_TTL = 6 * HOUR;
+const SEARCH_TTL = HOUR;
+
 const EMPTY_OMDB_DATA: OmdbData = {
 	ratings: [],
 	imdbVotes: null
@@ -46,9 +55,15 @@ type OmdbData = {
 	imdbVotes: string | null;
 };
 
+type OmdbFetchResult = {
+	data: OmdbData;
+	cacheable: boolean;
+};
+
 type MediaSummarySource =
 	MovieDetails | MovieResultItem | TVSeriesDetails | TVSeriesResultItem | PersonCombinedCastCredit;
-type MediaDetailsSource = MovieDetails | TVSeriesDetails;
+type MediaDetailsSource =
+	MovieDetailsWithAppends<typeof MEDIA_APPENDS> | TVDetailsWithAppends<typeof MEDIA_APPENDS>;
 type TmdbMediaType = 'movie' | 'tv';
 
 let client: TMDB | undefined;
@@ -65,13 +80,31 @@ function getClient() {
 		client = new TMDB(token, {
 			language: 'en-US',
 			region: 'US',
-			retry: true,
-			cache: { ttl: 300_000, max_size: 250 }
+			retry: true
 		});
 		clientToken = token;
 	}
 
 	return client;
+}
+
+function getMediaSource(
+	tmdbId: number,
+	creativeWorkType: SupportedCreativeWorkType,
+	cache: ReturnType<typeof getPublicDataCache>
+): Promise<MediaDetailsSource> {
+	return cachePublicData(cache, `tmdb:media:${creativeWorkType}:${tmdbId}`, async () => {
+		const tmdb = getClient();
+		return creativeWorkType === 'movie'
+			? tmdb.movies.details({
+					movie_id: tmdbId,
+					append_to_response: MEDIA_APPENDS
+				})
+			: tmdb.tv_series.details({
+					series_id: tmdbId,
+					append_to_response: MEDIA_APPENDS
+				});
+	});
 }
 
 function fromTmdbMediaType(mediaType: TmdbMediaType): SupportedCreativeWorkType {
@@ -173,75 +206,63 @@ function toPersonDetails(person: TmdbPersonDetails): PersonDetails {
 	};
 }
 
-export async function getRatings(imdbId: string): Promise<OmdbData> {
+export async function getRatings(
+	imdbId: string,
+	cache = getPublicDataCache(MEDIA_DATA_TTL)
+): Promise<OmdbData> {
 	if (!env.OMDB_API_KEY) return EMPTY_OMDB_DATA;
 
-	const url = new URL('https://www.omdbapi.com/');
-	url.searchParams.set('i', imdbId);
-	url.searchParams.set('apikey', env.OMDB_API_KEY);
+	const result = await cachePublicData<OmdbFetchResult>(
+		cache,
+		`omdb:ratings:${imdbId}`,
+		async () => {
+			const url = new URL('https://www.omdbapi.com/');
+			url.searchParams.set('i', imdbId);
+			url.searchParams.set('apikey', env.OMDB_API_KEY);
 
-	try {
-		const response = await fetch(url);
-		if (!response.ok) return EMPTY_OMDB_DATA;
+			try {
+				const response = await fetch(url);
+				if (!response.ok) return { data: EMPTY_OMDB_DATA, cacheable: false };
 
-		const data = (await response.json()) as {
-			Response: 'True' | 'False';
-			Ratings?: Array<{ Source: string; Value: string }>;
-			imdbVotes?: string;
-		};
+				const data = (await response.json()) as {
+					Response: 'True' | 'False';
+					Ratings?: Array<{ Source: string; Value: string }>;
+					imdbVotes?: string;
+				};
 
-		if (data.Response === 'False') return EMPTY_OMDB_DATA;
+				if (data.Response === 'False') {
+					return { data: EMPTY_OMDB_DATA, cacheable: true };
+				}
 
-		return {
-			ratings: (data.Ratings ?? []).map((rating) => ({
-				source: rating.Source,
-				value: rating.Value
-			})),
-			imdbVotes: data.imdbVotes && data.imdbVotes !== 'N/A' ? data.imdbVotes : null
-		};
-	} catch {
-		return EMPTY_OMDB_DATA;
-	}
+				return {
+					data: {
+						ratings: (data.Ratings ?? []).map((rating) => ({
+							source: rating.Source,
+							value: rating.Value
+						})),
+						imdbVotes: data.imdbVotes && data.imdbVotes !== 'N/A' ? data.imdbVotes : null
+					},
+					cacheable: true
+				};
+			} catch {
+				return { data: EMPTY_OMDB_DATA, cacheable: false };
+			}
+		},
+		(value) => value.cacheable
+	);
+
+	return result.data;
 }
 
 export async function getMediaPage(
 	tmdbId: number,
 	creativeWorkType: SupportedCreativeWorkType,
-	region = 'US'
+	region: string | null
 ) {
-	const tmdb = getClient();
-
-	if (creativeWorkType === 'movie') {
-		const details = await tmdb.movies.details({
-			movie_id: tmdbId,
-			append_to_response: MEDIA_APPENDS
-		});
-
-		const omdb = details.external_ids.imdb_id
-			? await getRatings(details.external_ids.imdb_id)
-			: EMPTY_OMDB_DATA;
-
-		return {
-			item: toMediaDetails(details, creativeWorkType),
-			recommendations: details.recommendations.results.map((item) =>
-				toMediaSummary(item, creativeWorkType)
-			),
-			cast: details.credits.cast.map(toCastMember),
-			imdb_id: details.external_ids.imdb_id ?? null,
-			imdb_votes: omdb.imdbVotes,
-			ratings: omdb.ratings,
-			trailer_url: getTrailerUrl(details.videos.results),
-			streaming: toStreamingAvailability(details['watch/providers'], region)
-		};
-	}
-
-	const details = await tmdb.tv_series.details({
-		series_id: tmdbId,
-		append_to_response: MEDIA_APPENDS
-	});
-
+	const cache = getPublicDataCache(MEDIA_DATA_TTL);
+	const details = await getMediaSource(tmdbId, creativeWorkType, cache);
 	const omdb = details.external_ids.imdb_id
-		? await getRatings(details.external_ids.imdb_id)
+		? await getRatings(details.external_ids.imdb_id, cache)
 		: EMPTY_OMDB_DATA;
 
 	return {
@@ -254,11 +275,11 @@ export async function getMediaPage(
 		imdb_votes: omdb.imdbVotes,
 		ratings: omdb.ratings,
 		trailer_url: getTrailerUrl(details.videos.results),
-		streaming: toStreamingAvailability(details['watch/providers'], region)
+		streaming: region ? toStreamingAvailability(details['watch/providers'], region) : null
 	};
 }
 
-export async function getHomePage() {
+async function loadHomePage() {
 	const empty = {
 		currentlyInTheaters: [] as MediaSummary[],
 		popular: [] as MediaSummary[]
@@ -304,45 +325,60 @@ export async function getHomePage() {
 	return { currentlyInTheaters, popular };
 }
 
-export async function searchMedia(query: string): Promise<MediaSummary[]> {
-	const response = await getClient().search.multi({
-		query,
-		include_adult: false,
-		page: 1
-	});
+export function getHomePage() {
+	const cache = getPublicDataCache(DISCOVERY_TTL);
+	return cachePublicData(cache, 'tmdb:home', loadHomePage, (data) =>
+		Boolean(data.currentlyInTheaters.length || data.popular.length)
+	);
+}
 
-	return response.results
-		.flatMap((result) => {
-			if (result.media_type !== 'movie' && result.media_type !== 'tv') return [];
-			return [toMediaSummary(result, fromTmdbMediaType(result.media_type))];
-		})
-		.filter((item) => item.poster)
-		.slice(0, 12);
+export function searchMedia(query: string): Promise<MediaSummary[]> {
+	const normalizedQuery = query.trim();
+	const cache = getPublicDataCache(SEARCH_TTL);
+
+	return cachePublicData(
+		cache,
+		`tmdb:search:${normalizedQuery.toLocaleLowerCase('en-US')}`,
+		async () => {
+			const response = await getClient().search.multi({
+				query: normalizedQuery,
+				include_adult: false,
+				page: 1
+			});
+
+			return response.results
+				.flatMap((result) => {
+					if (result.media_type !== 'movie' && result.media_type !== 'tv') return [];
+					return [toMediaSummary(result, fromTmdbMediaType(result.media_type))];
+				})
+				.filter((item) => item.poster)
+				.slice(0, 12);
+		}
+	);
 }
 
 export async function getDetails(
 	tmdbId: number,
 	creativeWorkType: SupportedCreativeWorkType
 ): Promise<MediaDetails> {
-	const tmdb = getClient();
-	const details =
-		creativeWorkType === 'movie'
-			? await tmdb.movies.details({ movie_id: tmdbId })
-			: await tmdb.tv_series.details({ series_id: tmdbId });
-
+	const cache = getPublicDataCache(MEDIA_DATA_TTL);
+	const details = await getMediaSource(tmdbId, creativeWorkType, cache);
 	return toMediaDetails(details, creativeWorkType);
 }
 
-export async function getPersonPage(personId: number) {
-	const person = await getClient().people.details({
-		person_id: personId,
-		append_to_response: PERSON_APPENDS
-	});
+export function getPersonPage(personId: number) {
+	const cache = getPublicDataCache(MEDIA_DATA_TTL);
+	return cachePublicData(cache, `tmdb:person:${personId}`, async () => {
+		const person = await getClient().people.details({
+			person_id: personId,
+			append_to_response: PERSON_APPENDS
+		});
 
-	return {
-		personDetails: toPersonDetails(person),
-		combinedCredits: person.combined_credits.cast.map(toMediaCredit)
-	};
+		return {
+			personDetails: toPersonDetails(person),
+			combinedCredits: person.combined_credits.cast.map(toMediaCredit)
+		};
+	});
 }
 
 export { TMDBError };

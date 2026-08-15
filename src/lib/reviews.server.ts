@@ -1,30 +1,38 @@
 import { getAtprotoCdnImageUrl } from '$lib/atproto/images';
 import { contrail } from '$lib/contrail';
+import type * as CommentListRecords from '$lib/contrail/types/types/watch/atmo/comment/listRecords';
+import type * as LikeListRecords from '$lib/contrail/types/types/watch/atmo/like/listRecords';
 import type * as ReviewListRecords from '$lib/contrail/types/types/watch/atmo/review/listRecords';
-import type { MediaImage, ReviewCardModel, SupportedCreativeWorkType } from '$lib/types';
+import type {
+	ActorSummary,
+	MediaImage,
+	ReviewCardModel,
+	ReviewCommentModel,
+	SupportedCreativeWorkType
+} from '$lib/types';
+
+type ReviewRecord = Pick<ReviewListRecords.Record, 'uri' | 'did' | 'value'>;
 
 function getCreativeWorkType(value: string): SupportedCreativeWorkType | undefined {
 	if (value === 'movie' || value === 'tv_show') return value;
 	return undefined;
 }
 
-function getPoster(record: ReviewListRecords.Record): MediaImage | null {
+function getPoster(record: ReviewRecord): MediaImage | null {
 	if (record.value.poster) {
-		return {
-			source: 'remote',
-			url: getAtprotoCdnImageUrl({
-				did: record.did,
-				blob: record.value.poster,
-				preset: 'feed_thumbnail'
-			})
-		};
+		const url = getAtprotoCdnImageUrl({
+			did: record.did,
+			blob: record.value.poster,
+			preset: 'feed_thumbnail'
+		});
+		if (url) return { source: 'remote', url };
 	}
 
 	return record.value.posterUrl ? { source: 'remote', url: record.value.posterUrl } : null;
 }
 
 export function toReview(
-	record: ReviewListRecords.Record,
+	record: ReviewRecord,
 	handle: string = record.did
 ): ReviewCardModel | undefined {
 	const creativeWorkType = getCreativeWorkType(record.value.creativeWorkType);
@@ -47,7 +55,99 @@ export function toReview(
 			poster: getPoster(record)
 		},
 		rating: record.value.rating,
-		text: record.value.text ?? ''
+		text: record.value.text ?? '',
+		containsSpoilers: record.value.containsSpoilers ?? false
+	};
+}
+
+function getCommentAuthor(
+	did: string,
+	profiles: Map<string, CommentListRecords.ProfileEntry>
+): ActorSummary {
+	const profile = profiles.get(did);
+	return {
+		did,
+		handle: profile?.handle ?? did,
+		displayName: profile?.value?.displayName,
+		avatarUrl: profile?.value?.avatar
+			? getAtprotoCdnImageUrl({ did, blob: profile.value.avatar, preset: 'avatar' })
+			: undefined
+	};
+}
+
+export async function getReviewInteractions(reviewUri: string, viewerDid: string | null) {
+	const likes: LikeListRecords.Record[] = [];
+	const comments: CommentListRecords.Record[] = [];
+	const commentProfiles = new Map<string, CommentListRecords.ProfileEntry>();
+	let likeCursor: string | undefined;
+	let commentCursor: string | undefined;
+
+	do {
+		const response = await contrail.get('watch.atmo.like.listRecords', {
+			params: { cursor: likeCursor, limit: 200 }
+		});
+		if (!response.ok) {
+			throw new Error(`Could not load review likes from Contrail (${response.status})`);
+		}
+
+		likes.push(...response.data.records.filter((record) => record.value.subjectUri === reviewUri));
+		likeCursor = response.data.cursor;
+	} while (likeCursor);
+
+	do {
+		const response = await contrail.get('watch.atmo.comment.listRecords', {
+			params: { cursor: commentCursor, limit: 200, profiles: true }
+		});
+		if (!response.ok) {
+			throw new Error(`Could not load review comments from Contrail (${response.status})`);
+		}
+
+		comments.push(...response.data.records);
+		for (const profile of response.data.profiles ?? []) {
+			if (!commentProfiles.has(profile.did) || profile.collection === 'app.bsky.actor.profile') {
+				commentProfiles.set(profile.did, profile);
+			}
+		}
+		commentCursor = response.data.cursor;
+	} while (commentCursor);
+
+	const uniqueLikers = new Set(likes.map((like) => like.did));
+	const viewerLikeUri = viewerDid
+		? (likes.find((like) => like.did === viewerDid)?.uri ?? null)
+		: null;
+
+	const threadUris = new Set([reviewUri]);
+	const threadComments: CommentListRecords.Record[] = [];
+	let foundComments = true;
+	while (foundComments) {
+		foundComments = false;
+		for (const comment of comments) {
+			if (threadUris.has(comment.uri)) continue;
+			if (
+				threadUris.has(comment.value.subjectUri) ||
+				(comment.value.rootUri && threadUris.has(comment.value.rootUri))
+			) {
+				threadUris.add(comment.uri);
+				threadComments.push(comment);
+				foundComments = true;
+			}
+		}
+	}
+
+	const reviewComments: ReviewCommentModel[] = threadComments
+		.map((comment) => ({
+			uri: comment.uri,
+			author: getCommentAuthor(comment.did, commentProfiles),
+			text: comment.value.text,
+			createdAt: comment.value.createdAt
+		}))
+		.sort((left, right) => Date.parse(right.createdAt) - Date.parse(left.createdAt));
+
+	return {
+		likeCount: uniqueLikers.size,
+		commentCount: reviewComments.length,
+		viewerLikeUri,
+		comments: reviewComments
 	};
 }
 

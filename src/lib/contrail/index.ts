@@ -5,7 +5,7 @@ import type {} from "./types/index.js";
 export const contrail = createPublicServiceClient({
   endpoint: "http://127.0.0.1:8787",
   allowInsecureHttp: true,
-  contractDigest: "sha256:401ce47ba01fb8c1ba1c34821782214c2c95eb1752784630f064c659dd6b1b0f",
+  contractDigest: "sha256:cb70003452bdb5fe4baf2c5c41f932a52ebf74ddc6d03ed3d833d0e34cc452ad",
   serviceMethods: [
     "watch.atmo.comment.getRecord",
     "watch.atmo.comment.listRecords",

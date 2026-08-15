@@ -37,7 +37,15 @@
             "format": "at-identifier",
             "type": "string"
           },
+          "creativeWorkType": {
+            "description": "Filter by creativeWorkType",
+            "type": "string"
+          },
           "cursor": {
+            "type": "string"
+          },
+          "identifiersTmdbId": {
+            "description": "Filter by identifiers.tmdbId",
             "type": "string"
           },
           "limit": {
@@ -46,9 +54,25 @@
             "minimum": 1,
             "type": "integer"
           },
+          "order": {
+            "description": "Sort direction",
+            "knownValues": [
+              "asc",
+              "desc"
+            ],
+            "type": "string"
+          },
           "profiles": {
             "description": "Include indexed profile and identity information",
             "type": "boolean"
+          },
+          "sort": {
+            "description": "Field to sort by (default: time_us)",
+            "knownValues": [
+              "creativeWorkType",
+              "identifiersTmdbId"
+            ],
+            "type": "string"
           }
         },
         "type": "params"

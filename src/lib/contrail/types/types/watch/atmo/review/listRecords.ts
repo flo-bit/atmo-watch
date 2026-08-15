@@ -13,7 +13,15 @@ const _mainSchema = /*#__PURE__*/ v.query(
 				 * Filter by an indexed DID or cached handle
 				 */
 				"actor": /*#__PURE__*/ v.optional(/*#__PURE__*/ v.actorIdentifierString()),
+				/**
+				 * Filter by creativeWorkType
+				 */
+				"creativeWorkType": /*#__PURE__*/ v.optional(/*#__PURE__*/ v.string()),
 				"cursor": /*#__PURE__*/ v.optional(/*#__PURE__*/ v.string()),
+				/**
+				 * Filter by identifiers.tmdbId
+				 */
+				"identifiersTmdbId": /*#__PURE__*/ v.optional(/*#__PURE__*/ v.string()),
 				/**
 				 * @minimum 1
 				 * @maximum 200
@@ -27,9 +35,17 @@ const _mainSchema = /*#__PURE__*/ v.query(
 					50
 				),
 				/**
+				 * Sort direction
+				 */
+				"order": /*#__PURE__*/ v.optional(/*#__PURE__*/ v.string<"asc" | "desc" | (string & {})>()),
+				/**
 				 * Include indexed profile and identity information
 				 */
 				"profiles": /*#__PURE__*/ v.optional(/*#__PURE__*/ v.boolean()),
+				/**
+				 * Field to sort by (default: time_us)
+				 */
+				"sort": /*#__PURE__*/ v.optional(/*#__PURE__*/ v.string<"creativeWorkType" | "identifiersTmdbId" | (string & {})>()),
 			}
 		),
 		"output": {

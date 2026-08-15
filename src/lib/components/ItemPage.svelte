@@ -1,10 +1,12 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
+	import { untrack } from 'svelte';
 	import Avatar from './Avatar.svelte';
 	import Container from './Container.svelte';
 	import ExternalRatings from './ExternalRatings.svelte';
 	import ItemsGrid from './ItemsGrid.svelte';
+	import Rating from './Rating.svelte';
 	import Review from './Review.svelte';
 	import TabSelect from './TabSelect.svelte';
 	import TrailerDialog from './TrailerDialog.svelte';
@@ -19,13 +21,28 @@
 		reviews: ReviewCardModel[];
 	};
 
+	function getDefaultDetailSection(data: ItemPageData): DetailSection {
+		if (data.reviews.length > 0) return 'reviews';
+		if (data.recommendations.length > 0) return 'similar';
+		return 'cast';
+	}
+
 	let { data }: { data: ItemPageData } = $props();
 	let canonicalUrl = $derived(`${page.url.origin}${page.url.pathname}`);
 	let ogImageUrl = $derived(`${canonicalUrl.replace(/\/$/, '')}/og.png`);
-	let selectedSection = $state<DetailSection>('reviews');
+	let averageReviewRating = $derived(
+		data.reviews.length > 0
+			? data.reviews.reduce((total, review) => total + review.rating, 0) / data.reviews.length
+			: 0
+	);
+	let selectedSection = $state<DetailSection>(untrack(() => getDefaultDetailSection(data)));
+	let showWrittenReviewsOnly = $state(true);
+	let visibleReviews = $derived(
+		showWrittenReviewsOnly ? data.reviews.filter((review) => review.text.trim()) : data.reviews
+	);
 	let detailTabs = $derived(
 		[
-			{ value: 'reviews' as const, label: 'reviews' },
+			data.reviews.length > 0 ? { value: 'reviews' as const, label: 'reviews' } : null,
 			data.recommendations.length > 0 ? { value: 'similar' as const, label: 'similar' } : null,
 			data.cast.length > 0 ? { value: 'cast' as const, label: 'cast' } : null
 		].filter((option): option is { value: DetailSection; label: string } => option !== null)
@@ -126,15 +143,34 @@
 			<h2 class="sr-only">More about {data.item.title}</h2>
 			<TabSelect bind:value={selectedSection} options={detailTabs} label="Choose detail section" />
 
-			{#if selectedSection === 'reviews'}
-				{#if data.reviews.length > 0}
-					<div class="mt-4 flex max-w-2xl flex-col gap-4">
-						{#each data.reviews as review (review.uri)}
+			{#if selectedSection === 'reviews' && data.reviews.length > 0}
+				<div class="mt-4 flex max-w-2xl flex-wrap items-center justify-between gap-3 px-3 sm:px-4">
+					<div class="flex items-center gap-2">
+						<Rating rating={averageReviewRating} size="size-4" />
+						<span class="font-semibold text-white">{(averageReviewRating / 2).toFixed(1)}</span>
+						<span class="text-base-400">
+							average from {data.reviews.length}
+							{data.reviews.length === 1 ? 'review' : 'reviews'}
+						</span>
+					</div>
+					<label class="flex cursor-pointer items-center gap-2 text-xs text-base-300">
+						<input
+							type="checkbox"
+							bind:checked={showWrittenReviewsOnly}
+							class="size-4 rounded border-base-700 bg-base-900 text-accent-500 focus:ring-2 focus:ring-accent-500/40 focus:ring-offset-0"
+						/>
+						only reviews with text
+					</label>
+				</div>
+
+				{#if visibleReviews.length > 0}
+					<div class="mt-2 flex max-w-2xl flex-col gap-4">
+						{#each visibleReviews as review (review.uri)}
 							<Review {review} showItem={false} />
 						{/each}
 					</div>
 				{:else}
-					<p class="mt-4 text-sm text-base-400">No reviews yet.</p>
+					<p class="mt-4 px-3 text-sm text-base-400 sm:px-4">No reviews with text.</p>
 				{/if}
 			{:else if selectedSection === 'similar' && data.recommendations.length > 0}
 				<ItemsGrid items={data.recommendations} class="mt-4" />

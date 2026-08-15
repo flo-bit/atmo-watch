@@ -11,7 +11,7 @@
 		imdbId: string | null;
 		imdbVotes: string | null;
 		ratings: ExternalRating[];
-		streaming: StreamingAvailability;
+		streaming: StreamingAvailability | null;
 	} = $props();
 
 	let imdbRating = $derived(ratings.find((rating) => rating.source === 'Internet Movie Database'));
@@ -36,7 +36,9 @@
 	}
 </script>
 
-{#if (imdbId && (imdbScore || compactImdbVotes)) || rottenTomatoesRating || streaming.providers.length > 0}
+{#if (imdbId && (imdbScore || compactImdbVotes)) ||
+	rottenTomatoesRating ||
+	(streaming && streaming.providers.length > 0)}
 	<div class="flex flex-col items-start gap-2">
 		{#if (imdbId && (imdbScore || compactImdbVotes)) || rottenTomatoesRating}
 			<div class="flex flex-wrap items-center gap-x-4 gap-y-2">
@@ -90,7 +92,7 @@
 			</div>
 		{/if}
 
-		{#if streaming.providers.length > 0}
+		{#if streaming && streaming.providers.length > 0}
 			<div
 				class="flex flex-wrap items-center gap-1.5"
 				title={`Streaming providers in ${streaming.region_name}`}
@@ -101,7 +103,7 @@
 						<a
 							href={streaming.link}
 							target="_blank"
-							rel="noopener noreferrer"
+							rel="external noopener noreferrer"
 							aria-label={`${provider.name} streaming options in ${streaming.region_name}`}
 							title={`${provider.name} · ${streaming.region_name}`}
 							class="rounded-md transition-opacity hover:opacity-80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70"

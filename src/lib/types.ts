@@ -24,6 +24,7 @@ export type MediaCredit = MediaSummary & {
 export type ActorSummary = {
 	did: string;
 	handle: string;
+	displayName?: string;
 	avatarUrl?: string;
 };
 
@@ -33,6 +34,14 @@ export type ReviewCardModel = {
 	media: MediaSummary;
 	rating: number;
 	text: string;
+	containsSpoilers: boolean;
+};
+
+export type ReviewCommentModel = {
+	uri: string;
+	author: ActorSummary;
+	text: string;
+	createdAt: string;
 };
 
 export type ExternalRating = {

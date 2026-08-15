@@ -22,14 +22,14 @@ function getStreamingRegion(url: URL, request: Request) {
 	for (const language of (request.headers.get('accept-language') ?? '').split(',')) {
 		try {
 			const locale = new Intl.Locale(language.split(';')[0].trim().replace('_', '-'));
-			const region = normalizeRegion(locale.region ?? locale.maximize().region);
+			const region = normalizeRegion(locale.region);
 			if (region) return region;
 		} catch {
 			// Ignore malformed language tags.
 		}
 	}
 
-	return 'US';
+	return null;
 }
 
 export const load: PageServerLoad = async ({ params, request, url }) => {
