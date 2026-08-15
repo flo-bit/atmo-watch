@@ -2,10 +2,9 @@
 @plugin '@tailwindcss/forms';
 @plugin '@tailwindcss/typography';
 
-
 @import '@foxui/core/theme.css';
 
-@source "../../node_modules/@foxui";
+@source '../../node_modules/@foxui';
 
 @custom-variant dark (&:where(.dark, .dark *));
 

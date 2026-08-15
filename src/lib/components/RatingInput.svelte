@@ -8,11 +8,7 @@
 	} = $props();
 
 	const uid = $props.id();
-	let hoverValue = $state(value);
-
-	$effect(() => {
-		hoverValue = value;
-	});
+	let hoverValue = $derived(value);
 
 	function select(score: number) {
 		value = score;
@@ -30,12 +26,12 @@
 	<legend class="sr-only">Your rating</legend>
 
 	<div class="flex items-center" role="radiogroup" aria-label="Your rating">
-		{#each [1, 2, 3, 4, 5] as star}
+		{#each [1, 2, 3, 4, 5] as star (star)}
 			{@const fullScore = star * 2}
 			{@const fill = hoverValue >= fullScore ? 100 : hoverValue === fullScore - 1 ? 50 : 0}
 			<span class="rating-star relative block size-9 shrink-0 rounded-sm">
 				<svg
-					class="text-base-700 size-full"
+					class="size-full text-base-700"
 					viewBox="0 0 24 24"
 					fill="currentColor"
 					aria-hidden="true"
@@ -51,7 +47,7 @@
 						style:width={`${fill}%`}
 					>
 						<svg
-							class="text-accent-500 size-9 max-w-none"
+							class="size-9 max-w-none text-accent-500"
 							viewBox="0 0 24 24"
 							fill="currentColor"
 							aria-hidden="true"
@@ -63,7 +59,7 @@
 					</span>
 				{/if}
 
-				{#each [fullScore - 1, fullScore] as score}
+				{#each [fullScore - 1, fullScore] as score (score)}
 					<input
 						type="radio"
 						name={`rating-${uid}`}

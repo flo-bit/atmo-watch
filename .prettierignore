@@ -7,6 +7,9 @@ bun.lockb
 
 # Miscellaneous
 /static/
+/contrail.lock.json
+/lex.config.js
+/src/lib/contrail/
 /api/lex.config.js
 /api/lexicons/
 /api/src/lexicon-types/

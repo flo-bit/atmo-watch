@@ -3,4 +3,4 @@
 - create reviews
 - show reviews in movie/show detail page
 - show single review with comments
-- opengraph images 
+- opengraph images

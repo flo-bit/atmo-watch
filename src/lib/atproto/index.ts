@@ -11,7 +11,7 @@ export const atproto = createAtprotoAuth({
 	cookieSecret: env.COOKIE_SECRET,
 	clientAssertionKey: env.CLIENT_ASSERTION_KEY,
 	scope:
-		'atproto repo:social.popfeed.feed.review repo:social.popfeed.feed.comment repo:social.popfeed.feed.like repo:social.popfeed.feed.list repo:social.popfeed.feed.listItem ' +
+		'atproto repo:social.popfeed.feed.review repo:social.popfeed.feed.comment repo:social.popfeed.feed.like repo:social.popfeed.feed.list repo:social.popfeed.feed.listItem blob:*/* ' +
 		contrail.scope,
 	sessions: cloudflareKV('OAUTH_SESSIONS'),
 	states: cloudflareKV('OAUTH_STATES', { ttl: 600 })

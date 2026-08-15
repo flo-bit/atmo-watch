@@ -1,11 +1,11 @@
-<footer class="border-base-800 relative z-10 border-t bg-black">
+<footer class="relative z-10 border-t border-base-800 bg-black">
 	<div
 		class="mx-auto max-w-2xl px-4 py-10 sm:px-6 md:flex md:items-center md:justify-between lg:max-w-4xl lg:px-8"
 	>
 		<div class="flex justify-center md:order-2">
 			<a
 				href="https://github.com/flo-bit/atmo-watch"
-				class="text-base-400 hover:text-base-300 transition-colors"
+				class="text-base-400 transition-colors hover:text-base-300"
 				target="_blank"
 				rel="noopener noreferrer"
 			>
@@ -52,7 +52,7 @@
 					/>
 				</svg>
 			</a>
-			<p class="text-base-400 mt-2 text-center text-xs">
+			<p class="mt-2 text-center text-xs text-base-400">
 				This website uses the TMDB API but is not endorsed or certified by TMDB. Streaming
 				availability provided by
 				<a

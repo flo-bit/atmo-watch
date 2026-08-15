@@ -12,7 +12,7 @@
 
 <div
 	class={cn(
-		'border-base-400/50 bg-base-100 dark:border-base-700 dark:bg-base-800 overflow-hidden rounded-full border',
+		'overflow-hidden rounded-full border border-base-400/50 bg-base-100 dark:border-base-700 dark:bg-base-800',
 		className
 	)}
 >
@@ -20,7 +20,7 @@
 		<img loading="lazy" class="size-full object-cover" {src} {alt} />
 	{:else}
 		<svg
-			class="text-base-300 dark:text-base-600 size-full"
+			class="size-full text-base-300 dark:text-base-600"
 			fill="currentColor"
 			viewBox="0 0 24 24"
 			aria-hidden="true"

@@ -51,7 +51,7 @@
 				{data.personDetails.name}
 			</h1>
 			{#if data.personDetails.birthday}
-				<p class="text-base-300 text-sm">
+				<p class="text-sm text-base-300">
 					{calculateAge(data.personDetails.birthday, data.personDetails.deathday)} years old
 				</p>
 			{/if}
@@ -65,7 +65,7 @@
 				<p class={showFullBiography ? '' : 'line-clamp-4'}>{data.personDetails.biography}</p>
 				{#if !showFullBiography}
 					<button
-						class="text-accent-400 mt-1 font-semibold"
+						class="mt-1 font-semibold text-accent-400"
 						onclick={() => (showFullBiography = true)}
 					>
 						show more

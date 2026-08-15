@@ -36,9 +36,7 @@
 	}
 </script>
 
-{#if (imdbId && (imdbScore || compactImdbVotes)) ||
-	rottenTomatoesRating ||
-	(streaming && streaming.providers.length > 0)}
+{#if (imdbId && (imdbScore || compactImdbVotes)) || rottenTomatoesRating || (streaming && streaming.providers.length > 0)}
 	<div class="flex flex-col items-start gap-2">
 		{#if (imdbId && (imdbScore || compactImdbVotes)) || rottenTomatoesRating}
 			<div class="flex flex-wrap items-center gap-x-4 gap-y-2">
@@ -47,7 +45,7 @@
 						href={`https://www.imdb.com/title/${imdbId}/`}
 						target="_blank"
 						rel="noopener noreferrer"
-						class="text-base-200 inline-flex items-center gap-1.5 text-xs transition-colors hover:text-white"
+						class="inline-flex items-center gap-1.5 text-xs text-base-200 transition-colors hover:text-white"
 						aria-label={`View on IMDb${imdbScore ? `. Rating: ${imdbScore} out of 10` : ''}${imdbVotes ? `. ${imdbVotes} votes` : ''}`}
 					>
 						<span
@@ -59,14 +57,14 @@
 							<span class="font-medium tabular-nums">{imdbScore}</span>
 						{/if}
 						{#if compactImdbVotes}
-							<span class="text-base-400 text-[0.65rem] tabular-nums">({compactImdbVotes})</span>
+							<span class="text-[0.65rem] text-base-400 tabular-nums">({compactImdbVotes})</span>
 						{/if}
 					</a>
 				{/if}
 
 				{#if rottenTomatoesRating}
 					<div
-						class="text-base-200 inline-flex items-center gap-1 text-xs"
+						class="inline-flex items-center gap-1 text-xs text-base-200"
 						aria-label={`Rotten Tomatoes rating: ${rottenTomatoesRating.value}`}
 					>
 						<svg
@@ -97,7 +95,7 @@
 				class="flex flex-wrap items-center gap-1.5"
 				title={`Streaming providers in ${streaming.region_name}`}
 			>
-				<span class="text-base-300 mr-0.5 text-xs">stream on</span>
+				<span class="mr-0.5 text-xs text-base-300">stream on</span>
 				{#each streaming.providers as provider (provider.id)}
 					{#if streaming.link}
 						<a

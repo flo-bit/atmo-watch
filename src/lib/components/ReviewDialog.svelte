@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
 	import { Dialog } from 'bits-ui';
+	import { untrack } from 'svelte';
 	import { X } from '@lucide/svelte';
 	import { posterUrl } from '$lib/images';
 	import { reviewDialog } from '$lib/review.svelte';
@@ -28,10 +29,13 @@
 		reviewError = '';
 
 		let cancelled = false;
-		void loadReviewDraft({
-			creativeWorkType: item.creativeWorkType,
-			tmdbId: item.tmdbId
-		})
+		const request = untrack(() =>
+			loadReviewDraft({
+				creativeWorkType: item.creativeWorkType,
+				tmdbId: item.tmdbId
+			})
+		);
+		void request
 			.then((draft) => {
 				if (cancelled || !draft) return;
 				rating = draft.rating;
