@@ -1,5 +1,6 @@
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
+import { getMediaReviews } from '$lib/reviews.server';
 import { getMediaPage, TMDBError } from '$lib/tmdb.server';
 import { isMediaKind, parseTmdbId } from '$lib/utils';
 
@@ -40,7 +41,15 @@ export const load: PageServerLoad = async ({ params, request, url }) => {
 	}
 
 	try {
-		return await getMediaPage(id, kind, getStreamingRegion(url, request));
+		const [mediaPage, reviews] = await Promise.all([
+			getMediaPage(id, kind, getStreamingRegion(url, request)),
+			getMediaReviews(id, kind).catch((cause) => {
+				console.error('Could not load reviews from Contrail', cause);
+				return [];
+			})
+		]);
+
+		return { ...mediaPage, reviews };
 	} catch (cause) {
 		if (cause instanceof TMDBError && cause.http_status_code === 404) {
 			error(404, 'Not found');

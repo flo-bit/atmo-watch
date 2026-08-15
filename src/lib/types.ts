@@ -12,6 +12,17 @@ export type Item = {
 	order?: number;
 };
 
+export type Review = {
+	uri: string;
+	author: {
+		did: string;
+		handle: string;
+	};
+	item: Pick<Item, 'id' | 'media_type' | 'title' | 'poster_path'>;
+	rating: number;
+	text: string;
+};
+
 export type ExternalRating = {
 	source: string;
 	value: string;

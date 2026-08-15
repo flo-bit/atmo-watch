@@ -1,7 +1,7 @@
 <script lang="ts">
 	import Avatar from '$lib/components/Avatar.svelte';
 	import Container from '$lib/components/Container.svelte';
-	import ItemsGrid from '$lib/components/ItemsGrid.svelte';
+	import Review from '$lib/components/Review.svelte';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -28,8 +28,12 @@
 		<section class="pt-8" aria-labelledby="reviews-heading">
 			<h2 id="reviews-heading" class="text-lg font-semibold text-white">reviews</h2>
 
-			{#if data.items.length > 0}
-				<ItemsGrid items={data.items} />
+			{#if data.reviews.length > 0}
+				<div class="mt-6 flex max-w-2xl flex-col gap-4">
+					{#each data.reviews as review (review.uri)}
+						<Review {review} />
+					{/each}
+				</div>
 			{:else}
 				<p class="mt-4 text-sm text-base-400">No movie or TV reviews yet.</p>
 			{/if}

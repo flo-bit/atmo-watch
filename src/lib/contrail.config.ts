@@ -4,7 +4,11 @@ export const config: ContrailConfig = {
 	namespace: 'watch.atmo',
 	collections: {
 		review: {
-			collection: 'social.popfeed.feed.review'
+			collection: 'social.popfeed.feed.review',
+			queryable: {
+				creativeWorkType: {},
+				'identifiers.tmdbId': {}
+			}
 		},
 		like: {
 			collection: 'social.popfeed.feed.like'

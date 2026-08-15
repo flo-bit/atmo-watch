@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import type { Pathname } from '$app/types';
 	import { oauthLogin } from '$lib/atproto/oauth.remote';
@@ -8,10 +9,10 @@
 	let { did, onLoginOpen }: { did: string | null; onLoginOpen?: () => void } = $props();
 	let loginOpen = $state(false);
 	let profileHref: Pathname | undefined = $derived(
-		did ? (`/profile/${encodeURIComponent(did)}` as Pathname) : undefined
+		did ? (resolve('/profile/[actor]', { actor: did }) as Pathname) : undefined
 	);
 	let active = $derived(
-		did !== null && page.route.id === '/(app)/profile/[actor]' && page.params.actor === did
+		did !== null && page.route.id === '/profile/[actor]' && page.params.actor === did
 	);
 
 	$effect(() => {
@@ -33,8 +34,8 @@
 
 <MenuItem
 	href={profileHref}
-	label="Account"
-	tooltip={did ? 'Account' : 'Log in'}
+	label={did ? 'Profile' : 'Log in'}
+	tooltip={did ? 'Profile' : 'Log in'}
 	{active}
 	onclick={openLogin}
 	class="md:mt-auto"

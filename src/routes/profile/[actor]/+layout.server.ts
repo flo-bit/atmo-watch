@@ -1,12 +1,8 @@
 import { contrail } from '$lib/contrail';
 import { isActorIdentifier } from '@atcute/lexicons/syntax';
 import { error } from '@sveltejs/kit';
-import type { Item, MediaKind, TmdbRef } from '$lib/types';
+import { toReview } from '$lib/reviews.server';
 import type { LayoutServerLoad } from './$types';
-
-function getTmdbRef(id: number, mediaType: MediaKind): TmdbRef {
-	return `tmdb:${mediaType === 'movie' ? 'm' : 's'}-${id}`;
-}
 
 function getBlobCid(value: unknown) {
 	if (!value || typeof value !== 'object') return undefined;
@@ -16,54 +12,53 @@ function getBlobCid(value: unknown) {
 	return typeof blob.cid === 'string' ? blob.cid : undefined;
 }
 
+function parseActor(value: string) {
+	if (isActorIdentifier(value)) return value;
+
+	try {
+		const decoded = decodeURIComponent(value);
+		return isActorIdentifier(decoded) ? decoded : undefined;
+	} catch {
+		return undefined;
+	}
+}
+
 export const load: LayoutServerLoad = async ({ params }) => {
-	const actor = params.actor;
-	if (!isActorIdentifier(actor)) error(404, 'Profile not found');
+	const actor = parseActor(params.actor);
+	if (!actor) error(404, 'Profile not found');
 	const [reviews, profileResponse] = await Promise.all([
 		contrail.get('watch.atmo.review.listRecords', {
-			params: { actor }
+			params: { actor, profiles: true }
 		}),
 		contrail.get('watch.atmo.getProfile', {
 			params: { actor }
 		})
 	]);
 
-	if (!reviews.ok) error(502, 'Could not load reviews');
-	if (!profileResponse.ok)
-		error(profileResponse.status === 404 ? 404 : 502, 'Could not load profile');
-
-	const items: Item[] = [];
-	for (const review of reviews.data.records) {
-		const value = review.value;
-		if (value.creativeWorkType !== 'tv_show' && value.creativeWorkType !== 'movie') continue;
-		if (!value.identifiers.tmdbId || !value.posterUrl || !value.title) continue;
-
-		const id = Number(value.identifiers.tmdbId);
-		if (!Number.isSafeInteger(id) || id <= 0) continue;
-
-		const mediaType: MediaKind = value.creativeWorkType === 'tv_show' ? 'tv' : 'movie';
-		items.push({
-			id,
-			ref: getTmdbRef(id, mediaType),
-			media_type: mediaType,
-			title: value.title,
-			poster_path: value.posterUrl,
-			backdrop_path: value.backdropUrl ?? null,
-			overview: value.text ?? ''
-		});
+	if (!reviews.ok) {
+		if (reviews.status === 400 || reviews.status === 404) error(404, 'Profile not found');
+		error(502, 'Could not load reviews');
 	}
 
+	const profiles = profileResponse.ok
+		? profileResponse.data.profiles
+		: (reviews.data.profiles ?? []);
 	const profileEntry =
-		profileResponse.data.profiles.find((entry) => entry.collection === 'app.bsky.actor.profile') ??
-		profileResponse.data.profiles[0];
+		profiles.find((entry) => entry.collection === 'app.bsky.actor.profile') ?? profiles[0];
 	const avatarCid = getBlobCid(profileEntry?.value?.avatar);
 	const did = profileEntry?.did ?? actor;
+	const handle = profileEntry?.handle ?? actor.replace(/^@/, '');
+
+	const reviewEntries = reviews.data.records.flatMap((record) => {
+		const review = toReview(record, handle);
+		return review ? [review] : [];
+	});
 
 	return {
-		items,
+		reviews: reviewEntries,
 		profile: {
 			did,
-			handle: profileEntry?.handle ?? actor.replace(/^@/, ''),
+			handle,
 			avatarUrl: avatarCid
 				? `https://cdn.bsky.app/img/avatar/plain/${did}/${avatarCid}@jpeg`
 				: undefined

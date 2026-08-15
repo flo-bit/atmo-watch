@@ -1,25 +1,32 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import Avatar from './Avatar.svelte';
 	import Container from './Container.svelte';
 	import ExternalRatings from './ExternalRatings.svelte';
 	import ItemsGrid from './ItemsGrid.svelte';
+	import Review from './Review.svelte';
 	import TabSelect from './TabSelect.svelte';
 	import TrailerDialog from './TrailerDialog.svelte';
 	import { backdropUrl, posterUrl, profileUrl } from '$lib/images';
 	import { reviewDialog } from '$lib/review.svelte';
 	import { slugify } from '$lib/utils';
 	import type { getMediaPage } from '$lib/tmdb.server';
+	import type { Review as ReviewData } from '$lib/types';
 
-	let { data }: { data: Awaited<ReturnType<typeof getMediaPage>> } = $props();
+	type DetailSection = 'reviews' | 'similar' | 'cast';
+	type ItemPageData = Awaited<ReturnType<typeof getMediaPage>> & { reviews: ReviewData[] };
+
+	let { data }: { data: ItemPageData } = $props();
 	let canonicalUrl = $derived(`${page.url.origin}${page.url.pathname}`);
 	let ogImageUrl = $derived(`${canonicalUrl.replace(/\/$/, '')}/og.png`);
-	let selectedSection = $state<'similar' | 'cast'>('similar');
+	let selectedSection = $state<DetailSection>('similar');
 	let detailTabs = $derived(
 		[
+			data.reviews.length > 0 ? { value: 'reviews' as const, label: 'reviews' } : null,
 			data.recommendations.length > 0 ? { value: 'similar' as const, label: 'similar' } : null,
 			data.cast.length > 0 ? { value: 'cast' as const, label: 'cast' } : null
-		].filter((option): option is { value: 'similar' | 'cast'; label: string } => option !== null)
+		].filter((option): option is { value: DetailSection; label: string } => option !== null)
 	);
 
 	$effect(() => {
@@ -117,13 +124,21 @@
 			<h2 class="sr-only">More about {data.item.title}</h2>
 			<TabSelect bind:value={selectedSection} options={detailTabs} label="Choose detail section" />
 
-			{#if selectedSection === 'similar' && data.recommendations.length > 0}
+			{#if selectedSection === 'reviews' && data.reviews.length > 0}
+				<div class="mt-4 flex max-w-2xl flex-col gap-4">
+					{#each data.reviews as review (review.uri)}
+						<Review {review} showItem={false} />
+					{/each}
+				</div>
+			{:else if selectedSection === 'similar' && data.recommendations.length > 0}
 				<ItemsGrid items={data.recommendations} class="mt-4" />
 			{:else if selectedSection === 'cast' && data.cast.length > 0}
 				<div class="mt-4 grid grid-cols-3 gap-x-4 gap-y-6 sm:grid-cols-4 lg:grid-cols-5">
 					{#each data.cast as castMember (castMember.id)}
 						<a
-							href={`/cast/${castMember.id}-${slugify(castMember.name)}`}
+							href={resolve('/cast/[id]', {
+								id: `${castMember.id}-${slugify(castMember.name)}`
+							})}
 							class="flex min-w-0 flex-col items-center gap-1.5 transition-opacity hover:opacity-75"
 						>
 							<Avatar
@@ -132,7 +147,7 @@
 								class="aspect-square w-full"
 							/>
 							<span class="line-clamp-2 text-center text-xs font-medium">{castMember.name}</span>
-							<span class="text-base-400 line-clamp-2 text-center text-xs"
+							<span class="line-clamp-2 text-center text-xs text-base-400"
 								>{castMember.character}</span
 							>
 						</a>
