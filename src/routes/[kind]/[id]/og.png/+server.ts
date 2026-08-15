@@ -2,7 +2,8 @@ import { ImageResponse } from '@ethercorps/sveltekit-og';
 import { error, type RequestHandler } from '@sveltejs/kit';
 import { backdropUrl, posterUrl } from '$lib/images';
 import { getDetails, TMDBError } from '$lib/tmdb.server';
-import { isMediaKind, parseTmdbId } from '$lib/utils';
+import type { MediaDetails } from '$lib/types';
+import { parseMediaRouteKind, parseTmdbId } from '$lib/utils';
 
 function escapeHtml(value: string) {
 	return value
@@ -13,13 +14,9 @@ function escapeHtml(value: string) {
 		.replaceAll("'", '&#039;');
 }
 
-function template(data: {
-	backdrop_path: string | null;
-	poster_path: string | null;
-	title: string;
-}) {
-	const backdrop = backdropUrl(data.backdrop_path, 'w780');
-	const poster = posterUrl(data.poster_path, 'w500');
+function template(data: Pick<MediaDetails, 'backdrop' | 'poster' | 'title'>) {
+	const backdrop = backdropUrl(data.backdrop, 'w780');
+	const poster = posterUrl(data.poster, 'w500');
 
 	return `
 <div tw="bg-zinc-950 flex flex-col w-full h-full items-center justify-center">
@@ -46,15 +43,15 @@ function template(data: {
 }
 
 export const GET: RequestHandler = async ({ params }) => {
-	const id = parseTmdbId(params.id ?? '');
-	const kind = params.kind;
+	const tmdbId = parseTmdbId(params.id ?? '');
+	const creativeWorkType = parseMediaRouteKind(params.kind);
 
-	if (!id || !isMediaKind(kind)) {
+	if (!tmdbId || !creativeWorkType) {
 		error(404, 'Not found');
 	}
 
 	try {
-		const item = await getDetails(id, kind);
+		const item = await getDetails(tmdbId, creativeWorkType);
 
 		return new ImageResponse(template(item), {
 			width: 1200,

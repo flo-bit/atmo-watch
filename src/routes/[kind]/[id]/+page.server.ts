@@ -2,7 +2,7 @@ import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { getMediaReviews } from '$lib/reviews.server';
 import { getMediaPage, TMDBError } from '$lib/tmdb.server';
-import { isMediaKind, parseTmdbId } from '$lib/utils';
+import { parseMediaRouteKind, parseTmdbId } from '$lib/utils';
 
 function normalizeRegion(value: string | null | undefined) {
 	const region = value?.trim().toUpperCase();
@@ -33,17 +33,17 @@ function getStreamingRegion(url: URL, request: Request) {
 }
 
 export const load: PageServerLoad = async ({ params, request, url }) => {
-	const id = parseTmdbId(params.id);
-	const kind = params.kind;
+	const tmdbId = parseTmdbId(params.id);
+	const creativeWorkType = parseMediaRouteKind(params.kind);
 
-	if (!id || !isMediaKind(kind)) {
+	if (!tmdbId || !creativeWorkType) {
 		error(404, 'Not found');
 	}
 
 	try {
 		const [mediaPage, reviews] = await Promise.all([
-			getMediaPage(id, kind, getStreamingRegion(url, request)),
-			getMediaReviews(id, kind).catch((cause) => {
+			getMediaPage(tmdbId, creativeWorkType, getStreamingRegion(url, request)),
+			getMediaReviews(tmdbId, creativeWorkType).catch((cause) => {
 				console.error('Could not load reviews from Contrail', cause);
 				return [];
 			})

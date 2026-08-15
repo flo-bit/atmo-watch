@@ -1,23 +1,38 @@
+import { getAtprotoCdnImageUrl } from '$lib/atproto/images';
 import { contrail } from '$lib/contrail';
 import type * as ReviewListRecords from '$lib/contrail/types/types/watch/atmo/review/listRecords';
-import type { MediaKind, Review } from '$lib/types';
+import type { MediaImage, ReviewCardModel, SupportedCreativeWorkType } from '$lib/types';
 
-function getMediaKind(creativeWorkType: string): MediaKind | undefined {
-	if (creativeWorkType === 'movie') return 'movie';
-	if (creativeWorkType === 'tv_show') return 'tv';
+function getCreativeWorkType(value: string): SupportedCreativeWorkType | undefined {
+	if (value === 'movie' || value === 'tv_show') return value;
 	return undefined;
+}
+
+function getPoster(record: ReviewListRecords.Record): MediaImage | null {
+	if (record.value.poster) {
+		return {
+			source: 'remote',
+			url: getAtprotoCdnImageUrl({
+				did: record.did,
+				blob: record.value.poster,
+				preset: 'feed_thumbnail'
+			})
+		};
+	}
+
+	return record.value.posterUrl ? { source: 'remote', url: record.value.posterUrl } : null;
 }
 
 export function toReview(
 	record: ReviewListRecords.Record,
 	handle: string = record.did
-): Review | undefined {
-	const mediaType = getMediaKind(record.value.creativeWorkType);
-	const tmdbId = record.value.identifiers.tmdbId;
-	if (!mediaType || !tmdbId || !record.value.title) return undefined;
+): ReviewCardModel | undefined {
+	const creativeWorkType = getCreativeWorkType(record.value.creativeWorkType);
+	const rawTmdbId = record.value.identifiers.tmdbId;
+	if (!creativeWorkType || !rawTmdbId || !record.value.title) return undefined;
 
-	const id = Number(tmdbId);
-	if (!Number.isSafeInteger(id) || id <= 0) return undefined;
+	const tmdbId = Number(rawTmdbId);
+	if (!Number.isSafeInteger(tmdbId) || tmdbId <= 0) return undefined;
 
 	return {
 		uri: record.uri,
@@ -25,22 +40,24 @@ export function toReview(
 			did: record.did,
 			handle
 		},
-		item: {
-			id,
-			media_type: mediaType,
+		media: {
+			creativeWorkType,
+			tmdbId,
 			title: record.value.title,
-			poster_path: record.value.posterUrl ?? null
+			poster: getPoster(record)
 		},
 		rating: record.value.rating,
 		text: record.value.text ?? ''
 	};
 }
 
-export async function getMediaReviews(id: number, kind: MediaKind): Promise<Review[]> {
-	const creativeWorkType = kind === 'movie' ? 'movie' : 'tv_show';
+export async function getMediaReviews(
+	tmdbId: number,
+	creativeWorkType: SupportedCreativeWorkType
+): Promise<ReviewCardModel[]> {
 	const params = {
 		creativeWorkType,
-		identifiersTmdbId: String(id),
+		identifiersTmdbId: String(tmdbId),
 		limit: 200,
 		profiles: true
 	};
@@ -56,6 +73,8 @@ export async function getMediaReviews(id: number, kind: MediaKind): Promise<Revi
 
 	return response.data.records.flatMap((record) => {
 		const review = toReview(record, handles.get(record.did));
-		return review?.item.id === id && review.item.media_type === kind ? [review] : [];
+		return review?.media.tmdbId === tmdbId && review.media.creativeWorkType === creativeWorkType
+			? [review]
+			: [];
 	});
 }

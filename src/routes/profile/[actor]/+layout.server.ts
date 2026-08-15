@@ -1,16 +1,9 @@
+import { getAtprotoCdnImageUrl } from '$lib/atproto/images';
 import { contrail } from '$lib/contrail';
 import { isActorIdentifier } from '@atcute/lexicons/syntax';
 import { error } from '@sveltejs/kit';
 import { toReview } from '$lib/reviews.server';
 import type { LayoutServerLoad } from './$types';
-
-function getBlobCid(value: unknown) {
-	if (!value || typeof value !== 'object') return undefined;
-
-	const blob = value as { ref?: { $link?: unknown }; cid?: unknown };
-	if (typeof blob.ref?.$link === 'string') return blob.ref.$link;
-	return typeof blob.cid === 'string' ? blob.cid : undefined;
-}
 
 function parseActor(value: string) {
 	if (isActorIdentifier(value)) return value;
@@ -45,7 +38,6 @@ export const load: LayoutServerLoad = async ({ params }) => {
 		: (reviews.data.profiles ?? []);
 	const profileEntry =
 		profiles.find((entry) => entry.collection === 'app.bsky.actor.profile') ?? profiles[0];
-	const avatarCid = getBlobCid(profileEntry?.value?.avatar);
 	const did = profileEntry?.did ?? actor;
 	const handle = profileEntry?.handle ?? actor.replace(/^@/, '');
 
@@ -59,8 +51,8 @@ export const load: LayoutServerLoad = async ({ params }) => {
 		profile: {
 			did,
 			handle,
-			avatarUrl: avatarCid
-				? `https://cdn.bsky.app/img/avatar/plain/${did}/${avatarCid}@jpeg`
+			avatarUrl: profileEntry?.value?.avatar
+				? getAtprotoCdnImageUrl({ did, blob: profileEntry.value.avatar, preset: 'avatar' })
 				: undefined
 		}
 	};

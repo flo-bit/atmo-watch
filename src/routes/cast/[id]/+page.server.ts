@@ -1,7 +1,7 @@
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { getPersonPage, TMDBError } from '$lib/tmdb.server';
-import { parseTmdbId } from '$lib/utils';
+import { mediaKey, parseTmdbId } from '$lib/utils';
 
 export const load: PageServerLoad = async ({ params }) => {
 	const id = parseTmdbId(params.id);
@@ -12,15 +12,16 @@ export const load: PageServerLoad = async ({ params }) => {
 
 	try {
 		const { combinedCredits: allCredits, personDetails } = await getPersonPage(id);
-		const seen = new Set<number>();
+		const seen = new Set<string>();
 		const combinedCredits = allCredits
 			.filter((item) => {
-				if (!item.poster_path || seen.has(item.id)) return false;
+				const key = mediaKey(item);
+				if (!item.poster || seen.has(key)) return false;
 
-				seen.add(item.id);
+				seen.add(key);
 				return true;
 			})
-			.sort((a, b) => (b.order ?? 0) - (a.order ?? 0));
+			.sort((a, b) => b.order - a.order);
 
 		return { combinedCredits, personDetails };
 	} catch (cause) {

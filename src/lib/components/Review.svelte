@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { posterUrl } from '$lib/images';
-	import type { Review as ReviewData } from '$lib/types';
-	import { cn, slugify } from '$lib/utils';
+	import type { ReviewCardModel } from '$lib/types';
+	import { cn, slugify, toMediaRouteKind } from '$lib/utils';
 	import Rating from './Rating.svelte';
 
 	let {
@@ -10,12 +10,18 @@
 		showItem = true,
 		class: className
 	}: {
-		review: ReviewData;
+		review: ReviewCardModel;
 		showItem?: boolean;
 		class?: string;
 	} = $props();
 
-	let imageUrl = $derived(posterUrl(review.item.poster_path, 'w342'));
+	let imageUrl = $derived(posterUrl(review.media.poster, 'w342'));
+	let itemUrl = $derived(
+		resolve('/[kind]/[id]', {
+			kind: toMediaRouteKind(review.media.creativeWorkType),
+			id: `${review.media.tmdbId}-${slugify(review.media.title)}`
+		})
+	);
 	let handle = $derived(review.author.handle.replace(/^@/, ''));
 	let text = $derived(review.text.trim());
 </script>
@@ -23,17 +29,14 @@
 <article class={cn('flex gap-3 p-3 sm:gap-4 sm:p-4', className)}>
 	{#if showItem}
 		<a
-			href={resolve('/[kind]/[id]', {
-				kind: review.item.media_type,
-				id: `${review.item.id}-${slugify(review.item.title)}`
-			})}
-			aria-label={review.item.title}
-			class="block aspect-2/3 w-20 shrink-0 overflow-hidden rounded-md bg-base-900 transition-opacity hover:opacity-75 sm:w-24"
+			href={itemUrl}
+			aria-label={review.media.title}
+			class="block aspect-2/3 w-16 shrink-0 overflow-hidden rounded-md bg-base-900 transition-opacity hover:opacity-75 sm:w-20"
 		>
 			{#if imageUrl}
 				<img
 					src={imageUrl}
-					alt={`Poster for ${review.item.title}`}
+					alt={`Poster for ${review.media.title}`}
 					class="size-full object-cover"
 					loading="lazy"
 				/>
@@ -61,18 +64,20 @@
 	<div class="min-w-0 flex-1 py-0.5">
 		<header class="flex items-start justify-between gap-3">
 			<div class="min-w-0">
-				<a
-					href={resolve('/[kind]/[id]', {
-						kind: review.item.media_type,
-						id: `${review.item.id}-${slugify(review.item.title)}`
-					})}
-					class="line-clamp-2 font-semibold text-white transition-colors hover:text-accent-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-400"
-				>
-					{review.item.title}
-				</a>
+				{#if showItem}
+					<a
+						href={itemUrl}
+						class="line-clamp-2 font-semibold text-white transition-colors hover:text-accent-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-400"
+					>
+						{review.media.title}
+					</a>
+				{/if}
 				<a
 					href={resolve('/profile/[actor]', { actor: review.author.did })}
-					class="mt-1 block truncate text-xs text-base-400 transition-colors hover:text-accent-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-400"
+					class={cn(
+						'block truncate transition-colors hover:text-accent-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-400',
+						showItem ? 'mt-1 text-xs text-base-400' : 'text-sm font-semibold text-white'
+					)}
 				>
 					@{handle}
 				</a>

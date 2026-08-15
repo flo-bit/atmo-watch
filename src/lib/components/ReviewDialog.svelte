@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { Dialog } from 'bits-ui';
 	import { posterUrl } from '$lib/images';
-	import { reviewDialog, reviewLibrary } from '$lib/review.svelte';
+	import { getReviewStorageKey, reviewDialog, reviewLibrary } from '$lib/review.svelte';
+	import { mediaKey } from '$lib/utils';
 	import RatingInput from './RatingInput.svelte';
 
 	type SavedReview = {
@@ -15,7 +16,7 @@
 	let review = $state('');
 	let watched = $state(true);
 	let saved = $state(false);
-	let storageKey = $derived(reviewDialog.item ? `atmo-review:${reviewDialog.item.ref}` : '');
+	let storageKey = $derived(reviewDialog.item ? getReviewStorageKey(reviewDialog.item) : '');
 
 	$effect(() => {
 		const key = storageKey;
@@ -59,7 +60,7 @@
 			storageKey,
 			JSON.stringify({ rating, ratingScale: 10, review: review.trim(), watched })
 		);
-		if (reviewDialog.item) reviewLibrary.setWatched(reviewDialog.item.ref, watched);
+		if (reviewDialog.item) reviewLibrary.setWatched(mediaKey(reviewDialog.item), watched);
 		saved = true;
 		window.setTimeout(() => reviewDialog.hide(), 350);
 	}
@@ -71,7 +72,7 @@
 	<Dialog.Portal>
 		<Dialog.Overlay class="fixed inset-0 z-100 bg-black/75 backdrop-blur-md" />
 		<Dialog.Content
-			class="bg-base-950 fixed top-1/2 left-1/2 z-101 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-xl border border-white/10 p-5 text-white shadow-2xl outline-none"
+			class="fixed top-1/2 left-1/2 z-101 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-xl border border-white/10 bg-base-950 p-5 text-white shadow-2xl outline-none"
 		>
 			<Dialog.Title class="text-sm font-semibold">rate & review</Dialog.Title>
 			<Dialog.Description class="sr-only">
@@ -79,7 +80,7 @@
 			</Dialog.Description>
 
 			<Dialog.Close
-				class="text-base-400 absolute top-3 right-3 inline-flex size-7 items-center justify-center rounded-full transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70"
+				class="absolute top-3 right-3 inline-flex size-7 items-center justify-center rounded-full text-base-400 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70"
 			>
 				<svg
 					class="size-4"
@@ -96,10 +97,10 @@
 
 			{#if reviewDialog.item}
 				<div class="mt-5 flex items-center gap-4">
-					<div class="bg-base-900 h-24 w-16 shrink-0 overflow-hidden rounded-md">
-						{#if reviewDialog.item.poster_path}
+					<div class="h-24 w-16 shrink-0 overflow-hidden rounded-md bg-base-900">
+						{#if reviewDialog.item.poster}
 							<img
-								src={posterUrl(reviewDialog.item.poster_path, 'w185')}
+								src={posterUrl(reviewDialog.item.poster, 'w185')}
 								alt="Poster for {reviewDialog.item.title}"
 								class="size-full object-cover"
 							/>
@@ -113,12 +114,12 @@
 					</div>
 				</div>
 
-				<label class="text-base-300 mt-4 flex w-fit cursor-pointer items-center gap-2 text-xs">
+				<label class="mt-4 flex w-fit cursor-pointer items-center gap-2 text-xs text-base-300">
 					<input
 						type="checkbox"
 						bind:checked={watched}
 						onchange={() => (saved = false)}
-						class="border-base-700 bg-base-900 text-accent-500 focus:ring-accent-500/40 size-4 rounded focus:ring-2 focus:ring-offset-0"
+						class="size-4 rounded border-base-700 bg-base-900 text-accent-500 focus:ring-2 focus:ring-accent-500/40 focus:ring-offset-0"
 					/>
 					mark as watched
 				</label>
@@ -131,14 +132,14 @@
 					rows="4"
 					maxlength="1000"
 					placeholder="write a review (optional)"
-					class="bg-base-900 placeholder:text-base-500 mt-4 block w-full resize-none rounded-lg border border-white/10 px-3 py-2 text-sm text-white outline-none focus:border-white/25 focus:ring-0"
+					class="mt-4 block w-full resize-none rounded-lg border border-white/10 bg-base-900 px-3 py-2 text-sm text-white outline-none placeholder:text-base-500 focus:border-white/25 focus:ring-0"
 				></textarea>
 
 				<button
 					type="button"
 					onclick={saveReview}
 					disabled={rating === 0}
-					class="bg-accent-950/80 text-accent-300 border-accent-900 hover:bg-accent-950 mt-4 inline-flex h-9 w-full items-center justify-center rounded-lg border text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-40"
+					class="mt-4 inline-flex h-9 w-full items-center justify-center rounded-lg border border-accent-900 bg-accent-950/80 text-sm font-semibold text-accent-300 transition-colors hover:bg-accent-950 disabled:cursor-not-allowed disabled:opacity-40"
 				>
 					{saved ? 'saved' : 'save review'}
 				</button>

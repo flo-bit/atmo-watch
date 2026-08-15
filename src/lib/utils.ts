@@ -1,11 +1,21 @@
-import type { MediaKind } from './types';
+import type { MediaIdentity, SupportedCreativeWorkType } from './types';
 
 export function cn(...classes: Array<string | false | null | undefined>) {
 	return classes.filter(Boolean).join(' ');
 }
 
-export function isMediaKind(value: unknown): value is MediaKind {
-	return value === 'movie' || value === 'tv';
+export function parseMediaRouteKind(value: unknown): SupportedCreativeWorkType | undefined {
+	if (value === 'movie') return 'movie';
+	if (value === 'tv') return 'tv_show';
+	return undefined;
+}
+
+export function toMediaRouteKind(creativeWorkType: SupportedCreativeWorkType): 'movie' | 'tv' {
+	return creativeWorkType === 'tv_show' ? 'tv' : 'movie';
+}
+
+export function mediaKey(media: MediaIdentity) {
+	return `${media.creativeWorkType}:${media.tmdbId}`;
 }
 
 export function parseTmdbId(value: string): number | null {

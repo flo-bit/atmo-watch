@@ -17,11 +17,13 @@ import {
 import type {
 	CastMember,
 	ExternalRating,
-	Item,
-	MediaKind,
+	MediaCredit,
+	MediaDetails,
+	MediaImage,
+	MediaSummary,
 	PersonDetails,
 	StreamingAvailability,
-	TmdbRef,
+	SupportedCreativeWorkType,
 	WatchProvider
 } from './types';
 
@@ -44,12 +46,10 @@ type OmdbData = {
 	imdbVotes: string | null;
 };
 
-type MediaSource =
-	| MovieDetails
-	| MovieResultItem
-	| TVSeriesDetails
-	| TVSeriesResultItem
-	| PersonCombinedCastCredit;
+type MediaSummarySource =
+	MovieDetails | MovieResultItem | TVSeriesDetails | TVSeriesResultItem | PersonCombinedCastCredit;
+type MediaDetailsSource = MovieDetails | TVSeriesDetails;
+type TmdbMediaType = 'movie' | 'tv';
 
 let client: TMDB | undefined;
 let clientToken: string | undefined;
@@ -74,20 +74,41 @@ function getClient() {
 	return client;
 }
 
-function getRef(id: number, kind: MediaKind): TmdbRef {
-	return `tmdb:${kind === 'movie' ? 'm' : 's'}-${id}`;
+function fromTmdbMediaType(mediaType: TmdbMediaType): SupportedCreativeWorkType {
+	return mediaType === 'tv' ? 'tv_show' : 'movie';
 }
 
-function toItem(source: MediaSource, kind: MediaKind): Item {
+function toTmdbImage(path: string | null | undefined): MediaImage | null {
+	return path ? { source: 'tmdb', path } : null;
+}
+
+function toMediaSummary(
+	source: MediaSummarySource,
+	creativeWorkType: SupportedCreativeWorkType
+): MediaSummary {
 	return {
-		id: source.id,
-		ref: getRef(source.id, kind),
-		media_type: kind,
+		tmdbId: source.id,
+		creativeWorkType,
 		title: 'title' in source ? source.title : source.name,
-		poster_path: source.poster_path ?? null,
-		backdrop_path: source.backdrop_path ?? null,
-		overview: source.overview ?? '',
-		order: 'order' in source ? source.order : undefined
+		poster: toTmdbImage(source.poster_path)
+	};
+}
+
+function toMediaDetails(
+	source: MediaDetailsSource,
+	creativeWorkType: SupportedCreativeWorkType
+): MediaDetails {
+	return {
+		...toMediaSummary(source, creativeWorkType),
+		backdrop: toTmdbImage(source.backdrop_path),
+		overview: source.overview ?? ''
+	};
+}
+
+function toMediaCredit(source: PersonCombinedCastCredit): MediaCredit {
+	return {
+		...toMediaSummary(source, fromTmdbMediaType(source.media_type)),
+		order: 'order' in source ? source.order : 0
 	};
 }
 
@@ -183,12 +204,16 @@ export async function getRatings(imdbId: string): Promise<OmdbData> {
 	}
 }
 
-export async function getMediaPage(id: number, kind: MediaKind, region = 'US') {
+export async function getMediaPage(
+	tmdbId: number,
+	creativeWorkType: SupportedCreativeWorkType,
+	region = 'US'
+) {
 	const tmdb = getClient();
 
-	if (kind === 'movie') {
+	if (creativeWorkType === 'movie') {
 		const details = await tmdb.movies.details({
-			movie_id: id,
+			movie_id: tmdbId,
 			append_to_response: MEDIA_APPENDS
 		});
 
@@ -197,8 +222,10 @@ export async function getMediaPage(id: number, kind: MediaKind, region = 'US') {
 			: EMPTY_OMDB_DATA;
 
 		return {
-			item: toItem(details, kind),
-			recommendations: details.recommendations.results.map((item) => toItem(item, kind)),
+			item: toMediaDetails(details, creativeWorkType),
+			recommendations: details.recommendations.results.map((item) =>
+				toMediaSummary(item, creativeWorkType)
+			),
 			cast: details.credits.cast.map(toCastMember),
 			imdb_id: details.external_ids.imdb_id ?? null,
 			imdb_votes: omdb.imdbVotes,
@@ -209,7 +236,7 @@ export async function getMediaPage(id: number, kind: MediaKind, region = 'US') {
 	}
 
 	const details = await tmdb.tv_series.details({
-		series_id: id,
+		series_id: tmdbId,
 		append_to_response: MEDIA_APPENDS
 	});
 
@@ -218,8 +245,10 @@ export async function getMediaPage(id: number, kind: MediaKind, region = 'US') {
 		: EMPTY_OMDB_DATA;
 
 	return {
-		item: toItem(details, kind),
-		recommendations: details.recommendations.results.map((item) => toItem(item, kind)),
+		item: toMediaDetails(details, creativeWorkType),
+		recommendations: details.recommendations.results.map((item) =>
+			toMediaSummary(item, creativeWorkType)
+		),
 		cast: details.credits.cast.map(toCastMember),
 		imdb_id: details.external_ids.imdb_id ?? null,
 		imdb_votes: omdb.imdbVotes,
@@ -230,7 +259,10 @@ export async function getMediaPage(id: number, kind: MediaKind, region = 'US') {
 }
 
 export async function getHomePage() {
-	const empty = { currentlyInTheaters: [] as Item[], popular: [] as Item[] };
+	const empty = {
+		currentlyInTheaters: [] as MediaSummary[],
+		popular: [] as MediaSummary[]
+	};
 	let tmdb: TMDB;
 
 	try {
@@ -248,31 +280,31 @@ export async function getHomePage() {
 	const currentlyInTheaters =
 		theatersResult.status === 'fulfilled'
 			? theatersResult.value.results
-					.map((item) => toItem(item, 'movie'))
-					.filter((item) => item.poster_path)
+					.map((item) => toMediaSummary(item, 'movie'))
+					.filter((item) => item.poster)
 					.slice(0, 16)
 			: [];
 	const popularMovies =
 		popularMoviesResult.status === 'fulfilled'
 			? popularMoviesResult.value.results
-					.map((item) => toItem(item, 'movie'))
-					.filter((item) => item.poster_path)
+					.map((item) => toMediaSummary(item, 'movie'))
+					.filter((item) => item.poster)
 			: [];
 	const popularTv =
 		popularTvResult.status === 'fulfilled'
 			? popularTvResult.value.results
-					.map((item) => toItem(item, 'tv'))
-					.filter((item) => item.poster_path)
+					.map((item) => toMediaSummary(item, 'tv_show'))
+					.filter((item) => item.poster)
 			: [];
 	const popular = Array.from({ length: Math.max(popularMovies.length, popularTv.length) })
 		.flatMap((_, index) => [popularMovies[index], popularTv[index]])
-		.filter((item): item is Item => Boolean(item))
+		.filter((item): item is MediaSummary => Boolean(item))
 		.slice(0, 16);
 
 	return { currentlyInTheaters, popular };
 }
 
-export async function searchMedia(query: string): Promise<Item[]> {
+export async function searchMedia(query: string): Promise<MediaSummary[]> {
 	const response = await getClient().search.multi({
 		query,
 		include_adult: false,
@@ -282,20 +314,23 @@ export async function searchMedia(query: string): Promise<Item[]> {
 	return response.results
 		.flatMap((result) => {
 			if (result.media_type !== 'movie' && result.media_type !== 'tv') return [];
-			return [toItem(result, result.media_type)];
+			return [toMediaSummary(result, fromTmdbMediaType(result.media_type))];
 		})
-		.filter((item) => item.poster_path)
+		.filter((item) => item.poster)
 		.slice(0, 12);
 }
 
-export async function getDetails(id: number, kind: MediaKind): Promise<Item> {
+export async function getDetails(
+	tmdbId: number,
+	creativeWorkType: SupportedCreativeWorkType
+): Promise<MediaDetails> {
 	const tmdb = getClient();
 	const details =
-		kind === 'movie'
-			? await tmdb.movies.details({ movie_id: id })
-			: await tmdb.tv_series.details({ series_id: id });
+		creativeWorkType === 'movie'
+			? await tmdb.movies.details({ movie_id: tmdbId })
+			: await tmdb.tv_series.details({ series_id: tmdbId });
 
-	return toItem(details, kind);
+	return toMediaDetails(details, creativeWorkType);
 }
 
 export async function getPersonPage(personId: number) {
@@ -306,7 +341,7 @@ export async function getPersonPage(personId: number) {
 
 	return {
 		personDetails: toPersonDetails(person),
-		combinedCredits: person.combined_credits.cast.map((item) => toItem(item, item.media_type))
+		combinedCredits: person.combined_credits.cast.map(toMediaCredit)
 	};
 }
 

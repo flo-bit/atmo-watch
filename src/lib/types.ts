@@ -1,24 +1,36 @@
-export type MediaKind = 'movie' | 'tv';
-export type TmdbRef = `tmdb:${'m' | 's'}-${number}`;
+export type SupportedCreativeWorkType = 'movie' | 'tv_show';
 
-export type Item = {
-	id: number;
-	ref: TmdbRef;
-	media_type: MediaKind;
-	title: string;
-	poster_path: string | null;
-	backdrop_path: string | null;
-	overview: string;
-	order?: number;
+export type MediaImage = { source: 'tmdb'; path: string } | { source: 'remote'; url: string };
+
+export type MediaIdentity = {
+	creativeWorkType: SupportedCreativeWorkType;
+	tmdbId: number;
 };
 
-export type Review = {
+export type MediaSummary = MediaIdentity & {
+	title: string;
+	poster: MediaImage | null;
+};
+
+export type MediaDetails = MediaSummary & {
+	backdrop: MediaImage | null;
+	overview: string;
+};
+
+export type MediaCredit = MediaSummary & {
+	order: number;
+};
+
+export type ActorSummary = {
+	did: string;
+	handle: string;
+	avatarUrl?: string;
+};
+
+export type ReviewCardModel = {
 	uri: string;
-	author: {
-		did: string;
-		handle: string;
-	};
-	item: Pick<Item, 'id' | 'media_type' | 'title' | 'poster_path'>;
+	author: ActorSummary;
+	media: MediaSummary;
 	rating: number;
 	text: string;
 };

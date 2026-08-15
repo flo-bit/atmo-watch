@@ -1,25 +1,31 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import { posterUrl } from '$lib/images';
-	import type { Item } from '$lib/types';
-	import { slugify } from '$lib/utils';
+	import type { MediaSummary } from '$lib/types';
+	import { slugify, toMediaRouteKind } from '$lib/utils';
 	import Rating from './Rating.svelte';
 
 	let {
 		item,
 		showTitle = true,
-		showRating = false
-	}: { item: Item; showTitle?: boolean; showRating?: boolean } = $props();
-	let randomRating = $derived(((Math.imul(item.id, 2_654_435_761) >>> 0) % 10) + 1);
+		rating
+	}: { item: MediaSummary; showTitle?: boolean; rating?: number } = $props();
+	let itemUrl = $derived(
+		resolve('/[kind]/[id]', {
+			kind: toMediaRouteKind(item.creativeWorkType),
+			id: `${item.tmdbId}-${slugify(item.title)}`
+		})
+	);
 	let watched = $derived(false);
 </script>
 
 <div class="group relative">
 	<div
-		class="border-base-800 bg-base-900/50 pointer-events-none relative z-20 aspect-2/3 h-auto min-h-44 w-full overflow-hidden rounded-md border transition-opacity duration-75 group-hover:opacity-75"
+		class="pointer-events-none relative z-20 aspect-2/3 h-auto min-h-44 w-full overflow-hidden rounded-md border border-base-800 bg-base-900/50 transition-opacity duration-75 group-hover:opacity-75"
 	>
-		{#if item.poster_path}
+		{#if item.poster}
 			<img
-				src={posterUrl(item.poster_path, 'w342')}
+				src={posterUrl(item.poster, 'w342')}
 				alt="Poster for {item.title}"
 				class="size-full object-cover object-center"
 				loading="lazy"
@@ -33,26 +39,22 @@
 			</div>
 		{/if}
 
-		{#if showRating}
+		{#if rating !== undefined}
 			<div class="absolute inset-0 bg-linear-to-b from-transparent via-black/10 to-black/70"></div>
 			<div class="absolute right-0 bottom-2 left-0 flex justify-center">
-				<Rating rating={randomRating} />
+				<Rating {rating} />
 			</div>
 		{/if}
 	</div>
 
 	{#if showTitle}
-		<h3 class="text-base-50 mt-2 text-sm font-medium sm:text-base">
-			<a href="/{item.media_type}/{item.id}-{slugify(item.title)}">
+		<h3 class="mt-2 text-sm font-medium text-base-50 sm:text-base">
+			<a href={itemUrl}>
 				<span aria-hidden="true" class="absolute inset-0"></span>
 				<span class="line-clamp-2">{item.title}</span>
 			</a>
 		</h3>
 	{:else}
-		<a
-			href="/{item.media_type}/{item.id}-{slugify(item.title)}"
-			aria-label={item.title}
-			class="absolute inset-0 z-30"
-		></a>
+		<a href={itemUrl} aria-label={item.title} class="absolute inset-0 z-30"></a>
 	{/if}
 </div>

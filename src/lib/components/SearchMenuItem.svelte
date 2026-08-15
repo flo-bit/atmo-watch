@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import { Dialog } from 'bits-ui';
-	import type { Item } from '$lib/types';
+	import type { MediaSummary } from '$lib/types';
 	import { reviewDialog } from '$lib/review.svelte';
 	import MenuItem from './MenuItem.svelte';
 	import SearchCommand from './SearchCommand.svelte';
@@ -18,7 +18,7 @@
 		open = true;
 	}
 
-	function reviewFromSearch(item: Item) {
+	function reviewFromSearch(item: MediaSummary) {
 		open = false;
 		requestAnimationFrame(() => reviewDialog.show(item));
 	}

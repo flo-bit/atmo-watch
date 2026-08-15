@@ -1,30 +1,34 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { resolve } from '$app/paths';
 	import { Command } from 'bits-ui';
 	import { posterUrl } from '$lib/images';
 	import { reviewDialog } from '$lib/review.svelte';
-	import type { Item } from '$lib/types';
-	import { cn, slugify } from '$lib/utils';
+	import type { MediaSummary } from '$lib/types';
+	import { cn, mediaKey, slugify, toMediaRouteKind } from '$lib/utils';
 
 	let {
 		autofocus = true,
 		class: className,
-		onReview = (item: Item) => reviewDialog.show(item)
+		onReview = (item: MediaSummary) => reviewDialog.show(item)
 	}: {
 		autofocus?: boolean;
 		class?: string;
-		onReview?: (item: Item) => void;
+		onReview?: (item: MediaSummary) => void;
 	} = $props();
 
 	let query = $state('');
-	let results = $state<Item[]>([]);
+	let results = $state<MediaSummary[]>([]);
 	let searching = $state(false);
 	let hasSearched = $state(false);
 	let searchError = $state('');
 	let resultsOpen = $state(false);
 
-	function itemUrl(item: Item) {
-		return `/${item.media_type}/${item.id}-${slugify(item.title)}`;
+	function itemUrl(item: MediaSummary) {
+		return resolve('/[kind]/[id]', {
+			kind: toMediaRouteKind(item.creativeWorkType),
+			id: `${item.tmdbId}-${slugify(item.title)}`
+		});
 	}
 
 	function handleFocusOut(event: FocusEvent) {
@@ -46,7 +50,7 @@
 				throw new Error('Search is unavailable right now');
 			}
 
-			const items = (await response.json()) as Item[];
+			const items = (await response.json()) as MediaSummary[];
 			if (controller.signal.aborted || term !== query.trim()) return;
 
 			results = items;
@@ -91,13 +95,13 @@
 	loop={true}
 	label="Search movies and TV shows"
 	class={cn(
-		'focus-within:border-accent-500/50 relative z-50 rounded-2xl border border-white/10 bg-black/40 shadow-2xl shadow-black/40 backdrop-blur-xl transition-colors',
+		'relative z-50 rounded-2xl border border-white/10 bg-black/40 shadow-2xl shadow-black/40 backdrop-blur-xl transition-colors focus-within:border-accent-500/50',
 		className
 	)}
 >
 	<div class="flex h-16 items-center gap-3 px-4">
 		<svg
-			class="text-base-400 size-5 shrink-0"
+			class="size-5 shrink-0 text-base-400"
 			viewBox="0 0 24 24"
 			fill="none"
 			stroke="currentColor"
@@ -114,12 +118,12 @@
 			autocomplete="off"
 			spellcheck="false"
 			placeholder="Search movies and TV shows…"
-			class="placeholder:text-base-500 h-full min-w-0 flex-1 border-0 bg-transparent p-0 text-lg font-medium text-white shadow-none ring-0 outline-none focus:border-0 focus:ring-0 focus:outline-none"
+			class="h-full min-w-0 flex-1 border-0 bg-transparent p-0 text-lg font-medium text-white shadow-none ring-0 outline-none placeholder:text-base-500 focus:border-0 focus:ring-0 focus:outline-none"
 		/>
 
 		{#if searching}
 			<svg
-				class="text-accent-400 size-5 animate-spin"
+				class="size-5 animate-spin text-accent-400"
 				viewBox="0 0 24 24"
 				fill="none"
 				aria-label="Searching"
@@ -134,13 +138,13 @@
 
 	{#if resultsOpen && query.trim().length >= 2}
 		<Command.List
-			class="bg-base-950/95 absolute top-[calc(100%+0.5rem)] right-0 left-0 z-50 max-h-96 overflow-y-auto rounded-2xl border border-white/10 p-2 shadow-2xl shadow-black/50 backdrop-blur-xl"
+			class="absolute top-[calc(100%+0.5rem)] right-0 left-0 z-50 max-h-96 overflow-y-auto rounded-2xl border border-white/10 bg-base-950/95 p-2 shadow-2xl shadow-black/50 backdrop-blur-xl"
 		>
 			<Command.Viewport>
 				{#if searching}
 					<Command.Loading
 						progress={0}
-						class="text-base-400 flex items-center justify-center px-4 py-8 text-sm"
+						class="flex items-center justify-center px-4 py-8 text-sm text-base-400"
 					>
 						Searching…
 					</Command.Loading>
@@ -149,26 +153,26 @@
 						{searchError}
 					</div>
 				{:else if hasSearched && results.length === 0}
-					<Command.Empty forceMount class="text-base-400 px-4 py-8 text-center text-sm">
+					<Command.Empty forceMount class="px-4 py-8 text-center text-sm text-base-400">
 						No movies or TV shows found.
 					</Command.Empty>
 				{:else if results.length > 0}
 					<Command.Group value="Search results">
 						<Command.GroupHeading class="sr-only">Search results</Command.GroupHeading>
 						<Command.GroupItems class="flex flex-col gap-1">
-							{#each results as item (`${item.media_type}-${item.id}`)}
+							{#each results as item (mediaKey(item))}
 								<Command.Item
 									onSelect={() => void goto(itemUrl(item))}
-									value={`${item.title} ${item.media_type} ${item.id}`}
-									keywords={[item.title, item.media_type]}
+									value={`${item.title} ${item.creativeWorkType} ${item.tmdbId}`}
+									keywords={[item.title, item.creativeWorkType]}
 									class="flex cursor-pointer items-center gap-3 rounded-xl p-2 transition-colors outline-none data-selected:bg-white/10"
 								>
 									<div
-										class="bg-base-900 h-18 w-12 shrink-0 overflow-hidden rounded-md border border-white/10"
+										class="h-18 w-12 shrink-0 overflow-hidden rounded-md border border-white/10 bg-base-900"
 									>
-										{#if item.poster_path}
+										{#if item.poster}
 											<img
-												src={posterUrl(item.poster_path, 'w185')}
+												src={posterUrl(item.poster, 'w185')}
 												alt="Poster for {item.title}"
 												class="size-full object-cover"
 											/>
@@ -185,7 +189,7 @@
 											event.stopPropagation();
 											onReview(item);
 										}}
-										class="bg-accent-500 hover:bg-accent-400 shrink-0 rounded-lg px-3 py-2 text-sm font-semibold text-white transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70"
+										class="shrink-0 rounded-lg bg-accent-500 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-accent-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70"
 									>
 										review
 									</button>

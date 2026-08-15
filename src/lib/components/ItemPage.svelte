@@ -12,18 +12,20 @@
 	import { reviewDialog } from '$lib/review.svelte';
 	import { slugify } from '$lib/utils';
 	import type { getMediaPage } from '$lib/tmdb.server';
-	import type { Review as ReviewData } from '$lib/types';
+	import type { ReviewCardModel } from '$lib/types';
 
 	type DetailSection = 'reviews' | 'similar' | 'cast';
-	type ItemPageData = Awaited<ReturnType<typeof getMediaPage>> & { reviews: ReviewData[] };
+	type ItemPageData = Awaited<ReturnType<typeof getMediaPage>> & {
+		reviews: ReviewCardModel[];
+	};
 
 	let { data }: { data: ItemPageData } = $props();
 	let canonicalUrl = $derived(`${page.url.origin}${page.url.pathname}`);
 	let ogImageUrl = $derived(`${canonicalUrl.replace(/\/$/, '')}/og.png`);
-	let selectedSection = $state<DetailSection>('similar');
+	let selectedSection = $state<DetailSection>('reviews');
 	let detailTabs = $derived(
 		[
-			data.reviews.length > 0 ? { value: 'reviews' as const, label: 'reviews' } : null,
+			{ value: 'reviews' as const, label: 'reviews' },
 			data.recommendations.length > 0 ? { value: 'similar' as const, label: 'similar' } : null,
 			data.cast.length > 0 ? { value: 'cast' as const, label: 'cast' } : null
 		].filter((option): option is { value: DetailSection; label: string } => option !== null)
@@ -54,9 +56,9 @@
 	<meta name="twitter:image" content={ogImageUrl} />
 </svelte:head>
 
-{#if data.item.backdrop_path}
+{#if data.item.backdrop}
 	<img
-		src={backdropUrl(data.item.backdrop_path, 'w780')}
+		src={backdropUrl(data.item.backdrop, 'w780')}
 		alt=""
 		class="fixed h-full w-full object-cover object-center opacity-20"
 	/>
@@ -65,9 +67,9 @@
 
 <Container class="relative z-10 pt-4 pb-8">
 	<div class="flex gap-4 px-4 pt-8">
-		{#if data.item.poster_path}
+		{#if data.item.poster}
 			<img
-				src={posterUrl(data.item.poster_path, 'w500')}
+				src={posterUrl(data.item.poster, 'w500')}
 				alt="Poster for {data.item.title}"
 				class="h-36 w-24 shrink-0 rounded-lg border border-white/10 object-cover sm:h-64 sm:w-44"
 			/>
@@ -124,12 +126,16 @@
 			<h2 class="sr-only">More about {data.item.title}</h2>
 			<TabSelect bind:value={selectedSection} options={detailTabs} label="Choose detail section" />
 
-			{#if selectedSection === 'reviews' && data.reviews.length > 0}
-				<div class="mt-4 flex max-w-2xl flex-col gap-4">
-					{#each data.reviews as review (review.uri)}
-						<Review {review} showItem={false} />
-					{/each}
-				</div>
+			{#if selectedSection === 'reviews'}
+				{#if data.reviews.length > 0}
+					<div class="mt-4 flex max-w-2xl flex-col gap-4">
+						{#each data.reviews as review (review.uri)}
+							<Review {review} showItem={false} />
+						{/each}
+					</div>
+				{:else}
+					<p class="mt-4 text-sm text-base-400">No reviews yet.</p>
+				{/if}
 			{:else if selectedSection === 'similar' && data.recommendations.length > 0}
 				<ItemsGrid items={data.recommendations} class="mt-4" />
 			{:else if selectedSection === 'cast' && data.cast.length > 0}

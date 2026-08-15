@@ -1,10 +1,13 @@
 <script lang="ts">
 	import Avatar from '$lib/components/Avatar.svelte';
 	import Container from '$lib/components/Container.svelte';
+	import ItemCard from '$lib/components/ItemCard.svelte';
 	import Review from '$lib/components/Review.svelte';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
+	let ratings = $derived(data.reviews.filter((review) => !review.text.trim()));
+	let writtenReviews = $derived(data.reviews.filter((review) => review.text.trim()));
 </script>
 
 <svelte:head>
@@ -25,18 +28,33 @@
 			</h1>
 		</header>
 
-		<section class="pt-8" aria-labelledby="reviews-heading">
-			<h2 id="reviews-heading" class="text-lg font-semibold text-white">reviews</h2>
+		{#if ratings.length > 0}
+			<section class="pt-8" aria-labelledby="ratings-heading">
+				<h2 id="ratings-heading" class="text-lg font-semibold text-white">ratings</h2>
+				<div class="mt-6 grid grid-cols-3 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+					{#each ratings as review (review.uri)}
+						<ItemCard item={review.media} showTitle={false} rating={review.rating} />
+					{/each}
+				</div>
+			</section>
+		{/if}
 
-			{#if data.reviews.length > 0}
+		{#if writtenReviews.length > 0}
+			<section class="pt-10" aria-labelledby="reviews-heading">
+				<h2 id="reviews-heading" class="text-lg font-semibold text-white">reviews</h2>
 				<div class="mt-6 flex max-w-2xl flex-col gap-4">
-					{#each data.reviews as review (review.uri)}
+					{#each writtenReviews as review (review.uri)}
 						<Review {review} />
 					{/each}
 				</div>
-			{:else}
+			</section>
+		{/if}
+
+		{#if data.reviews.length === 0}
+			<section class="pt-8" aria-labelledby="reviews-heading">
+				<h2 id="reviews-heading" class="text-lg font-semibold text-white">reviews</h2>
 				<p class="mt-4 text-sm text-base-400">No movie or TV reviews yet.</p>
-			{/if}
-		</section>
+			</section>
+		{/if}
 	</Container>
 </main>
