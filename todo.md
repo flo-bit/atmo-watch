@@ -2,3 +2,5 @@
 - show profile: avatar, handle, reviews, lists
 - create reviews
 - show reviews in movie/show detail page
+- show single review with comments
+- opengraph images 
