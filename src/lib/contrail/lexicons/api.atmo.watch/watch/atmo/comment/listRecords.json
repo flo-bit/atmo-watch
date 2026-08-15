@@ -46,9 +46,38 @@
             "minimum": 1,
             "type": "integer"
           },
+          "order": {
+            "description": "Sort direction",
+            "knownValues": [
+              "asc",
+              "desc"
+            ],
+            "type": "string"
+          },
           "profiles": {
             "description": "Include indexed profile and identity information",
             "type": "boolean"
+          },
+          "rootUri": {
+            "description": "Filter by rootUri",
+            "type": "string"
+          },
+          "sort": {
+            "description": "Field to sort by (default: time_us)",
+            "knownValues": [
+              "rootUri",
+              "subjectType",
+              "subjectUri"
+            ],
+            "type": "string"
+          },
+          "subjectType": {
+            "description": "Filter by subjectType",
+            "type": "string"
+          },
+          "subjectUri": {
+            "description": "Filter by subjectUri",
+            "type": "string"
           }
         },
         "type": "params"
@@ -80,8 +109,11 @@
           "type": "string"
         },
         "value": {
-          "ref": "app.bsky.actor.profile#main",
-          "type": "ref"
+          "refs": [
+            "app.bsky.actor.profile#main",
+            "social.popfeed.actor.profile#main"
+          ],
+          "type": "union"
         }
       },
       "required": [

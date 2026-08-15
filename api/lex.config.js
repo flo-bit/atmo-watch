@@ -21,6 +21,7 @@ export default defineLexiconConfig({
           "app.bsky.actor.profile",
           "com.atproto.label.defs",
           "com.atproto.repo.strongRef",
+          "social.popfeed.actor.profile",
           "social.popfeed.feed.comment",
           "social.popfeed.feed.like",
           "social.popfeed.feed.list",

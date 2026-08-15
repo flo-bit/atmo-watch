@@ -16,8 +16,7 @@
 		{
 			"binding": "DB",
 			"database_name": "atmo-watch-contrail-g20260815",
-			// Replace this after creating the production D1 database.
-			"database_id": "00000000-0000-0000-0000-000000000000"
+			"database_id": "cb7e6da0-d1ff-4e0d-8543-ca13c941460f"
 		}
 	],
 	"triggers": {

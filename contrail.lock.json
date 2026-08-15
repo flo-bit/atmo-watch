@@ -1,10 +1,10 @@
 {
   "format": "contrail.provider-lock",
   "version": 1,
-  "endpoint": "http://127.0.0.1:8787",
+  "endpoint": "https://api.atmo.watch",
   "namespace": "watch.atmo",
-  "contractDigest": "sha256:cb70003452bdb5fe4baf2c5c41f932a52ebf74ddc6d03ed3d833d0e34cc452ad",
-  "lexiconDigest": "sha256:fc63a6640eaff6cb71b35045fbb5c8ec3f8b178a64bae46c9512bc0bc0aeb73b",
+  "contractDigest": "sha256:13d95e3935100499b0d7d30deaa3daebff2150c6bdb118dc33015235897fb126",
+  "lexiconDigest": "sha256:f4f7b4ddbb358fc1c701329b0bdde8f085bb17c238197c91f8a2a62233343afd",
   "methods": [
     "watch.atmo.comment.getRecord",
     "watch.atmo.comment.listRecords",
@@ -21,13 +21,22 @@
   ],
   "collections": [
     "app.bsky.actor.profile",
+    "social.popfeed.actor.profile",
     "social.popfeed.feed.comment",
     "social.popfeed.feed.like",
     "social.popfeed.feed.list",
     "social.popfeed.feed.listItem",
     "social.popfeed.feed.review"
   ],
-  "serviceAuth": null,
-  "lexiconRoot": "src/lib/contrail/lexicons",
-  "allowInsecureHttp": true
+  "serviceAuth": {
+    "type": "atproto-service-auth",
+    "audience": "did:web:api.atmo.watch",
+    "methods": [
+      {
+        "id": "watch.atmo.notifyOfUpdate",
+        "type": "procedure"
+      }
+    ]
+  },
+  "lexiconRoot": "src/lib/contrail/lexicons/api.atmo.watch"
 }

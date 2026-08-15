@@ -1,5 +1,83 @@
 {
   "defs": {
+    "hydrateCommentsRecord": {
+      "properties": {
+        "cid": {
+          "format": "cid",
+          "type": "string"
+        },
+        "collection": {
+          "format": "nsid",
+          "type": "string"
+        },
+        "did": {
+          "format": "did",
+          "type": "string"
+        },
+        "rkey": {
+          "type": "string"
+        },
+        "time_us": {
+          "type": "integer"
+        },
+        "uri": {
+          "format": "at-uri",
+          "type": "string"
+        },
+        "value": {
+          "ref": "social.popfeed.feed.comment#main",
+          "type": "ref"
+        }
+      },
+      "required": [
+        "uri",
+        "value",
+        "did",
+        "collection",
+        "rkey",
+        "time_us"
+      ],
+      "type": "object"
+    },
+    "hydrateLikesRecord": {
+      "properties": {
+        "cid": {
+          "format": "cid",
+          "type": "string"
+        },
+        "collection": {
+          "format": "nsid",
+          "type": "string"
+        },
+        "did": {
+          "format": "did",
+          "type": "string"
+        },
+        "rkey": {
+          "type": "string"
+        },
+        "time_us": {
+          "type": "integer"
+        },
+        "uri": {
+          "format": "at-uri",
+          "type": "string"
+        },
+        "value": {
+          "ref": "social.popfeed.feed.like#main",
+          "type": "ref"
+        }
+      },
+      "required": [
+        "uri",
+        "value",
+        "did",
+        "collection",
+        "rkey",
+        "time_us"
+      ],
+      "type": "object"
+    },
     "main": {
       "description": "Query social.popfeed.feed.review records",
       "output": {
@@ -37,6 +115,10 @@
             "format": "at-identifier",
             "type": "string"
           },
+          "commentsCountMin": {
+            "description": "Minimum total comments count",
+            "type": "integer"
+          },
           "creativeWorkType": {
             "description": "Filter by creativeWorkType",
             "type": "string"
@@ -44,9 +126,25 @@
           "cursor": {
             "type": "string"
           },
+          "hydrateComments": {
+            "description": "Number of comments records to embed",
+            "maximum": 50,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "hydrateLikes": {
+            "description": "Number of likes records to embed",
+            "maximum": 50,
+            "minimum": 1,
+            "type": "integer"
+          },
           "identifiersTmdbId": {
             "description": "Filter by identifiers.tmdbId",
             "type": "string"
+          },
+          "likesCountMin": {
+            "description": "Minimum total likes count",
+            "type": "integer"
           },
           "limit": {
             "default": 50,
@@ -69,8 +167,10 @@
           "sort": {
             "description": "Field to sort by (default: time_us)",
             "knownValues": [
+              "commentsCount",
               "creativeWorkType",
-              "identifiersTmdbId"
+              "identifiersTmdbId",
+              "likesCount"
             ],
             "type": "string"
           }
@@ -104,8 +204,11 @@
           "type": "string"
         },
         "value": {
-          "ref": "app.bsky.actor.profile#main",
-          "type": "ref"
+          "refs": [
+            "app.bsky.actor.profile#main",
+            "social.popfeed.actor.profile#main"
+          ],
+          "type": "union"
         }
       },
       "required": [
@@ -123,9 +226,31 @@
           "format": "nsid",
           "type": "string"
         },
+        "comments": {
+          "items": {
+            "ref": "#hydrateCommentsRecord",
+            "type": "ref"
+          },
+          "type": "array"
+        },
+        "commentsCount": {
+          "description": "Total comments count",
+          "type": "integer"
+        },
         "did": {
           "format": "did",
           "type": "string"
+        },
+        "likes": {
+          "items": {
+            "ref": "#hydrateLikesRecord",
+            "type": "ref"
+          },
+          "type": "array"
+        },
+        "likesCount": {
+          "description": "Total likes count",
+          "type": "integer"
         },
         "rkey": {
           "type": "string"

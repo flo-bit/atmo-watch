@@ -2,6 +2,7 @@ import type {} from '@atcute/lexicons';
 import * as v from '@atcute/lexicons/validations';
 import type {} from '@atcute/lexicons/ambient';
 import * as AppBskyActorProfile from "../../../app/bsky/actor/profile.js";
+import * as SocialPopfeedActorProfile from "../../../social/popfeed/actor/profile.js";
 import * as SocialPopfeedFeedComment from "../../../social/popfeed/feed/comment.js";
 
 const _mainSchema = /*#__PURE__*/ v.query(
@@ -50,7 +51,10 @@ const _profileEntrySchema = /*#__PURE__*/ v.object(
 		"rkey": /*#__PURE__*/ v.optional(/*#__PURE__*/ v.string()),
 		"uri": /*#__PURE__*/ v.optional(/*#__PURE__*/ v.resourceUriString()),
 		get "value"() {
-			return /*#__PURE__*/ v.optional(AppBskyActorProfile.mainSchema)
+			return /*#__PURE__*/ v.optional(/*#__PURE__*/ v.variant([
+				AppBskyActorProfile.mainSchema,
+				SocialPopfeedActorProfile.mainSchema
+			]))
 		},
 	}
 );

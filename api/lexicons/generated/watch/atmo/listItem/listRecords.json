@@ -25,6 +25,63 @@
           "profiles": {
             "type": "boolean",
             "description": "Include indexed profile and identity information"
+          },
+          "addedAtMin": {
+            "type": "string",
+            "description": "Minimum value for addedAt"
+          },
+          "addedAtMax": {
+            "type": "string",
+            "description": "Maximum value for addedAt"
+          },
+          "creativeWorkType": {
+            "type": "string",
+            "description": "Filter by creativeWorkType"
+          },
+          "identifiersTmdbId": {
+            "type": "string",
+            "description": "Filter by identifiers.tmdbId"
+          },
+          "identifiersTmdbTvSeriesId": {
+            "type": "string",
+            "description": "Filter by identifiers.tmdbTvSeriesId"
+          },
+          "listType": {
+            "type": "string",
+            "description": "Filter by listType"
+          },
+          "listUri": {
+            "type": "string",
+            "description": "Filter by listUri"
+          },
+          "status": {
+            "type": "string",
+            "description": "Filter by status"
+          },
+          "hydrateList": {
+            "type": "boolean",
+            "description": "Embed the referenced list record"
+          },
+          "sort": {
+            "type": "string",
+            "knownValues": [
+              "addedAt",
+              "creativeWorkType",
+              "identifiersTmdbId",
+              "identifiersTmdbTvSeriesId",
+              "listType",
+              "listUri",
+              "status"
+            ],
+            "description": "Field to sort by (default: time_us)"
+          },
+          "order": {
+            "type": "string",
+            "knownValues": [
+              "asc",
+              "desc"
+            ],
+            "description": "Sort direction"
           }
         }
       },
@@ -94,6 +151,49 @@
         },
         "time_us": {
           "type": "integer"
+        },
+        "list": {
+          "type": "ref",
+          "ref": "#refListRecord"
+        }
+      }
+    },
+    "refListRecord": {
+      "type": "object",
+      "required": [
+        "uri",
+        "value",
+        "did",
+        "collection",
+        "rkey",
+        "time_us"
+      ],
+      "properties": {
+        "uri": {
+          "type": "string",
+          "format": "at-uri"
+        },
+        "cid": {
+          "type": "string",
+          "format": "cid"
+        },
+        "value": {
+          "type": "ref",
+          "ref": "social.popfeed.feed.list#main"
+        },
+        "did": {
+          "type": "string",
+          "format": "did"
+        },
+        "collection": {
+          "type": "string",
+          "format": "nsid"
+        },
+        "rkey": {
+          "type": "string"
+        },
+        "time_us": {
+          "type": "integer"
         }
       }
     },
@@ -119,8 +219,11 @@
           "format": "cid"
         },
         "value": {
-          "type": "ref",
-          "ref": "app.bsky.actor.profile#main"
+          "type": "union",
+          "refs": [
+            "app.bsky.actor.profile#main",
+            "social.popfeed.actor.profile#main"
+          ]
         },
         "collection": {
           "type": "string",

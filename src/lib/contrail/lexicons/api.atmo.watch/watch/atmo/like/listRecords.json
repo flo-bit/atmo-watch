@@ -1,7 +1,7 @@
 {
   "defs": {
     "main": {
-      "description": "Query social.popfeed.actor.profile records",
+      "description": "Query social.popfeed.feed.like records",
       "output": {
         "encoding": "application/json",
         "schema": {
@@ -46,9 +46,33 @@
             "minimum": 1,
             "type": "integer"
           },
+          "order": {
+            "description": "Sort direction",
+            "knownValues": [
+              "asc",
+              "desc"
+            ],
+            "type": "string"
+          },
           "profiles": {
             "description": "Include indexed profile and identity information",
             "type": "boolean"
+          },
+          "sort": {
+            "description": "Field to sort by (default: time_us)",
+            "knownValues": [
+              "subjectType",
+              "subjectUri"
+            ],
+            "type": "string"
+          },
+          "subjectType": {
+            "description": "Filter by subjectType",
+            "type": "string"
+          },
+          "subjectUri": {
+            "description": "Filter by subjectUri",
+            "type": "string"
           }
         },
         "type": "params"
@@ -80,7 +104,11 @@
           "type": "string"
         },
         "value": {
-          "type": "unknown"
+          "refs": [
+            "app.bsky.actor.profile#main",
+            "social.popfeed.actor.profile#main"
+          ],
+          "type": "union"
         }
       },
       "required": [
@@ -113,7 +141,7 @@
           "type": "string"
         },
         "value": {
-          "ref": "social.popfeed.actor.profile#main",
+          "ref": "social.popfeed.feed.like#main",
           "type": "ref"
         }
       },
@@ -129,6 +157,6 @@
       "type": "object"
     }
   },
-  "id": "watch.atmo.profile.listRecords",
+  "id": "watch.atmo.like.listRecords",
   "lexicon": 1
 }

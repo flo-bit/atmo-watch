@@ -19,7 +19,5 @@ export * as WatchAtmoListListRecords from "./types/watch/atmo/list/listRecords.j
 export * as WatchAtmoListItemGetRecord from "./types/watch/atmo/listItem/getRecord.js";
 export * as WatchAtmoListItemListRecords from "./types/watch/atmo/listItem/listRecords.js";
 export * as WatchAtmoNotifyOfUpdate from "./types/watch/atmo/notifyOfUpdate.js";
-export * as WatchAtmoProfileGetRecord from "./types/watch/atmo/profile/getRecord.js";
-export * as WatchAtmoProfileListRecords from "./types/watch/atmo/profile/listRecords.js";
 export * as WatchAtmoReviewGetRecord from "./types/watch/atmo/review/getRecord.js";
 export * as WatchAtmoReviewListRecords from "./types/watch/atmo/review/listRecords.js";

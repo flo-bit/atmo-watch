@@ -25,6 +25,67 @@
           "profiles": {
             "type": "boolean",
             "description": "Include indexed profile and identity information"
+          },
+          "createdAtMin": {
+            "type": "string",
+            "description": "Minimum value for createdAt"
+          },
+          "createdAtMax": {
+            "type": "string",
+            "description": "Maximum value for createdAt"
+          },
+          "listType": {
+            "type": "string",
+            "description": "Filter by listType"
+          },
+          "commentsCountMin": {
+            "type": "integer",
+            "description": "Minimum total comments count"
+          },
+          "hydrateComments": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 50,
+            "description": "Number of comments records to embed"
+          },
+          "itemsCountMin": {
+            "type": "integer",
+            "description": "Minimum total items count"
+          },
+          "hydrateItems": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 50,
+            "description": "Number of items records to embed"
+          },
+          "likesCountMin": {
+            "type": "integer",
+            "description": "Minimum total likes count"
+          },
+          "hydrateLikes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 50,
+            "description": "Number of likes records to embed"
+          },
+          "sort": {
+            "type": "string",
+            "knownValues": [
+              "commentsCount",
+              "createdAt",
+              "itemsCount",
+              "likesCount",
+              "listType"
+            ],
+            "description": "Field to sort by (default: time_us)"
+          },
+          "order": {
+            "type": "string",
+            "knownValues": [
+              "asc",
+              "desc"
+            ],
+            "description": "Sort direction"
           }
         }
       },
@@ -94,6 +155,156 @@
         },
         "time_us": {
           "type": "integer"
+        },
+        "commentsCount": {
+          "type": "integer",
+          "description": "Total comments count"
+        },
+        "comments": {
+          "type": "array",
+          "items": {
+            "type": "ref",
+            "ref": "#hydrateCommentsRecord"
+          }
+        },
+        "itemsCount": {
+          "type": "integer",
+          "description": "Total items count"
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "ref",
+            "ref": "#hydrateItemsRecord"
+          }
+        },
+        "likesCount": {
+          "type": "integer",
+          "description": "Total likes count"
+        },
+        "likes": {
+          "type": "array",
+          "items": {
+            "type": "ref",
+            "ref": "#hydrateLikesRecord"
+          }
+        }
+      }
+    },
+    "hydrateCommentsRecord": {
+      "type": "object",
+      "required": [
+        "uri",
+        "value",
+        "did",
+        "collection",
+        "rkey",
+        "time_us"
+      ],
+      "properties": {
+        "uri": {
+          "type": "string",
+          "format": "at-uri"
+        },
+        "cid": {
+          "type": "string",
+          "format": "cid"
+        },
+        "value": {
+          "type": "ref",
+          "ref": "social.popfeed.feed.comment#main"
+        },
+        "did": {
+          "type": "string",
+          "format": "did"
+        },
+        "collection": {
+          "type": "string",
+          "format": "nsid"
+        },
+        "rkey": {
+          "type": "string"
+        },
+        "time_us": {
+          "type": "integer"
+        }
+      }
+    },
+    "hydrateItemsRecord": {
+      "type": "object",
+      "required": [
+        "uri",
+        "value",
+        "did",
+        "collection",
+        "rkey",
+        "time_us"
+      ],
+      "properties": {
+        "uri": {
+          "type": "string",
+          "format": "at-uri"
+        },
+        "cid": {
+          "type": "string",
+          "format": "cid"
+        },
+        "value": {
+          "type": "ref",
+          "ref": "social.popfeed.feed.listItem#main"
+        },
+        "did": {
+          "type": "string",
+          "format": "did"
+        },
+        "collection": {
+          "type": "string",
+          "format": "nsid"
+        },
+        "rkey": {
+          "type": "string"
+        },
+        "time_us": {
+          "type": "integer"
+        }
+      }
+    },
+    "hydrateLikesRecord": {
+      "type": "object",
+      "required": [
+        "uri",
+        "value",
+        "did",
+        "collection",
+        "rkey",
+        "time_us"
+      ],
+      "properties": {
+        "uri": {
+          "type": "string",
+          "format": "at-uri"
+        },
+        "cid": {
+          "type": "string",
+          "format": "cid"
+        },
+        "value": {
+          "type": "ref",
+          "ref": "social.popfeed.feed.like#main"
+        },
+        "did": {
+          "type": "string",
+          "format": "did"
+        },
+        "collection": {
+          "type": "string",
+          "format": "nsid"
+        },
+        "rkey": {
+          "type": "string"
+        },
+        "time_us": {
+          "type": "integer"
         }
       }
     },
@@ -119,8 +330,11 @@
           "format": "cid"
         },
         "value": {
-          "type": "ref",
-          "ref": "app.bsky.actor.profile#main"
+          "type": "union",
+          "refs": [
+            "app.bsky.actor.profile#main",
+            "social.popfeed.actor.profile#main"
+          ]
         },
         "collection": {
           "type": "string",

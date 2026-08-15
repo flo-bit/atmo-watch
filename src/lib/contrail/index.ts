@@ -3,9 +3,10 @@ import { createPublicServiceClient } from "@atmo-dev/contrail/client";
 import type {} from "./types/index.js";
 
 export const contrail = createPublicServiceClient({
-  endpoint: "http://127.0.0.1:8787",
-  allowInsecureHttp: true,
-  contractDigest: "sha256:cb70003452bdb5fe4baf2c5c41f932a52ebf74ddc6d03ed3d833d0e34cc452ad",
+  endpoint: "https://api.atmo.watch",
+  contractDigest: "sha256:13d95e3935100499b0d7d30deaa3daebff2150c6bdb118dc33015235897fb126",
+  serviceDid: "did:web:api.atmo.watch",
+  scope: "rpc?lxm=*&aud=did:web:api.atmo.watch",
   serviceMethods: [
     "watch.atmo.comment.getRecord",
     "watch.atmo.comment.listRecords",
@@ -17,11 +18,13 @@ export const contrail = createPublicServiceClient({
     "watch.atmo.list.listRecords",
     "watch.atmo.listItem.getRecord",
     "watch.atmo.listItem.listRecords",
+    "watch.atmo.notifyOfUpdate",
     "watch.atmo.review.getRecord",
     "watch.atmo.review.listRecords",
   ],
   collections: [
     "app.bsky.actor.profile",
+    "social.popfeed.actor.profile",
     "social.popfeed.feed.comment",
     "social.popfeed.feed.like",
     "social.popfeed.feed.list",

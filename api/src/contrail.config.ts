@@ -2,7 +2,10 @@ import type { ContrailConfig } from '@atmo-dev/contrail';
 
 export const config: ContrailConfig = {
 	namespace: 'watch.atmo',
-	profiles: ['app.bsky.actor.profile'],
+	profiles: [
+		{ collection: 'app.bsky.actor.profile', shortName: 'profile' },
+		{ collection: 'social.popfeed.actor.profile', shortName: 'popfeedProfile' }
+	],
 	jetstreams: ['wss://jetstream1.us-east.bsky.network'],
 	orderedSource: {
 		source: 'jetstream',
@@ -41,10 +44,44 @@ export const config: ContrailConfig = {
 			}
 		},
 		list: {
-			collection: 'social.popfeed.feed.list'
+			collection: 'social.popfeed.feed.list',
+			queryable: {
+				listType: {},
+				createdAt: { type: 'range' }
+			},
+			relations: {
+				items: {
+					collection: 'listItem',
+					field: 'listUri'
+				},
+				likes: {
+					collection: 'like',
+					field: 'subjectUri',
+					countDistinct: 'did'
+				},
+				comments: {
+					collection: 'comment',
+					field: 'subjectUri'
+				}
+			}
 		},
 		listItem: {
-			collection: 'social.popfeed.feed.listItem'
+			collection: 'social.popfeed.feed.listItem',
+			queryable: {
+				listUri: {},
+				listType: {},
+				creativeWorkType: {},
+				'identifiers.tmdbId': {},
+				'identifiers.tmdbTvSeriesId': {},
+				status: {},
+				addedAt: { type: 'range' }
+			},
+			references: {
+				list: {
+					collection: 'list',
+					field: 'listUri'
+				}
+			}
 		},
 		comment: {
 			collection: 'social.popfeed.feed.comment',

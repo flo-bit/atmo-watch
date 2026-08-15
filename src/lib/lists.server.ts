@@ -118,6 +118,24 @@ async function getActorListItems(actor: string) {
 	return records;
 }
 
+async function getListItems(listUri: ResourceUri) {
+	const records: ListItemRecord[] = [];
+	let cursor: string | undefined;
+
+	do {
+		const response = await contrail.get('watch.atmo.listItem.listRecords', {
+			params: { listUri, cursor, limit: 200 }
+		});
+		if (!response.ok) {
+			throw new Error(`Could not load list items from Contrail (${response.status})`);
+		}
+		records.push(...response.data.records);
+		cursor = response.data.cursor;
+	} while (cursor);
+
+	return records;
+}
+
 export async function getProfileMediaLists(author: ActorSummary): Promise<MediaListModel[]> {
 	const [lists, items] = await Promise.all([
 		getActorLists(author.did),
@@ -146,13 +164,12 @@ export async function getMediaListPage({
 	page: number;
 	pageSize?: number;
 }) {
-	const [listResponse, allItems] = await Promise.all([
+	const [listResponse, listItems] = await Promise.all([
 		contrail.get('watch.atmo.list.getRecord', { params: { uri } }),
-		getActorListItems(author.did)
+		getListItems(uri)
 	]);
 	if (!listResponse.ok) return { response: listResponse } as const;
 
-	const listItems = allItems.filter((item) => item.value.listUri === uri);
 	const { list, items } = buildList(listResponse.data, listItems, author);
 	const totalPages = Math.max(1, Math.ceil(items.length / pageSize));
 	const currentPage = Math.min(page, totalPages);

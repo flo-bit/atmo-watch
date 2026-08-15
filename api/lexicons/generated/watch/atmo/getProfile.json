@@ -57,8 +57,11 @@
           "format": "cid"
         },
         "value": {
-          "type": "ref",
-          "ref": "app.bsky.actor.profile#main"
+          "type": "union",
+          "refs": [
+            "app.bsky.actor.profile#main",
+            "social.popfeed.actor.profile#main"
+          ]
         },
         "collection": {
           "type": "string",

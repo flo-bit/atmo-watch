@@ -1,7 +1,7 @@
 {
   "defs": {
     "main": {
-      "description": "Get a social.popfeed.feed.list record by AT URI",
+      "description": "Get a social.popfeed.feed.like record by AT URI",
       "output": {
         "encoding": "application/json",
         "schema": {
@@ -36,7 +36,7 @@
               "type": "string"
             },
             "value": {
-              "ref": "social.popfeed.feed.list#main",
+              "ref": "social.popfeed.feed.like#main",
               "type": "ref"
             }
           },
@@ -95,8 +95,11 @@
           "type": "string"
         },
         "value": {
-          "ref": "app.bsky.actor.profile#main",
-          "type": "ref"
+          "refs": [
+            "app.bsky.actor.profile#main",
+            "social.popfeed.actor.profile#main"
+          ],
+          "type": "union"
         }
       },
       "required": [
@@ -105,6 +108,6 @@
       "type": "object"
     }
   },
-  "id": "watch.atmo.list.getRecord",
+  "id": "watch.atmo.like.getRecord",
   "lexicon": 1
 }

@@ -11,7 +11,10 @@ import type {
 	SupportedCreativeWorkType
 } from '$lib/types';
 
-type ReviewRecord = Pick<ReviewListRecords.Record, 'uri' | 'did' | 'value'>;
+type ReviewRecord = Pick<
+	ReviewListRecords.Record,
+	'uri' | 'did' | 'value' | 'likesCount' | 'commentsCount'
+>;
 
 function getCreativeWorkType(value: string): SupportedCreativeWorkType | undefined {
 	if (value === 'movie' || value === 'tv_show') return value;
@@ -57,95 +60,9 @@ export function toReview(
 		rating: record.value.rating,
 		text: record.value.text ?? '',
 		containsSpoilers: record.value.containsSpoilers ?? false,
-		likeCount: 0,
-		commentCount: 0
+		likeCount: record.likesCount ?? 0,
+		commentCount: record.commentsCount ?? 0
 	};
-}
-
-async function listAllLikes() {
-	const records: LikeListRecords.Record[] = [];
-	let cursor: string | undefined;
-
-	do {
-		const response = await contrail.get('watch.atmo.like.listRecords', {
-			params: { cursor, limit: 200 }
-		});
-		if (!response.ok) {
-			throw new Error(`Could not load review likes from Contrail (${response.status})`);
-		}
-		records.push(...response.data.records);
-		cursor = response.data.cursor;
-	} while (cursor);
-
-	return records;
-}
-
-async function listAllComments() {
-	const records: CommentListRecords.Record[] = [];
-	let cursor: string | undefined;
-
-	do {
-		const response = await contrail.get('watch.atmo.comment.listRecords', {
-			params: { cursor, limit: 200 }
-		});
-		if (!response.ok) {
-			throw new Error(`Could not load review comments from Contrail (${response.status})`);
-		}
-		records.push(...response.data.records);
-		cursor = response.data.cursor;
-	} while (cursor);
-
-	return records;
-}
-
-export async function withReviewInteractionCounts(
-	reviews: ReviewCardModel[]
-): Promise<ReviewCardModel[]> {
-	const targetUris = new Set(
-		reviews.filter((review) => review.text.trim()).map((review) => review.uri)
-	);
-	if (targetUris.size === 0) return reviews;
-
-	try {
-		const [likes, comments] = await Promise.all([listAllLikes(), listAllComments()]);
-		const likersByReview = new Map<string, Set<string>>();
-		for (const like of likes) {
-			if (!targetUris.has(like.value.subjectUri)) continue;
-			const likers = likersByReview.get(like.value.subjectUri) ?? new Set<string>();
-			likers.add(like.did);
-			likersByReview.set(like.value.subjectUri, likers);
-		}
-
-		const reviewByThreadUri = new Map<string, string>();
-		for (const uri of targetUris) reviewByThreadUri.set(uri, uri);
-		const commentCounts = new Map<string, number>();
-		const countedComments = new Set<string>();
-		let foundComments = true;
-		while (foundComments) {
-			foundComments = false;
-			for (const comment of comments) {
-				if (countedComments.has(comment.uri)) continue;
-				const reviewUri =
-					reviewByThreadUri.get(comment.value.subjectUri) ??
-					(comment.value.rootUri ? reviewByThreadUri.get(comment.value.rootUri) : undefined);
-				if (!reviewUri) continue;
-
-				countedComments.add(comment.uri);
-				reviewByThreadUri.set(comment.uri, reviewUri);
-				commentCounts.set(reviewUri, (commentCounts.get(reviewUri) ?? 0) + 1);
-				foundComments = true;
-			}
-		}
-
-		return reviews.map((review) => ({
-			...review,
-			likeCount: likersByReview.get(review.uri)?.size ?? 0,
-			commentCount: commentCounts.get(review.uri) ?? 0
-		}));
-	} catch (cause) {
-		console.error('Could not load review interaction counts from Contrail', cause);
-		return reviews;
-	}
 }
 
 function getCommentAuthor(
@@ -153,13 +70,12 @@ function getCommentAuthor(
 	profiles: Map<string, CommentListRecords.ProfileEntry>
 ): ActorSummary {
 	const profile = profiles.get(did);
+	const avatar = profile?.value && 'avatar' in profile.value ? profile.value.avatar : undefined;
 	return {
 		did,
 		handle: profile?.handle ?? did,
 		displayName: profile?.value?.displayName,
-		avatarUrl: profile?.value?.avatar
-			? getAtprotoCdnImageUrl({ did, blob: profile.value.avatar, preset: 'avatar' })
-			: undefined
+		avatarUrl: avatar ? getAtprotoCdnImageUrl({ did, blob: avatar, preset: 'avatar' }) : undefined
 	};
 }
 
@@ -172,13 +88,13 @@ export async function getReviewInteractions(reviewUri: string, viewerDid: string
 
 	do {
 		const response = await contrail.get('watch.atmo.like.listRecords', {
-			params: { cursor: likeCursor, limit: 200 }
+			params: { subjectUri: reviewUri, cursor: likeCursor, limit: 200 }
 		});
 		if (!response.ok) {
 			throw new Error(`Could not load review likes from Contrail (${response.status})`);
 		}
 
-		likes.push(...response.data.records.filter((record) => record.value.subjectUri === reviewUri));
+		likes.push(...response.data.records);
 		likeCursor = response.data.cursor;
 	} while (likeCursor);
 
@@ -266,5 +182,5 @@ export async function getMediaReviews(
 			: [];
 	});
 
-	return withReviewInteractionCounts(reviews);
+	return reviews;
 }

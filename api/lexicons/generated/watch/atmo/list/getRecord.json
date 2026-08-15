@@ -19,6 +19,24 @@
           "profiles": {
             "type": "boolean",
             "description": "Include indexed profile and identity information"
+          },
+          "hydrateComments": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 50,
+            "description": "Number of comments records to embed"
+          },
+          "hydrateItems": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 50,
+            "description": "Number of items records to embed"
+          },
+          "hydrateLikes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 50,
+            "description": "Number of likes records to embed"
           }
         }
       },
@@ -61,6 +79,39 @@
             "time_us": {
               "type": "integer"
             },
+            "commentsCount": {
+              "type": "integer",
+              "description": "Total comments count"
+            },
+            "comments": {
+              "type": "array",
+              "items": {
+                "type": "ref",
+                "ref": "#hydrateCommentsRecord"
+              }
+            },
+            "itemsCount": {
+              "type": "integer",
+              "description": "Total items count"
+            },
+            "items": {
+              "type": "array",
+              "items": {
+                "type": "ref",
+                "ref": "#hydrateItemsRecord"
+              }
+            },
+            "likesCount": {
+              "type": "integer",
+              "description": "Total likes count"
+            },
+            "likes": {
+              "type": "array",
+              "items": {
+                "type": "ref",
+                "ref": "#hydrateLikesRecord"
+              }
+            },
             "profiles": {
               "type": "array",
               "items": {
@@ -69,6 +120,123 @@
               }
             }
           }
+        }
+      }
+    },
+    "hydrateCommentsRecord": {
+      "type": "object",
+      "required": [
+        "uri",
+        "value",
+        "did",
+        "collection",
+        "rkey",
+        "time_us"
+      ],
+      "properties": {
+        "uri": {
+          "type": "string",
+          "format": "at-uri"
+        },
+        "cid": {
+          "type": "string",
+          "format": "cid"
+        },
+        "value": {
+          "type": "ref",
+          "ref": "social.popfeed.feed.comment#main"
+        },
+        "did": {
+          "type": "string",
+          "format": "did"
+        },
+        "collection": {
+          "type": "string",
+          "format": "nsid"
+        },
+        "rkey": {
+          "type": "string"
+        },
+        "time_us": {
+          "type": "integer"
+        }
+      }
+    },
+    "hydrateItemsRecord": {
+      "type": "object",
+      "required": [
+        "uri",
+        "value",
+        "did",
+        "collection",
+        "rkey",
+        "time_us"
+      ],
+      "properties": {
+        "uri": {
+          "type": "string",
+          "format": "at-uri"
+        },
+        "cid": {
+          "type": "string",
+          "format": "cid"
+        },
+        "value": {
+          "type": "ref",
+          "ref": "social.popfeed.feed.listItem#main"
+        },
+        "did": {
+          "type": "string",
+          "format": "did"
+        },
+        "collection": {
+          "type": "string",
+          "format": "nsid"
+        },
+        "rkey": {
+          "type": "string"
+        },
+        "time_us": {
+          "type": "integer"
+        }
+      }
+    },
+    "hydrateLikesRecord": {
+      "type": "object",
+      "required": [
+        "uri",
+        "value",
+        "did",
+        "collection",
+        "rkey",
+        "time_us"
+      ],
+      "properties": {
+        "uri": {
+          "type": "string",
+          "format": "at-uri"
+        },
+        "cid": {
+          "type": "string",
+          "format": "cid"
+        },
+        "value": {
+          "type": "ref",
+          "ref": "social.popfeed.feed.like#main"
+        },
+        "did": {
+          "type": "string",
+          "format": "did"
+        },
+        "collection": {
+          "type": "string",
+          "format": "nsid"
+        },
+        "rkey": {
+          "type": "string"
+        },
+        "time_us": {
+          "type": "integer"
         }
       }
     },
@@ -94,8 +262,11 @@
           "format": "cid"
         },
         "value": {
-          "type": "ref",
-          "ref": "app.bsky.actor.profile#main"
+          "type": "union",
+          "refs": [
+            "app.bsky.actor.profile#main",
+            "social.popfeed.actor.profile#main"
+          ]
         },
         "collection": {
           "type": "string",

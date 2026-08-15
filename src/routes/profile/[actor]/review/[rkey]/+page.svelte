@@ -9,6 +9,7 @@
 	import { likeReview, unlikeReview } from '$lib/review-interactions.remote';
 	import { slugify, toMediaRouteKind } from '$lib/utils';
 	import { AtprotoLoginModal } from '@foxui/social';
+	import { Heart, Image as ImageIcon, MessageCircle } from '@lucide/svelte';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -106,20 +107,7 @@
 					/>
 				{:else}
 					<span class="flex size-full items-center justify-center text-base-600">
-						<svg
-							class="size-10"
-							viewBox="0 0 24 24"
-							fill="none"
-							stroke="currentColor"
-							stroke-width="1.5"
-							aria-hidden="true"
-						>
-							<path
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								d="m6 20.25 6-10.5 6 10.5m-12 0h12M5.25 6.75h13.5A2.25 2.25 0 0 1 21 9v9a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 18V9a2.25 2.25 0 0 1 2.25-2.25ZM8.25 3.75h7.5"
-							/>
-						</svg>
+						<ImageIcon class="size-10" strokeWidth={1.5} aria-hidden="true" />
 					</span>
 				{/if}
 			</a>
@@ -199,20 +187,12 @@
 							viewerLikeUri ? 'text-accent-400 hover:text-accent-300' : 'hover:text-white'
 						}`}
 					>
-						<svg
+						<Heart
 							class="size-5"
-							viewBox="0 0 24 24"
 							fill={viewerLikeUri ? 'currentColor' : 'none'}
-							stroke="currentColor"
-							stroke-width="1.5"
+							strokeWidth={1.5}
 							aria-hidden="true"
-						>
-							<path
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5A4.72 4.72 0 0 0 12 6.461 4.72 4.72 0 0 0 7.688 3.75C5.099 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z"
-							/>
-						</svg>
+						/>
 						{#if likeCount > 0}<span>{likeCount}</span>{/if}
 					</button>
 
@@ -221,20 +201,7 @@
 						aria-label={`${data.commentCount} ${data.commentCount === 1 ? 'comment' : 'comments'}`}
 						class="inline-flex items-center gap-1.5 text-sm transition-colors hover:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent-400"
 					>
-						<svg
-							class="size-5"
-							viewBox="0 0 24 24"
-							fill="none"
-							stroke="currentColor"
-							stroke-width="1.5"
-							aria-hidden="true"
-						>
-							<path
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								d="M8.625 12a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm3.75 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm3.75 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0ZM21 12c0 4.142-4.03 7.5-9 7.5a10.2 10.2 0 0 1-3.75-.7L3 20.25l1.48-3.94A7.1 7.1 0 0 1 3 12c0-4.142 4.03-7.5 9-7.5s9 3.358 9 7.5Z"
-							/>
-						</svg>
+						<MessageCircle class="size-5" strokeWidth={1.5} aria-hidden="true" />
 						{#if data.commentCount > 0}<span>{data.commentCount}</span>{/if}
 					</a>
 				</div>

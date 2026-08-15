@@ -7,12 +7,6 @@
 
 	let { data }: { data: PageData } = $props();
 	let profileUrl = $derived(resolve('/profile/[actor]', { actor: data.list.author.did }));
-	let listUrl = $derived(
-		resolve('/profile/[actor]/list/[rkey]', {
-			actor: data.list.author.did,
-			rkey: data.list.rkey
-		})
-	);
 	let handle = $derived(data.list.author.handle.replace(/^@/, ''));
 
 	const dateFormatter = new Intl.DateTimeFormat('en', {
@@ -73,7 +67,10 @@
 				<nav class="mt-12 flex items-center justify-center gap-5 text-sm" aria-label="List pages">
 					{#if data.currentPage > 1}
 						<a
-							href={`${listUrl}?page=${data.currentPage - 1}`}
+							href={resolve(`/profile/[actor]/list/[rkey]?page=${data.currentPage - 1}`, {
+								actor: data.list.author.did,
+								rkey: data.list.rkey
+							})}
 							class="text-base-400 transition-colors hover:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent-400"
 						>
 							previous
@@ -84,7 +81,10 @@
 					</span>
 					{#if data.currentPage < data.totalPages}
 						<a
-							href={`${listUrl}?page=${data.currentPage + 1}`}
+							href={resolve(`/profile/[actor]/list/[rkey]?page=${data.currentPage + 1}`, {
+								actor: data.list.author.did,
+								rkey: data.list.rkey
+							})}
 							class="text-base-400 transition-colors hover:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent-400"
 						>
 							next

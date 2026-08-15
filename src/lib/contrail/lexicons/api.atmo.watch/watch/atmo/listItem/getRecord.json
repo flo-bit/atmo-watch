@@ -1,7 +1,7 @@
 {
   "defs": {
     "main": {
-      "description": "Get a social.popfeed.feed.review record by AT URI",
+      "description": "Get a social.popfeed.feed.listItem record by AT URI",
       "output": {
         "encoding": "application/json",
         "schema": {
@@ -17,6 +17,10 @@
             "did": {
               "format": "did",
               "type": "string"
+            },
+            "list": {
+              "ref": "#refListRecord",
+              "type": "ref"
             },
             "profiles": {
               "items": {
@@ -36,7 +40,7 @@
               "type": "string"
             },
             "value": {
-              "ref": "social.popfeed.feed.review#main",
+              "ref": "social.popfeed.feed.listItem#main",
               "type": "ref"
             }
           },
@@ -53,6 +57,10 @@
       },
       "parameters": {
         "properties": {
+          "hydrateList": {
+            "description": "Embed the referenced list record",
+            "type": "boolean"
+          },
           "profiles": {
             "description": "Include indexed profile and identity information",
             "type": "boolean"
@@ -95,16 +103,58 @@
           "type": "string"
         },
         "value": {
-          "ref": "app.bsky.actor.profile#main",
-          "type": "ref"
+          "refs": [
+            "app.bsky.actor.profile#main",
+            "social.popfeed.actor.profile#main"
+          ],
+          "type": "union"
         }
       },
       "required": [
         "did"
       ],
       "type": "object"
+    },
+    "refListRecord": {
+      "properties": {
+        "cid": {
+          "format": "cid",
+          "type": "string"
+        },
+        "collection": {
+          "format": "nsid",
+          "type": "string"
+        },
+        "did": {
+          "format": "did",
+          "type": "string"
+        },
+        "rkey": {
+          "type": "string"
+        },
+        "time_us": {
+          "type": "integer"
+        },
+        "uri": {
+          "format": "at-uri",
+          "type": "string"
+        },
+        "value": {
+          "ref": "social.popfeed.feed.list#main",
+          "type": "ref"
+        }
+      },
+      "required": [
+        "uri",
+        "value",
+        "did",
+        "collection",
+        "rkey",
+        "time_us"
+      ],
+      "type": "object"
     }
   },
-  "id": "watch.atmo.review.getRecord",
+  "id": "watch.atmo.listItem.getRecord",
   "lexicon": 1
 }

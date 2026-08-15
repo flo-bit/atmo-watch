@@ -27,20 +27,24 @@ export const load: LayoutServerLoad = async ({ params }) => {
 		error(502, 'Could not load profile');
 	}
 
-	const profileEntry =
-		response.data.profiles.find((entry) => entry.collection === 'app.bsky.actor.profile') ??
-		response.data.profiles[0];
+	const bskyProfile = response.data.profiles.find(
+		(entry) => entry.collection === 'app.bsky.actor.profile'
+	);
+	const popfeedProfile = response.data.profiles.find(
+		(entry) => entry.collection === 'social.popfeed.actor.profile'
+	);
+	const profileEntry = bskyProfile ?? popfeedProfile;
 	if (!profileEntry) error(404, 'Profile not found');
 
 	const did = profileEntry.did;
+	const avatar =
+		bskyProfile?.value && 'avatar' in bskyProfile.value ? bskyProfile.value.avatar : undefined;
 	return {
 		profile: {
 			did,
 			handle: profileEntry.handle ?? did,
-			displayName: profileEntry.value?.displayName,
-			avatarUrl: profileEntry.value?.avatar
-				? getAtprotoCdnImageUrl({ did, blob: profileEntry.value.avatar, preset: 'avatar' })
-				: undefined
+			displayName: popfeedProfile?.value?.displayName ?? bskyProfile?.value?.displayName,
+			avatarUrl: avatar ? getAtprotoCdnImageUrl({ did, blob: avatar, preset: 'avatar' }) : undefined
 		}
 	};
 };
