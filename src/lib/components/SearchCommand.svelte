@@ -3,18 +3,23 @@
 	import { resolve } from '$app/paths';
 	import { Command } from 'bits-ui';
 	import { posterUrl } from '$lib/images';
+	import { loginDialog } from '$lib/login.svelte';
 	import { reviewDialog } from '$lib/review.svelte';
 	import type { MediaSummary } from '$lib/types';
 	import { cn, mediaKey, slugify, toMediaRouteKind } from '$lib/utils';
 
 	let {
+		did,
 		autofocus = true,
 		class: className,
-		onReview = (item: MediaSummary) => reviewDialog.show(item)
+		onReview = (item: MediaSummary) => reviewDialog.show(item),
+		onLoginRequired = () => loginDialog.show()
 	}: {
+		did: string | null;
 		autofocus?: boolean;
 		class?: string;
 		onReview?: (item: MediaSummary) => void;
+		onLoginRequired?: () => void;
 	} = $props();
 
 	let query = $state('');
@@ -23,6 +28,16 @@
 	let hasSearched = $state(false);
 	let searchError = $state('');
 	let resultsOpen = $state(false);
+
+	function reviewItem(item: MediaSummary) {
+		resultsOpen = false;
+		if (!did) {
+			onLoginRequired();
+			return;
+		}
+
+		onReview(item);
+	}
 
 	function itemUrl(item: MediaSummary) {
 		return resolve('/[kind]/[id]', {
@@ -187,10 +202,24 @@
 										type="button"
 										onclick={(event) => {
 											event.stopPropagation();
-											onReview(item);
+											reviewItem(item);
 										}}
-										class="shrink-0 rounded-lg bg-accent-500 px-3 py-2 text-sm font-semibold text-white transition-colors hover:bg-accent-400 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70"
+										class="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-white/15 bg-white/10 px-2.5 text-xs font-semibold text-white transition-colors hover:bg-white/15 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70"
 									>
+										<svg
+											class="size-3.5"
+											viewBox="0 0 24 24"
+											fill="none"
+											stroke="currentColor"
+											stroke-width="1.8"
+											aria-hidden="true"
+										>
+											<path
+												stroke-linecap="round"
+												stroke-linejoin="round"
+												d="m12 3.75 2.47 5.004 5.522.803-3.996 3.895.943 5.5L12 16.354l-4.939 2.598.943-5.5-3.996-3.895 5.522-.803L12 3.75Z"
+											/>
+										</svg>
 										review
 									</button>
 								</Command.Item>

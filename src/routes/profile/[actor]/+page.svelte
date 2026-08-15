@@ -2,6 +2,7 @@
 	import Avatar from '$lib/components/Avatar.svelte';
 	import Container from '$lib/components/Container.svelte';
 	import ItemCard from '$lib/components/ItemCard.svelte';
+	import ListCard from '$lib/components/ListCard.svelte';
 	import Review from '$lib/components/Review.svelte';
 	import type { PageData } from './$types';
 
@@ -11,8 +12,8 @@
 </script>
 
 <svelte:head>
-	<title>@{data.profile.handle} reviews | atmo.watch</title>
-	<meta name="description" content={`Movie and TV reviews by @${data.profile.handle}.`} />
+	<title>@{data.profile.handle} | atmo.watch</title>
+	<meta name="description" content={`Movie and TV reviews and lists by @${data.profile.handle}.`} />
 </svelte:head>
 
 <main class="min-h-dvh bg-base-950 pb-12 text-base-50">
@@ -27,6 +28,17 @@
 				@{data.profile.handle}
 			</h1>
 		</header>
+
+		{#if data.lists.length > 0}
+			<section class="pt-8" aria-labelledby="lists-heading">
+				<h2 id="lists-heading" class="text-lg font-semibold text-white">lists</h2>
+				<div class="mt-6 grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3">
+					{#each data.lists as list (list.uri)}
+						<ListCard {list} />
+					{/each}
+				</div>
+			</section>
+		{/if}
 
 		{#if ratings.length > 0}
 			<section class="pt-8" aria-labelledby="ratings-heading">

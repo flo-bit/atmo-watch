@@ -35,6 +35,8 @@ export type ReviewCardModel = {
 	rating: number;
 	text: string;
 	containsSpoilers: boolean;
+	likeCount: number;
+	commentCount: number;
 };
 
 export type ReviewCommentModel = {
@@ -42,6 +44,19 @@ export type ReviewCommentModel = {
 	author: ActorSummary;
 	text: string;
 	createdAt: string;
+};
+
+export type MediaListModel = {
+	uri: string;
+	rkey: string;
+	author: ActorSummary;
+	name: string;
+	description: string;
+	listType?: string;
+	ordered: boolean;
+	createdAt: string;
+	itemCount: number;
+	previewItems: MediaSummary[];
 };
 
 export type ExternalRating = {

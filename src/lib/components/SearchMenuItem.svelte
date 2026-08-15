@@ -1,12 +1,13 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import { Dialog } from 'bits-ui';
-	import type { MediaSummary } from '$lib/types';
+	import { loginDialog } from '$lib/login.svelte';
 	import { reviewDialog } from '$lib/review.svelte';
+	import type { MediaSummary } from '$lib/types';
 	import MenuItem from './MenuItem.svelte';
 	import SearchCommand from './SearchCommand.svelte';
 
-	let { onOpen }: { onOpen?: () => void } = $props();
+	let { did, onOpen }: { did: string | null; onOpen?: () => void } = $props();
 	let open = $state(false);
 
 	$effect(() => {
@@ -21,6 +22,11 @@
 	function reviewFromSearch(item: MediaSummary) {
 		open = false;
 		requestAnimationFrame(() => reviewDialog.show(item));
+	}
+
+	function loginFromSearch() {
+		open = false;
+		requestAnimationFrame(() => loginDialog.show());
 	}
 </script>
 
@@ -51,7 +57,12 @@
 			<Dialog.Description class="sr-only">
 				Search for a movie or TV show by title.
 			</Dialog.Description>
-			<SearchCommand autofocus={open} onReview={reviewFromSearch} />
+			<SearchCommand
+				{did}
+				autofocus={open}
+				onReview={reviewFromSearch}
+				onLoginRequired={loginFromSearch}
+			/>
 			<Dialog.Close
 				class="absolute -top-12 right-0 inline-flex size-9 items-center justify-center rounded-full border border-white/15 bg-black/50 text-white backdrop-blur-sm transition-colors hover:bg-white/15 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70"
 			>

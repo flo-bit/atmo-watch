@@ -7,3 +7,6 @@ bun.lockb
 
 # Miscellaneous
 /static/
+/api/lex.config.js
+/api/lexicons/
+/api/src/lexicon-types/

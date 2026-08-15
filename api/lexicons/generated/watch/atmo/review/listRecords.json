@@ -1,0 +1,281 @@
+{
+  "lexicon": 1,
+  "id": "watch.atmo.review.listRecords",
+  "defs": {
+    "main": {
+      "type": "query",
+      "description": "Query social.popfeed.feed.review records",
+      "parameters": {
+        "type": "params",
+        "properties": {
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 200,
+            "default": 50
+          },
+          "cursor": {
+            "type": "string"
+          },
+          "actor": {
+            "type": "string",
+            "format": "at-identifier",
+            "description": "Filter by an indexed DID or cached handle"
+          },
+          "profiles": {
+            "type": "boolean",
+            "description": "Include indexed profile and identity information"
+          },
+          "creativeWorkType": {
+            "type": "string",
+            "description": "Filter by creativeWorkType"
+          },
+          "identifiersTmdbId": {
+            "type": "string",
+            "description": "Filter by identifiers.tmdbId"
+          },
+          "commentsCountMin": {
+            "type": "integer",
+            "description": "Minimum total comments count"
+          },
+          "hydrateComments": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 50,
+            "description": "Number of comments records to embed"
+          },
+          "likesCountMin": {
+            "type": "integer",
+            "description": "Minimum total likes count"
+          },
+          "hydrateLikes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 50,
+            "description": "Number of likes records to embed"
+          },
+          "sort": {
+            "type": "string",
+            "knownValues": [
+              "commentsCount",
+              "creativeWorkType",
+              "identifiersTmdbId",
+              "likesCount"
+            ],
+            "description": "Field to sort by (default: time_us)"
+          },
+          "order": {
+            "type": "string",
+            "knownValues": [
+              "asc",
+              "desc"
+            ],
+            "description": "Sort direction"
+          }
+        }
+      },
+      "output": {
+        "encoding": "application/json",
+        "schema": {
+          "type": "object",
+          "required": [
+            "records"
+          ],
+          "properties": {
+            "records": {
+              "type": "array",
+              "items": {
+                "type": "ref",
+                "ref": "#record"
+              }
+            },
+            "cursor": {
+              "type": "string"
+            },
+            "profiles": {
+              "type": "array",
+              "items": {
+                "type": "ref",
+                "ref": "#profileEntry"
+              }
+            }
+          }
+        }
+      }
+    },
+    "record": {
+      "type": "object",
+      "required": [
+        "uri",
+        "cid",
+        "value",
+        "did",
+        "collection",
+        "rkey",
+        "time_us"
+      ],
+      "properties": {
+        "uri": {
+          "type": "string",
+          "format": "at-uri"
+        },
+        "cid": {
+          "type": "string",
+          "format": "cid"
+        },
+        "value": {
+          "type": "ref",
+          "ref": "social.popfeed.feed.review#main"
+        },
+        "did": {
+          "type": "string",
+          "format": "did"
+        },
+        "collection": {
+          "type": "string",
+          "format": "nsid"
+        },
+        "rkey": {
+          "type": "string"
+        },
+        "time_us": {
+          "type": "integer"
+        },
+        "commentsCount": {
+          "type": "integer",
+          "description": "Total comments count"
+        },
+        "comments": {
+          "type": "array",
+          "items": {
+            "type": "ref",
+            "ref": "#hydrateCommentsRecord"
+          }
+        },
+        "likesCount": {
+          "type": "integer",
+          "description": "Total likes count"
+        },
+        "likes": {
+          "type": "array",
+          "items": {
+            "type": "ref",
+            "ref": "#hydrateLikesRecord"
+          }
+        }
+      }
+    },
+    "hydrateCommentsRecord": {
+      "type": "object",
+      "required": [
+        "uri",
+        "value",
+        "did",
+        "collection",
+        "rkey",
+        "time_us"
+      ],
+      "properties": {
+        "uri": {
+          "type": "string",
+          "format": "at-uri"
+        },
+        "cid": {
+          "type": "string",
+          "format": "cid"
+        },
+        "value": {
+          "type": "ref",
+          "ref": "social.popfeed.feed.comment#main"
+        },
+        "did": {
+          "type": "string",
+          "format": "did"
+        },
+        "collection": {
+          "type": "string",
+          "format": "nsid"
+        },
+        "rkey": {
+          "type": "string"
+        },
+        "time_us": {
+          "type": "integer"
+        }
+      }
+    },
+    "hydrateLikesRecord": {
+      "type": "object",
+      "required": [
+        "uri",
+        "value",
+        "did",
+        "collection",
+        "rkey",
+        "time_us"
+      ],
+      "properties": {
+        "uri": {
+          "type": "string",
+          "format": "at-uri"
+        },
+        "cid": {
+          "type": "string",
+          "format": "cid"
+        },
+        "value": {
+          "type": "ref",
+          "ref": "social.popfeed.feed.like#main"
+        },
+        "did": {
+          "type": "string",
+          "format": "did"
+        },
+        "collection": {
+          "type": "string",
+          "format": "nsid"
+        },
+        "rkey": {
+          "type": "string"
+        },
+        "time_us": {
+          "type": "integer"
+        }
+      }
+    },
+    "profileEntry": {
+      "type": "object",
+      "required": [
+        "did"
+      ],
+      "properties": {
+        "did": {
+          "type": "string",
+          "format": "did"
+        },
+        "handle": {
+          "type": "string"
+        },
+        "uri": {
+          "type": "string",
+          "format": "at-uri"
+        },
+        "cid": {
+          "type": "string",
+          "format": "cid"
+        },
+        "value": {
+          "type": "ref",
+          "ref": "app.bsky.actor.profile#main"
+        },
+        "collection": {
+          "type": "string",
+          "format": "nsid"
+        },
+        "rkey": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

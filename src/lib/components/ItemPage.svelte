@@ -11,6 +11,7 @@
 	import TabSelect from './TabSelect.svelte';
 	import TrailerDialog from './TrailerDialog.svelte';
 	import { backdropUrl, posterUrl, profileUrl } from '$lib/images';
+	import { loginDialog } from '$lib/login.svelte';
 	import { reviewDialog } from '$lib/review.svelte';
 	import { slugify } from '$lib/utils';
 	import type { getMediaPage } from '$lib/tmdb.server';
@@ -18,8 +19,18 @@
 
 	type DetailSection = 'reviews' | 'similar' | 'cast';
 	type ItemPageData = Awaited<ReturnType<typeof getMediaPage>> & {
+		did: string | null;
 		reviews: ReviewCardModel[];
 	};
+
+	function startReview() {
+		if (!data.did) {
+			loginDialog.show();
+			return;
+		}
+
+		reviewDialog.show(data.item);
+	}
 
 	function getDefaultDetailSection(data: ItemPageData): DetailSection {
 		if (data.reviews.length > 0) return 'reviews';
@@ -105,7 +116,7 @@
 			<div class="flex flex-wrap items-center gap-2">
 				<button
 					type="button"
-					onclick={() => reviewDialog.show(data.item)}
+					onclick={startReview}
 					class="inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/15 bg-white/10 px-2.5 text-xs font-semibold text-white transition-colors hover:bg-white/15 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70"
 				>
 					<svg

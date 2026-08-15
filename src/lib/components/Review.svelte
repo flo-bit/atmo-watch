@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { isCanonicalResourceUri, parseCanonicalResourceUri } from '@atcute/lexicons';
+	import { EyeOff, Heart, Image as ImageIcon, MessageCircle } from '@lucide/svelte';
 	import { posterUrl } from '$lib/images';
 	import type { ReviewCardModel } from '$lib/types';
 	import { cn, slugify, toMediaRouteKind } from '$lib/utils';
@@ -55,20 +56,7 @@
 				/>
 			{:else}
 				<span class="flex size-full items-center justify-center text-base-600">
-					<svg
-						class="size-8"
-						viewBox="0 0 24 24"
-						fill="none"
-						stroke="currentColor"
-						stroke-width="1.5"
-						aria-hidden="true"
-					>
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							d="m6 20.25 6-10.5 6 10.5m-12 0h12M5.25 6.75h13.5A2.25 2.25 0 0 1 21 9v9a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 18V9a2.25 2.25 0 0 1 2.25-2.25ZM8.25 3.75h7.5"
-						/>
-					</svg>
+					<ImageIcon class="size-8" strokeWidth={1.5} aria-hidden="true" />
 				</span>
 			{/if}
 		</a>
@@ -125,44 +113,34 @@
 						onclick={() => (spoilerRevealed = true)}
 						class="absolute inset-0 flex size-full flex-col items-center justify-center gap-1 rounded-lg bg-base-950/65 px-4 text-center backdrop-blur-[2px] transition-colors hover:bg-base-950/55 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-400"
 					>
-						<svg
-							class="size-4 text-base-300"
-							viewBox="0 0 24 24"
-							fill="none"
-							stroke="currentColor"
-							stroke-width="1.5"
-							aria-hidden="true"
-						>
-							<path
-								stroke-linecap="round"
-								stroke-linejoin="round"
-								d="M3 3l18 18M10.6 10.7a2 2 0 0 0 2.7 2.7M9.9 4.2A10.8 10.8 0 0 1 12 4c5.5 0 9.3 4.7 9.8 5.4a1 1 0 0 1 0 1.2 17.8 17.8 0 0 1-3 3.2M6.2 6.2A17.5 17.5 0 0 0 2.2 9.4a1 1 0 0 0 0 1.2C2.7 11.3 6.5 16 12 16c.8 0 1.6-.1 2.3-.3"
-							/>
-						</svg>
+						<EyeOff class="size-4 text-base-300" strokeWidth={1.5} aria-hidden="true" />
 						<span class="text-xs font-semibold text-white">This review may contain spoilers</span>
 						<span class="text-xs text-base-400">Click to show review</span>
 					</button>
 				{/if}
 			</div>
 
-			{#if reviewUrl}
-				<a
-					href={reviewUrl}
-					class="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-base-400 transition-colors hover:text-accent-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-400"
+			<a
+				href={reviewUrl}
+				aria-label={`Open review of ${review.media.title}`}
+				class="mt-3 flex w-fit items-center gap-3 text-xs text-base-500 transition-colors hover:text-base-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-400"
+			>
+				<span
+					class="inline-flex items-center gap-1"
+					aria-label={`${review.likeCount} ${review.likeCount === 1 ? 'like' : 'likes'}`}
 				>
-					view review
-					<svg
-						class="size-3"
-						viewBox="0 0 24 24"
-						fill="none"
-						stroke="currentColor"
-						stroke-width="1.75"
-						aria-hidden="true"
-					>
-						<path stroke-linecap="round" stroke-linejoin="round" d="m9 18 6-6-6-6" />
-					</svg>
-				</a>
-			{/if}
+					<Heart class="size-4" strokeWidth={1.5} aria-hidden="true" />
+					{#if review.likeCount > 0}<span>{review.likeCount}</span>{/if}
+				</span>
+
+				<span
+					class="inline-flex items-center gap-1"
+					aria-label={`${review.commentCount} ${review.commentCount === 1 ? 'comment' : 'comments'}`}
+				>
+					<MessageCircle class="size-4" strokeWidth={1.5} aria-hidden="true" />
+					{#if review.commentCount > 0}<span>{review.commentCount}</span>{/if}
+				</span>
+			</a>
 		{:else}
 			<div class="mt-4">
 				<Rating rating={review.rating} size="size-6" />

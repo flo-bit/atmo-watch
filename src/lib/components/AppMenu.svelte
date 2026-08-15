@@ -38,7 +38,7 @@
 			</svg>
 		</MenuItem>
 
-		<SearchMenuItem onOpen={() => (menuOpen = false)} />
+		<SearchMenuItem {did} onOpen={() => (menuOpen = false)} />
 		<AccountMenuItem {did} onLoginOpen={() => (menuOpen = false)} />
 	</nav>
 </aside>

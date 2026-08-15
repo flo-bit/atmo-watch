@@ -29,6 +29,10 @@ npm run dev
 npm run dev -- --open
 ```
 
+## API Worker
+
+The public Contrail API is a separate Cloudflare Worker under [`api/`](api/README.md). Use `pnpm api:dev`, `pnpm api:check`, and `pnpm api:deploy` from the repository root.
+
 ## Cloudflare KV
 
 Bind a Cloudflare KV namespace as `MEDIA_CACHE` to cache TMDB and OMDb data. Without the binding, external data is fetched normally.

@@ -3,6 +3,7 @@
 	import { onMount } from 'svelte';
 	import AppMenu from '$lib/components/AppMenu.svelte';
 	import Footer from '$lib/components/Footer.svelte';
+	import LoginDialog from '$lib/components/LoginDialog.svelte';
 	import ReviewDialog from '$lib/components/ReviewDialog.svelte';
 	import { reviewLibrary } from '$lib/review.svelte';
 
@@ -19,4 +20,5 @@
 </div>
 
 <AppMenu did={data.did} />
+<LoginDialog />
 <ReviewDialog />

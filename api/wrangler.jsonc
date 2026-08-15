@@ -1,0 +1,26 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "atmo-watch-api",
+	"main": "src/worker.ts",
+	"compatibility_date": "2026-08-15",
+	"observability": {
+		"enabled": true
+	},
+	"routes": [
+		{
+			"pattern": "api.atmo.watch",
+			"custom_domain": true
+		}
+	],
+	"d1_databases": [
+		{
+			"binding": "DB",
+			"database_name": "atmo-watch-contrail-g20260815",
+			// Replace this after creating the production D1 database.
+			"database_id": "00000000-0000-0000-0000-000000000000"
+		}
+	],
+	"triggers": {
+		"crons": ["*/1 * * * *"]
+	}
+}

@@ -1,0 +1,5 @@
+# lexicon sources
+
+this directory contains lexicon documents pulled from the following sources:
+
+- atproto (nsids: app.bsky.actor.profile, com.atproto.label.defs, com.atproto.repo.strongRef, social.popfeed.feed.comment, social.popfeed.feed.like, social.popfeed.feed.list, social.popfeed.feed.listItem, social.popfeed.feed.review)

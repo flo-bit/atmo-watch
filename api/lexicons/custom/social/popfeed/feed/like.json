@@ -1,0 +1,40 @@
+{
+  "defs": {
+    "main": {
+      "description": "Record declaring a 'like' of a review.",
+      "key": "tid",
+      "record": {
+        "properties": {
+          "createdAt": {
+            "description": "Client-declared timestamp when this like was created.",
+            "format": "datetime",
+            "type": "string"
+          },
+          "subjectType": {
+            "description": "The type of subject being liked, e.g., 'review'.",
+            "enum": [
+              "review",
+              "list",
+              "post",
+              "comment"
+            ],
+            "type": "string"
+          },
+          "subjectUri": {
+            "description": "The type of subject being liked, e.g., 'review'.",
+            "format": "uri",
+            "type": "string"
+          }
+        },
+        "required": [
+          "subjectUri",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "type": "record"
+    }
+  },
+  "id": "social.popfeed.feed.like",
+  "lexicon": 1
+}

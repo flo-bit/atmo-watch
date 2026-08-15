@@ -18,12 +18,12 @@
 	<meta name="description" content="Find a movie or TV show to review." />
 </svelte:head>
 
-<main class="bg-base-950 text-base-50 min-h-dvh pb-12">
+<main class="min-h-dvh bg-base-950 pb-12 text-base-50">
 	<Container class="px-4">
 		<h1 class="sr-only">Search movies and TV shows</h1>
 
 		<div class="mx-auto w-full max-w-xl pt-[18vh] sm:pt-[22vh]">
-			<SearchCommand />
+			<SearchCommand did={data.did} />
 		</div>
 
 		<section class="mt-20 w-full pb-12">
@@ -34,7 +34,7 @@
 			{#if selectedItems.length > 0}
 				<ItemsGrid items={selectedItems} />
 			{:else}
-				<p class="text-base-400 mt-8 text-sm">This collection is unavailable right now.</p>
+				<p class="mt-8 text-sm text-base-400">This collection is unavailable right now.</p>
 			{/if}
 		</section>
 	</Container>
