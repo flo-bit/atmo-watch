@@ -1,0 +1,35 @@
+{
+  "format": "contrail.provider-lock",
+  "version": 1,
+  "endpoint": "http://127.0.0.1:8787",
+  "namespace": "watch.atmo",
+  "contractDigest": "sha256:0f5f5b7930ba4502e4ef35f81ac33abd71896958e45841c96f55748a631e4d19",
+  "lexiconDigest": "sha256:ec400c9703839dd015a9d006e626f3b7d03f52815db8b4d7b183de23bb387385",
+  "methods": [
+    "watch.atmo.comment.getRecord",
+    "watch.atmo.comment.listRecords",
+    "watch.atmo.getCursor",
+    "watch.atmo.getProfile",
+    "watch.atmo.like.getRecord",
+    "watch.atmo.like.listRecords",
+    "watch.atmo.list.getRecord",
+    "watch.atmo.list.listRecords",
+    "watch.atmo.listItem.getRecord",
+    "watch.atmo.listItem.listRecords",
+    "watch.atmo.profile.getRecord",
+    "watch.atmo.profile.listRecords",
+    "watch.atmo.review.getRecord",
+    "watch.atmo.review.listRecords"
+  ],
+  "collections": [
+    "social.popfeed.actor.profile",
+    "social.popfeed.feed.comment",
+    "social.popfeed.feed.like",
+    "social.popfeed.feed.list",
+    "social.popfeed.feed.listItem",
+    "social.popfeed.feed.review"
+  ],
+  "serviceAuth": null,
+  "lexiconRoot": "src/lib/contrail/lexicons",
+  "allowInsecureHttp": true
+}

@@ -4,6 +4,9 @@
 	"version": "0.0.1",
 	"type": "module",
 	"scripts": {
+		"atproto:setup": "atproto-oauth setup",
+		"atproto:keygen": "atproto-oauth keygen",
+		"atproto:secret": "atproto-oauth secret",
 		"dev": "vite dev",
 		"build": "vite build",
 		"preview": "vite preview",
@@ -45,12 +48,15 @@
 		"vitest-browser-svelte": "^2.1.1"
 	},
 	"dependencies": {
+		"@atcute/atproto": "^4.0.0",
 		"@atcute/client": "^5.1.1",
 		"@atcute/lexicons": "^2.0.3",
 		"@atmo-dev/contrail": "^0.17.0",
 		"@lorenzopant/tmdb": "^1.25.3",
+		"@svelte-atproto/oauth": "^0.3.0",
 		"add": "^2.0.9",
 		"bits-ui": "^2.18.1",
-		"pnpm": "^11.21.0"
+		"pnpm": "^11.21.0",
+		"valibot": "^1.0.0"
 	}
 }

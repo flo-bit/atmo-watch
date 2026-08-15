@@ -120,7 +120,7 @@
 			{#if selectedSection === 'similar' && data.recommendations.length > 0}
 				<ItemsGrid items={data.recommendations} class="mt-4" />
 			{:else if selectedSection === 'cast' && data.cast.length > 0}
-				<div class="mt-4 grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 lg:grid-cols-5">
+				<div class="mt-4 grid grid-cols-3 gap-x-4 gap-y-6 sm:grid-cols-4 lg:grid-cols-5">
 					{#each data.cast as castMember (castMember.id)}
 						<a
 							href={`/cast/${castMember.id}-${slugify(castMember.name)}`}

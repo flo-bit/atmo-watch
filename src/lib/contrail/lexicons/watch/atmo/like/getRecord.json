@@ -1,0 +1,109 @@
+{
+  "defs": {
+    "main": {
+      "description": "Get a social.popfeed.feed.like record by AT URI",
+      "output": {
+        "encoding": "application/json",
+        "schema": {
+          "properties": {
+            "cid": {
+              "format": "cid",
+              "type": "string"
+            },
+            "collection": {
+              "format": "nsid",
+              "type": "string"
+            },
+            "did": {
+              "format": "did",
+              "type": "string"
+            },
+            "profiles": {
+              "items": {
+                "ref": "#profileEntry",
+                "type": "ref"
+              },
+              "type": "array"
+            },
+            "rkey": {
+              "type": "string"
+            },
+            "time_us": {
+              "type": "integer"
+            },
+            "uri": {
+              "format": "at-uri",
+              "type": "string"
+            },
+            "value": {
+              "ref": "social.popfeed.feed.like#main",
+              "type": "ref"
+            }
+          },
+          "required": [
+            "uri",
+            "value",
+            "did",
+            "collection",
+            "rkey",
+            "time_us"
+          ],
+          "type": "object"
+        }
+      },
+      "parameters": {
+        "properties": {
+          "profiles": {
+            "description": "Include indexed profile and identity information",
+            "type": "boolean"
+          },
+          "uri": {
+            "description": "AT URI of the record",
+            "format": "at-uri",
+            "type": "string"
+          }
+        },
+        "required": [
+          "uri"
+        ],
+        "type": "params"
+      },
+      "type": "query"
+    },
+    "profileEntry": {
+      "properties": {
+        "cid": {
+          "format": "cid",
+          "type": "string"
+        },
+        "collection": {
+          "format": "nsid",
+          "type": "string"
+        },
+        "did": {
+          "format": "did",
+          "type": "string"
+        },
+        "handle": {
+          "type": "string"
+        },
+        "rkey": {
+          "type": "string"
+        },
+        "uri": {
+          "format": "at-uri",
+          "type": "string"
+        },
+        "value": {
+          "type": "unknown"
+        }
+      },
+      "required": [
+        "did"
+      ],
+      "type": "object"
+    }
+  },
+  "id": "watch.atmo.like.getRecord",
+  "lexicon": 1
+}

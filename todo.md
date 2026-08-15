@@ -1,0 +1,4 @@
+- login with atproto, show account button at bottom of side menu (if not logged in show login modal, otherwise open profile)
+- show profile: avatar, handle, reviews, lists
+- create reviews
+- show reviews in movie/show detail page

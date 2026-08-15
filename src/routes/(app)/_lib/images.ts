@@ -17,6 +17,7 @@ export function logoUrl(path: string | null | undefined, size: LogoSize = 'w92')
 }
 
 export function posterUrl(path: string | null | undefined, size: PosterSize = 'w500') {
+	if (path?.startsWith('https://')) return path;
 	return path ? images.poster(path, size) : undefined;
 }
 

@@ -1,0 +1,56 @@
+{
+  "defs": {
+    "main": {
+      "description": "Fetch changed records from their authoritative PDS for immediate indexing",
+      "input": {
+        "encoding": "application/json",
+        "schema": {
+          "properties": {
+            "uri": {
+              "format": "at-uri",
+              "type": "string"
+            },
+            "uris": {
+              "items": {
+                "format": "at-uri",
+                "type": "string"
+              },
+              "maxLength": 25,
+              "type": "array"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "output": {
+        "encoding": "application/json",
+        "schema": {
+          "properties": {
+            "deleted": {
+              "minimum": 0,
+              "type": "integer"
+            },
+            "errors": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "indexed": {
+              "minimum": 0,
+              "type": "integer"
+            }
+          },
+          "required": [
+            "indexed",
+            "deleted"
+          ],
+          "type": "object"
+        }
+      },
+      "type": "procedure"
+    }
+  },
+  "id": "watch.atmo.notifyOfUpdate",
+  "lexicon": 1
+}

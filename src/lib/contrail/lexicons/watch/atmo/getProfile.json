@@ -1,0 +1,72 @@
+{
+  "defs": {
+    "main": {
+      "output": {
+        "encoding": "application/json",
+        "schema": {
+          "properties": {
+            "profiles": {
+              "items": {
+                "ref": "#profileEntry",
+                "type": "ref"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "profiles"
+          ],
+          "type": "object"
+        }
+      },
+      "parameters": {
+        "properties": {
+          "actor": {
+            "format": "at-identifier",
+            "type": "string"
+          }
+        },
+        "required": [
+          "actor"
+        ],
+        "type": "params"
+      },
+      "type": "query"
+    },
+    "profileEntry": {
+      "properties": {
+        "cid": {
+          "format": "cid",
+          "type": "string"
+        },
+        "collection": {
+          "format": "nsid",
+          "type": "string"
+        },
+        "did": {
+          "format": "did",
+          "type": "string"
+        },
+        "handle": {
+          "type": "string"
+        },
+        "rkey": {
+          "type": "string"
+        },
+        "uri": {
+          "format": "at-uri",
+          "type": "string"
+        },
+        "value": {
+          "type": "unknown"
+        }
+      },
+      "required": [
+        "did"
+      ],
+      "type": "object"
+    }
+  },
+  "id": "watch.atmo.getProfile",
+  "lexicon": 1
+}

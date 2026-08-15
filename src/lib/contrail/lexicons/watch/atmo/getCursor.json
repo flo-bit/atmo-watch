@@ -1,0 +1,48 @@
+{
+  "defs": {
+    "main": {
+      "description": "Get the committed primary ordered-source position",
+      "output": {
+        "encoding": "application/json",
+        "schema": {
+          "properties": {
+            "position": {
+              "ref": "#sourcePosition",
+              "type": "ref"
+            },
+            "updatedAt": {
+              "type": "integer"
+            },
+            "updatedAtDate": {
+              "format": "datetime",
+              "type": "string"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "query"
+    },
+    "sourcePosition": {
+      "properties": {
+        "cursor": {
+          "type": "string"
+        },
+        "epoch": {
+          "type": "string"
+        },
+        "source": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "source",
+        "epoch",
+        "cursor"
+      ],
+      "type": "object"
+    }
+  },
+  "id": "watch.atmo.getCursor",
+  "lexicon": 1
+}

@@ -1,0 +1,134 @@
+{
+  "defs": {
+    "main": {
+      "description": "Query social.popfeed.feed.comment records",
+      "output": {
+        "encoding": "application/json",
+        "schema": {
+          "properties": {
+            "cursor": {
+              "type": "string"
+            },
+            "profiles": {
+              "items": {
+                "ref": "#profileEntry",
+                "type": "ref"
+              },
+              "type": "array"
+            },
+            "records": {
+              "items": {
+                "ref": "#record",
+                "type": "ref"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "records"
+          ],
+          "type": "object"
+        }
+      },
+      "parameters": {
+        "properties": {
+          "actor": {
+            "description": "Filter by an indexed DID or cached handle",
+            "format": "at-identifier",
+            "type": "string"
+          },
+          "cursor": {
+            "type": "string"
+          },
+          "limit": {
+            "default": 50,
+            "maximum": 200,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "profiles": {
+            "description": "Include indexed profile and identity information",
+            "type": "boolean"
+          }
+        },
+        "type": "params"
+      },
+      "type": "query"
+    },
+    "profileEntry": {
+      "properties": {
+        "cid": {
+          "format": "cid",
+          "type": "string"
+        },
+        "collection": {
+          "format": "nsid",
+          "type": "string"
+        },
+        "did": {
+          "format": "did",
+          "type": "string"
+        },
+        "handle": {
+          "type": "string"
+        },
+        "rkey": {
+          "type": "string"
+        },
+        "uri": {
+          "format": "at-uri",
+          "type": "string"
+        },
+        "value": {
+          "type": "unknown"
+        }
+      },
+      "required": [
+        "did"
+      ],
+      "type": "object"
+    },
+    "record": {
+      "properties": {
+        "cid": {
+          "format": "cid",
+          "type": "string"
+        },
+        "collection": {
+          "format": "nsid",
+          "type": "string"
+        },
+        "did": {
+          "format": "did",
+          "type": "string"
+        },
+        "rkey": {
+          "type": "string"
+        },
+        "time_us": {
+          "type": "integer"
+        },
+        "uri": {
+          "format": "at-uri",
+          "type": "string"
+        },
+        "value": {
+          "ref": "social.popfeed.feed.comment#main",
+          "type": "ref"
+        }
+      },
+      "required": [
+        "uri",
+        "cid",
+        "value",
+        "did",
+        "collection",
+        "rkey",
+        "time_us"
+      ],
+      "type": "object"
+    }
+  },
+  "id": "watch.atmo.comment.listRecords",
+  "lexicon": 1
+}
