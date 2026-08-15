@@ -7,6 +7,8 @@ import type { Did } from '@atcute/lexicons';
 import * as v from 'valibot';
 import { contrail } from '$lib/contrail';
 import type { Main as ReviewRecord } from '$lib/contrail/types/types/social/popfeed/feed/review';
+import { backdropUrl } from '$lib/images';
+import { getReviewRecordMetadata } from '$lib/tmdb.server';
 
 const REVIEW_COLLECTION = 'social.popfeed.feed.review';
 const MAX_POSTER_SIZE = 2_000_000;
@@ -55,6 +57,14 @@ type StoredReviewValue = {
 	createdAt?: unknown;
 	poster?: unknown;
 	posterUrl?: unknown;
+	backdropUrl?: unknown;
+	facets?: unknown;
+	genres?: unknown;
+	isRevisit?: unknown;
+	mainCredit?: unknown;
+	mainCreditRole?: unknown;
+	releaseDate?: unknown;
+	tags?: unknown;
 	[key: string]: unknown;
 };
 
@@ -183,6 +193,14 @@ export const saveReviewRecord = command(saveReviewSchema, async ({ media, ...rev
 		typeof existing?.value.createdAt === 'string'
 			? existing.value.createdAt
 			: new Date().toISOString();
+
+	let metadata: Awaited<ReturnType<typeof getReviewRecordMetadata>>;
+	try {
+		metadata = await getReviewRecordMetadata(media.tmdbId, media.creativeWorkType);
+	} catch {
+		error(502, 'Could not load the media details needed to save this review');
+	}
+
 	let poster = existing?.value.poster;
 	if (media.posterUrl && (!poster || existing?.value.posterUrl !== media.posterUrl)) {
 		poster = await uploadPoster(client, media.posterUrl);
@@ -193,16 +211,27 @@ export const saveReviewRecord = command(saveReviewSchema, async ({ media, ...rev
 		$type: REVIEW_COLLECTION,
 		identifiers: {
 			...(existing?.value.identifiers ?? {}),
-			tmdbId: String(media.tmdbId)
+			tmdbId: String(media.tmdbId),
+			...(metadata.imdbId ? { imdbId: metadata.imdbId } : {})
 		},
 		creativeWorkType: media.creativeWorkType,
 		rating: review.rating,
 		createdAt,
-		title: media.title,
-		text: review.text || undefined,
+		title: metadata.title,
+		text: review.text,
 		containsSpoilers: review.containsSpoilers,
+		facets: Array.isArray(existing?.value.facets) ? existing.value.facets : [],
+		genres: metadata.genres,
+		isRevisit: typeof existing?.value.isRevisit === 'boolean' ? existing.value.isRevisit : false,
+		tags: Array.isArray(existing?.value.tags) ? existing.value.tags : [],
 		...(poster ? { poster } : {}),
-		...(media.posterUrl ? { posterUrl: media.posterUrl } : {})
+		...(media.posterUrl ? { posterUrl: media.posterUrl } : {}),
+		...(backdropUrl(metadata.backdrop, 'original')
+			? { backdropUrl: backdropUrl(metadata.backdrop, 'original') }
+			: {}),
+		...(metadata.releaseDate ? { releaseDate: metadata.releaseDate } : {}),
+		...(metadata.mainCredit ? { mainCredit: metadata.mainCredit } : {}),
+		...(metadata.mainCreditRole ? { mainCreditRole: metadata.mainCreditRole } : {})
 	} as ReviewRecord;
 
 	const authenticated = contrail.authenticated(client);

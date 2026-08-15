@@ -366,6 +366,49 @@ export async function getDetails(
 	return toMediaDetails(details, creativeWorkType);
 }
 
+function toRecordDate(value: string | null | undefined) {
+	if (!value) return undefined;
+	const date = new Date(`${value}T00:00:00.000Z`);
+	return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
+}
+
+export async function getReviewRecordMetadata(
+	tmdbId: number,
+	creativeWorkType: SupportedCreativeWorkType
+) {
+	const cache = getPublicDataCache(MEDIA_DATA_TTL);
+	const details = await getMediaSource(tmdbId, creativeWorkType, cache);
+	const summary = toMediaSummary(details, creativeWorkType);
+
+	let releaseDate: string | undefined;
+	let mainCredit: string | undefined;
+	let mainCreditRole: 'director' | 'network' | 'creator' | 'studio' | undefined;
+
+	if ('release_date' in details) {
+		releaseDate = toRecordDate(details.release_date);
+		const director = details.credits.crew.find((credit) => credit.job === 'Director');
+		const studio = details.production_companies[0];
+		mainCredit = director?.name ?? studio?.name;
+		mainCreditRole = director ? 'director' : studio ? 'studio' : undefined;
+	} else {
+		releaseDate = toRecordDate(details.first_air_date);
+		const network = details.networks?.[0];
+		const creator = details.created_by?.[0];
+		mainCredit = network?.name ?? creator?.name;
+		mainCreditRole = network ? 'network' : creator ? 'creator' : undefined;
+	}
+
+	return {
+		title: summary.title,
+		backdrop: toTmdbImage(details.backdrop_path),
+		genres: details.genres.map((genre) => genre.name),
+		imdbId: details.external_ids.imdb_id ?? undefined,
+		releaseDate,
+		mainCredit,
+		mainCreditRole
+	};
+}
+
 export function getPersonPage(personId: number) {
 	const cache = getPublicDataCache(MEDIA_DATA_TTL);
 	return cachePublicData(cache, `tmdb:person:${personId}`, async () => {

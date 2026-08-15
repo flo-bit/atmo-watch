@@ -7,6 +7,10 @@ import { sveltekitOG } from '@ethercorps/sveltekit-og/plugin';
 
 export default defineConfig({
 	server: { host: '127.0.0.1' },
+	// Add Workerd to Vite's default SSR conditions so packages can select their Worker-safe exports.
+	ssr: {
+		resolve: { conditions: ['workerd', 'module', 'node', 'development|production'] }
+	},
 	plugins: [
 		tailwindcss(),
 		sveltekit({
