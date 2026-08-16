@@ -124,7 +124,7 @@
 						class={`text-sm text-white ${writtenReviews.length > 0 || ratings.length > 0 ? 'mt-10 border-t border-white/10 pt-6' : 'mt-6'}`}
 					>
 						<h2 class="text-lg font-semibold tracking-tight">Lists</h2>
-						<div class="mt-4 grid grid-cols-2 gap-x-4 gap-y-8 sm:grid-cols-3">
+						<div class="mt-4 grid grid-cols-1 gap-x-4 gap-y-7 sm:grid-cols-2">
 							{#each data.lists as list (list.uri)}
 								<ListCard {list} />
 							{/each}

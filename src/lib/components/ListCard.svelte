@@ -18,15 +18,15 @@
 		class="block rounded-lg focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent-400"
 	>
 		<div
-			class="grid h-32 grid-cols-4 gap-1 overflow-hidden rounded-lg bg-base-900 p-1 transition-opacity group-hover:opacity-75 sm:h-36"
+			class="flex h-24 gap-1 overflow-hidden rounded-lg bg-base-900 p-1 transition-opacity group-hover:opacity-75"
 		>
 			{#each list.previewItems as item, index (`${item.creativeWorkType}:${item.tmdbId}:${index}`)}
-				<div class="min-w-0 overflow-hidden rounded-sm bg-base-800">
+				<div class="aspect-2/3 h-full shrink-0 overflow-hidden rounded-sm bg-base-800">
 					{#if item.poster}
 						<img
 							src={posterUrl(item.poster, 'w185')}
 							alt=""
-							class="size-full object-cover"
+							class="size-full object-contain"
 							loading="lazy"
 						/>
 					{/if}

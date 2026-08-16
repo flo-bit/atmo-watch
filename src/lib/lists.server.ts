@@ -78,7 +78,7 @@ function buildList(
 			ordered: record.value.ordered ?? false,
 			createdAt: record.value.createdAt,
 			itemCount: items.length,
-			previewItems: items.slice(0, 4)
+			previewItems: items.slice(0, 10)
 		},
 		items
 	};

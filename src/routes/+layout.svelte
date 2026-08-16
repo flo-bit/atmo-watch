@@ -4,6 +4,7 @@
 	import Footer from '$lib/components/Footer.svelte';
 	import LoginDialog from '$lib/components/LoginDialog.svelte';
 	import ReviewDialog from '$lib/components/ReviewDialog.svelte';
+	import CreateListDialog from '$lib/components/CreateListDialog.svelte';
 
 	let { data, children } = $props();
 </script>
@@ -18,3 +19,4 @@
 <AppMenu did={data.did} avatarUrl={data.avatarUrl} />
 <LoginDialog />
 <ReviewDialog />
+<CreateListDialog />

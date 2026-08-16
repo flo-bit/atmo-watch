@@ -11,6 +11,7 @@
 	let rating = $state(0);
 	let review = $state('');
 	let containsSpoilers = $state(false);
+	let markAsWatched = $state(true);
 	let loading = $state(false);
 	let saving = $state(false);
 	let saved = $state(false);
@@ -23,6 +24,7 @@
 		rating = 0;
 		review = '';
 		containsSpoilers = false;
+		markAsWatched = true;
 		loading = true;
 		saving = false;
 		saved = false;
@@ -99,7 +101,8 @@
 				},
 				rating,
 				text: review,
-				containsSpoilers
+				containsSpoilers,
+				markAsWatched
 			});
 			saved = true;
 			void invalidateAll();
@@ -122,7 +125,7 @@
 		>
 			<Dialog.Title class="text-sm font-semibold">rate & review</Dialog.Title>
 			<Dialog.Description class="sr-only">
-				Choose a star rating and optionally write a review.
+				Choose a star rating, optionally write a review, and mark this title as watched.
 			</Dialog.Description>
 
 			<Dialog.Close
@@ -168,16 +171,29 @@
 						class="mt-4 block w-full resize-none rounded-lg border border-white/10 bg-base-900 px-3 py-2 text-sm text-white outline-none placeholder:text-base-500 focus:border-white/25 focus:ring-0 disabled:cursor-wait"
 					></textarea>
 
-					<label class="mt-3 flex w-fit cursor-pointer items-center gap-2 text-xs text-base-300">
-						<input
-							type="checkbox"
-							bind:checked={containsSpoilers}
-							onchange={markChanged}
-							disabled={loading || saving}
-							class="size-4 rounded border-base-700 bg-base-900 text-accent-500 focus:ring-2 focus:ring-accent-500/40 focus:ring-offset-0"
-						/>
-						contains spoilers
-					</label>
+					<div class="mt-3 flex flex-wrap gap-x-5 gap-y-2">
+						<label class="flex w-fit cursor-pointer items-center gap-2 text-xs text-base-300">
+							<input
+								type="checkbox"
+								bind:checked={markAsWatched}
+								onchange={markChanged}
+								disabled={loading || saving}
+								class="size-4 rounded border-base-700 bg-base-900 text-accent-500 focus:ring-2 focus:ring-accent-500/40 focus:ring-offset-0"
+							/>
+							mark as watched
+						</label>
+
+						<label class="flex w-fit cursor-pointer items-center gap-2 text-xs text-base-300">
+							<input
+								type="checkbox"
+								bind:checked={containsSpoilers}
+								onchange={markChanged}
+								disabled={loading || saving}
+								class="size-4 rounded border-base-700 bg-base-900 text-accent-500 focus:ring-2 focus:ring-accent-500/40 focus:ring-offset-0"
+							/>
+							contains spoilers
+						</label>
+					</div>
 				</div>
 
 				{#if reviewError}

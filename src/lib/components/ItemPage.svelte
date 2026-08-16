@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
+	import AddToListMenu from './AddToListMenu.svelte';
 	import Avatar from './Avatar.svelte';
 	import BackdropGallery from './BackdropGallery.svelte';
 	import Container from './Container.svelte';
@@ -213,9 +214,10 @@
 				</h1>
 
 				<div
-					class="hidden shrink-0 lg:col-start-2 lg:row-start-2 lg:flex lg:items-center lg:justify-end lg:justify-self-end"
+					class="hidden shrink-0 gap-2 lg:col-start-2 lg:row-start-2 lg:flex lg:items-center lg:justify-end lg:justify-self-end"
 				>
 					{@render reviewButton()}
+					<AddToListMenu item={data.item} did={data.did} />
 				</div>
 			</header>
 
@@ -227,8 +229,9 @@
 					imdbVotes={data.imdb_votes}
 					ratings={data.ratings}
 				/>
-				<div class="ml-auto">
+				<div class="ml-auto flex gap-2">
 					{@render reviewButton()}
+					<AddToListMenu item={data.item} did={data.did} />
 				</div>
 			</div>
 
