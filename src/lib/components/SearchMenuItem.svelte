@@ -7,7 +7,11 @@
 	import MenuItem from './MenuItem.svelte';
 	import SearchCommand from './SearchCommand.svelte';
 
-	let { did, onOpen }: { did: string | null; onOpen?: () => void } = $props();
+	let {
+		did,
+		variant = 'sidebar',
+		onOpen
+	}: { did: string | null; variant?: 'sidebar' | 'bottom'; onOpen?: () => void } = $props();
 	let open = $state(false);
 
 	$effect(() => {
@@ -31,7 +35,7 @@
 </script>
 
 <Dialog.Root bind:open>
-	<MenuItem label="Search" onclick={openSearch}>
+	<MenuItem label="Search" onclick={openSearch} {variant}>
 		<svg
 			class="size-5 shrink-0"
 			viewBox="0 0 24 24"

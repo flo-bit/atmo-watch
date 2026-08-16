@@ -39,12 +39,23 @@ export const load: LayoutServerLoad = async ({ params }) => {
 	const did = profileEntry.did;
 	const avatar =
 		bskyProfile?.value && 'avatar' in bskyProfile.value ? bskyProfile.value.avatar : undefined;
+	const popfeedBanner = popfeedProfile?.value?.banner;
+	const bskyBanner = bskyProfile?.value?.banner;
+	const banner = popfeedBanner ?? bskyBanner;
+	const bannerUrl = banner
+		? getAtprotoCdnImageUrl({ did, blob: banner, preset: 'banner' })
+		: undefined;
+
 	return {
 		profile: {
 			did,
 			handle: profileEntry.handle ?? did,
 			displayName: popfeedProfile?.value?.displayName ?? bskyProfile?.value?.displayName,
-			avatarUrl: avatar ? getAtprotoCdnImageUrl({ did, blob: avatar, preset: 'avatar' }) : undefined
+			description: popfeedProfile?.value?.description ?? bskyProfile?.value?.description,
+			avatarUrl: avatar
+				? getAtprotoCdnImageUrl({ did, blob: avatar, preset: 'avatar' })
+				: undefined,
+			bannerUrl
 		}
 	};
 };

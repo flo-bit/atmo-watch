@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
-	import Avatar from '$lib/components/Avatar.svelte';
+	import { UserProfile } from '@foxui/social';
 	import Container from '$lib/components/Container.svelte';
 	import ItemCard from '$lib/components/ItemCard.svelte';
 	import ListCard from '$lib/components/ListCard.svelte';
@@ -42,19 +42,19 @@
 
 <main class="min-h-dvh bg-base-950 pb-12 text-base-50">
 	<Container class="px-4 pt-12">
-		<header class="flex items-center gap-4 border-b border-base-800 pb-8 sm:gap-6">
-			<Avatar
-				src={data.profile.avatarUrl}
-				alt={`@${data.profile.handle}'s Bluesky avatar`}
-				class="size-20 shrink-0 sm:size-24"
-			/>
-			<h1 class="min-w-0 truncate text-xl font-semibold text-white sm:text-2xl">
-				@{data.profile.handle}
-			</h1>
-		</header>
+		<UserProfile
+			class="not-prose"
+			profile={{
+				handle: `@${data.profile.handle}`,
+				displayName: data.profile.displayName,
+				description: data.profile.description,
+				avatar: data.profile.avatarUrl,
+				banner: data.profile.bannerUrl
+			}}
+		/>
 
 		{#if profileTabs.length > 0}
-			<section class="pt-8" aria-labelledby="activity-heading">
+			<section class="mx-auto max-w-2xl pt-8" aria-labelledby="activity-heading">
 				<h2 id="activity-heading" class="sr-only">@{data.profile.handle}'s activity</h2>
 				<TabSelect
 					bind:value={selectedSection}
@@ -83,7 +83,7 @@
 				{/if}
 			</section>
 		{:else}
-			<p class="pt-8 text-sm text-base-400">No reviews, ratings, or lists yet.</p>
+			<p class="mx-auto max-w-2xl pt-8 text-sm text-base-400">No reviews, ratings, or lists yet.</p>
 		{/if}
 	</Container>
 </main>

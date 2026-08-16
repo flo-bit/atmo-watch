@@ -10,6 +10,7 @@
 		tooltip = label,
 		active = false,
 		onclick,
+		variant = 'sidebar',
 		class: className,
 		children
 	}: {
@@ -18,13 +19,17 @@
 		tooltip?: string;
 		active?: boolean;
 		onclick?: () => void;
+		variant?: 'sidebar' | 'bottom';
 		class?: string;
 		children: Snippet;
 	} = $props();
 
 	let styles = $derived(
 		cn(
-			'group relative flex h-10 w-full items-center gap-3 rounded-lg p-2.5 text-sm font-semibold transition-colors md:size-10',
+			'group relative flex transition-colors',
+			variant === 'bottom'
+				? 'h-12 min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-2 py-1 text-[0.65rem] font-medium'
+				: 'h-10 w-full items-center gap-3 rounded-lg p-2.5 text-sm font-semibold md:size-10',
 			active
 				? 'bg-accent-500/10 text-accent-300'
 				: 'text-base-300 hover:bg-white/10 hover:text-white',
@@ -35,12 +40,14 @@
 
 {#snippet content()}
 	{@render children()}
-	<span class="md:sr-only">{label}</span>
-	<span
-		class="pointer-events-none absolute left-14 hidden rounded-lg bg-accent-950/20 px-3 py-2 text-xs whitespace-nowrap text-white opacity-0 backdrop-blur-md transition-opacity group-hover:opacity-100 md:block"
-	>
-		{tooltip}
-	</span>
+	<span class={variant === 'bottom' ? 'max-w-full truncate' : 'md:sr-only'}>{label}</span>
+	{#if variant === 'sidebar'}
+		<span
+			class="pointer-events-none absolute left-14 hidden rounded-lg bg-accent-950/20 px-3 py-2 text-xs whitespace-nowrap text-white opacity-0 backdrop-blur-md transition-opacity group-hover:opacity-100 md:block"
+		>
+			{tooltip}
+		</span>
+	{/if}
 {/snippet}
 
 {#if href}

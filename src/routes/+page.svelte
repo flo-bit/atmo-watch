@@ -1,16 +1,17 @@
 <script lang="ts">
 	import Container from '$lib/components/Container.svelte';
-	import ItemsGrid from '$lib/components/ItemsGrid.svelte';
+	import MediaCollection from '$lib/components/MediaCollection.svelte';
 	import SearchCommand from '$lib/components/SearchCommand.svelte';
-	import TabSelect from '$lib/components/TabSelect.svelte';
 
 	let { data } = $props();
-	let selected = $state<'popular' | 'theaters'>('popular');
-	let selectedItems = $derived(selected === 'popular' ? data.popular : data.currentlyInTheaters);
-	const collections = [
-		{ value: 'popular', label: 'popular' },
-		{ value: 'theaters', label: 'in theaters' }
-	] satisfies Array<{ value: typeof selected; label: string }>;
+	let collections = $derived(
+		[
+			{ title: 'Popular movies', items: data.popularMovies },
+			{ title: 'In theaters', items: data.currentlyInTheaters },
+			{ title: 'Popular shows', items: data.popularShows },
+			{ title: 'Recently reviewed in the atmosphere', items: data.recentlyReviewedInAtmosphere }
+		].filter((collection) => collection.items.length > 0)
+	);
 </script>
 
 <svelte:head>
@@ -26,16 +27,18 @@
 			<SearchCommand did={data.did} />
 		</div>
 
-		<section class="mt-20 w-full pb-12">
-			<h2 class="sr-only">Browse movies and TV shows</h2>
-
-			<TabSelect bind:value={selected} options={collections} label="Choose collection" />
-
-			{#if selectedItems.length > 0}
-				<ItemsGrid items={selectedItems} />
-			{:else}
-				<p class="mt-8 text-sm text-base-400">This collection is unavailable right now.</p>
-			{/if}
-		</section>
+		{#if collections.length > 0}
+			<div class="mt-20 space-y-12 pb-12">
+				{#each collections as collection, index (collection.title)}
+					<MediaCollection
+						title={collection.title}
+						items={collection.items}
+						class={index > 0 ? 'border-t border-white/10 pt-8' : undefined}
+					/>
+				{/each}
+			</div>
+		{:else}
+			<p class="mt-20 pb-12 text-sm text-base-400">No movies or shows are available right now.</p>
+		{/if}
 	</Container>
 </main>

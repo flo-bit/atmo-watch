@@ -6,6 +6,7 @@ import type * as ReviewListRecords from '$lib/contrail/types/types/watch/atmo/re
 import type {
 	ActorSummary,
 	MediaImage,
+	MediaSummary,
 	ReviewCardModel,
 	ReviewCommentModel,
 	SupportedCreativeWorkType
@@ -172,6 +173,33 @@ export async function getReviewInteractions(reviewUri: string, viewerDid: string
 		viewerLikeUri,
 		comments: reviewComments
 	};
+}
+
+export async function getRecentlyReviewedMedia(): Promise<MediaSummary[]> {
+	const response = await contrail.get('watch.atmo.review.listRecords', {
+		params: { limit: 200, order: 'desc' }
+	});
+
+	if (!response.ok) {
+		throw new Error(`Could not load recent reviews from Contrail (${response.status})`);
+	}
+
+	const seen = new Set<string>();
+	const media: MediaSummary[] = [];
+
+	for (const record of response.data.records) {
+		const review = toReview(record);
+		if (!review?.media.poster) continue;
+
+		const key = `${review.media.creativeWorkType}:${review.media.tmdbId}`;
+		if (seen.has(key)) continue;
+
+		seen.add(key);
+		media.push(review.media);
+		if (media.length === 20) break;
+	}
+
+	return media;
 }
 
 export async function getMediaReviews(

@@ -30,13 +30,14 @@ import type {
 	WatchProvider
 } from './types';
 
-const MEDIA_APPENDS: ['credits', 'recommendations', 'external_ids', 'videos', 'watch/providers'] = [
+const MEDIA_APPENDS: [
 	'credits',
 	'recommendations',
 	'external_ids',
 	'videos',
-	'watch/providers'
-];
+	'watch/providers',
+	'images'
+] = ['credits', 'recommendations', 'external_ids', 'videos', 'watch/providers', 'images'];
 const PERSON_APPENDS: ['combined_credits'] = ['combined_credits'];
 
 const HOUR = 60 * 60;
@@ -93,16 +94,18 @@ function getMediaSource(
 	creativeWorkType: SupportedCreativeWorkType,
 	cache: ReturnType<typeof getPublicDataCache>
 ): Promise<MediaDetailsSource> {
-	return cachePublicData(cache, `tmdb:media:${creativeWorkType}:${tmdbId}`, async () => {
+	return cachePublicData(cache, `tmdb:media:v2:${creativeWorkType}:${tmdbId}`, async () => {
 		const tmdb = getClient();
 		return creativeWorkType === 'movie'
 			? tmdb.movies.details({
 					movie_id: tmdbId,
-					append_to_response: MEDIA_APPENDS
+					append_to_response: MEDIA_APPENDS,
+					include_image_language: ['en', 'null']
 				})
 			: tmdb.tv_series.details({
 					series_id: tmdbId,
-					append_to_response: MEDIA_APPENDS
+					append_to_response: MEDIA_APPENDS,
+					include_image_language: ['en', 'null']
 				});
 	});
 }
@@ -167,6 +170,13 @@ function toCastMember(person: Cast): CastMember {
 		character: person.character,
 		profile_path: person.profile_path ?? null
 	};
+}
+
+function toBackdropGallery(source: MediaDetailsSource): MediaImage[] {
+	const paths = [source.backdrop_path, ...source.images.backdrops.map((image) => image.file_path)];
+	return [...new Set(paths.filter((path): path is string => Boolean(path)))]
+		.slice(0, 6)
+		.map((path) => ({ source: 'tmdb', path }));
 }
 
 const regionNames = new Intl.DisplayNames(['en'], { type: 'region' });
@@ -286,6 +296,7 @@ export async function getMediaPage(
 			toMediaSummary(item, creativeWorkType)
 		),
 		cast: details.credits.cast.map(toCastMember),
+		backdrops: toBackdropGallery(details),
 		imdb_id: details.external_ids.imdb_id ?? null,
 		imdb_votes: omdb.imdbVotes,
 		ratings: omdb.ratings,
@@ -297,7 +308,8 @@ export async function getMediaPage(
 async function loadHomePage() {
 	const empty = {
 		currentlyInTheaters: [] as MediaSummary[],
-		popular: [] as MediaSummary[]
+		popularMovies: [] as MediaSummary[],
+		popularShows: [] as MediaSummary[]
 	};
 	let tmdb: TMDB;
 
@@ -318,7 +330,6 @@ async function loadHomePage() {
 			? theatersResult.value.results
 					.map((item) => toMediaSummary(item, 'movie'))
 					.filter((item) => item.poster)
-					.slice(0, 16)
 			: [];
 	const popularMovies =
 		popularMoviesResult.status === 'fulfilled'
@@ -326,24 +337,22 @@ async function loadHomePage() {
 					.map((item) => toMediaSummary(item, 'movie'))
 					.filter((item) => item.poster)
 			: [];
-	const popularTv =
+	const popularShows =
 		popularTvResult.status === 'fulfilled'
 			? popularTvResult.value.results
 					.map((item) => toMediaSummary(item, 'tv_show'))
 					.filter((item) => item.poster)
 			: [];
-	const popular = Array.from({ length: Math.max(popularMovies.length, popularTv.length) })
-		.flatMap((_, index) => [popularMovies[index], popularTv[index]])
-		.filter((item): item is MediaSummary => Boolean(item))
-		.slice(0, 16);
 
-	return { currentlyInTheaters, popular };
+	return { currentlyInTheaters, popularMovies, popularShows };
 }
 
 export function getHomePage() {
 	const cache = getPublicDataCache(DISCOVERY_TTL);
-	return cachePublicData(cache, 'tmdb:home', loadHomePage, (data) =>
-		Boolean(data.currentlyInTheaters.length || data.popular.length)
+	return cachePublicData(cache, 'tmdb:home:v2', loadHomePage, (data) =>
+		Boolean(
+			data.currentlyInTheaters.length || data.popularMovies.length || data.popularShows.length
+		)
 	);
 }
 

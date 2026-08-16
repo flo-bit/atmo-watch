@@ -2,6 +2,7 @@
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import Avatar from './Avatar.svelte';
+	import BackdropGallery from './BackdropGallery.svelte';
 	import Container from './Container.svelte';
 	import ExternalRatings from './ExternalRatings.svelte';
 	import ItemsGrid from './ItemsGrid.svelte';
@@ -62,6 +63,7 @@
 	);
 	let showAllReviews = $state(false);
 	let showAllRecommendations = $state(false);
+	let showAllCast = $state(false);
 	let writtenReviews = $derived(data.reviews.filter((review) => review.text.trim()));
 	let displayedReviews = $derived(showAllReviews ? writtenReviews : writtenReviews.slice(0, 3));
 	let mobileRecommendations = $derived(
@@ -70,11 +72,15 @@
 	let desktopRecommendations = $derived(
 		showAllRecommendations ? data.recommendations : data.recommendations.slice(0, 10)
 	);
+	let castShowMoreClass = $derived(
+		data.cast.length > 10 ? '' : data.cast.length > 8 ? 'lg:hidden' : 'sm:hidden'
+	);
 
 	$effect(() => {
 		if (data.item.tmdbId > 0 && data.item.creativeWorkType) {
 			showAllReviews = false;
 			showAllRecommendations = false;
+			showAllCast = false;
 		}
 	});
 </script>
@@ -114,19 +120,13 @@
 
 <main class="relative isolate min-h-dvh overflow-hidden bg-base-950 text-white">
 	{#if data.item.backdrop}
-		<div
-			class="pointer-events-none absolute inset-x-0 top-0 h-[36rem] overflow-hidden sm:h-[46rem]"
-		>
-			<img
-				src={backdropUrl(data.item.backdrop)}
-				alt=""
-				class="absolute inset-0 size-full scale-105 object-cover object-center opacity-35 blur-[2px]"
-			/>
-			<div
-				class="absolute inset-0 bg-gradient-to-b from-black/25 via-base-950/75 to-base-950"
-			></div>
-		</div>
+		<img
+			src={backdropUrl(data.item.backdrop, 'w780')}
+			alt=""
+			class="pointer-events-none fixed inset-0 size-full object-cover object-center opacity-20"
+		/>
 	{/if}
+	<div class="pointer-events-none fixed inset-0 bg-black/50"></div>
 
 	<Container class="relative z-10 pt-8 pb-12 sm:pt-12">
 		<div class="px-4">
@@ -325,15 +325,23 @@
 			{/if}
 
 			{#if data.cast.length > 0}
-				<section class="mt-10 border-t border-white/10 pt-6 pb-8 text-sm text-white">
+				<section class="mt-10 border-t border-white/10 pt-6 text-sm text-white">
 					<h2 class="text-lg font-semibold tracking-tight">Cast</h2>
 					<div class="mt-4 grid grid-cols-3 gap-x-4 gap-y-6 sm:grid-cols-4 lg:grid-cols-5">
-						{#each data.cast as castMember (castMember.id)}
+						{#each data.cast as castMember, index (castMember.id)}
 							<a
 								href={resolve('/cast/[id]', {
 									id: `${castMember.id}-${slugify(castMember.name)}`
 								})}
-								class="flex min-w-0 flex-col items-center gap-1.5 transition-opacity hover:opacity-75"
+								class={`min-w-0 flex-col items-center gap-1.5 transition-opacity hover:opacity-75 ${
+									showAllCast || index < 6
+										? 'flex'
+										: index < 8
+											? 'hidden sm:flex'
+											: index < 10
+												? 'hidden lg:flex'
+												: 'hidden'
+								}`}
 							>
 								<Avatar
 									src={profileUrl(castMember.profile_path, 'h632')}
@@ -347,6 +355,37 @@
 							</a>
 						{/each}
 					</div>
+
+					{#if !showAllCast && data.cast.length > 6}
+						<button
+							type="button"
+							onclick={() => (showAllCast = true)}
+							class={`mt-5 inline-flex h-8 items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.07] px-3 text-xs font-semibold text-white transition-colors hover:bg-white/[0.12] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70 ${castShowMoreClass}`}
+						>
+							show more
+							<svg
+								class="size-3.5"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								aria-hidden="true"
+							>
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="1.8"
+									d="m6 9 6 6 6-6"
+								/>
+							</svg>
+						</button>
+					{/if}
+				</section>
+			{/if}
+
+			{#if data.backdrops.length > 0}
+				<section class="mt-10 border-t border-white/10 pt-6 pb-8 text-sm text-white">
+					<h2 class="text-lg font-semibold tracking-tight">Backdrops</h2>
+					<BackdropGallery images={data.backdrops} title={data.item.title} />
 				</section>
 			{/if}
 		</div>

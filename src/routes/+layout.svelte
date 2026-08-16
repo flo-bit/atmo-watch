@@ -8,13 +8,13 @@
 	let { data, children } = $props();
 </script>
 
-<div class="flex min-h-dvh flex-col">
+<div class="flex min-h-dvh flex-col pb-20 md:pb-0">
 	<div class="flex-1">
 		{@render children()}
 	</div>
 	<Footer />
 </div>
 
-<AppMenu did={data.did} />
+<AppMenu did={data.did} avatarUrl={data.avatarUrl} />
 <LoginDialog />
 <ReviewDialog />
