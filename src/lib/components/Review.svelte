@@ -5,6 +5,7 @@
 	import { posterUrl } from '$lib/images';
 	import type { ReviewCardModel } from '$lib/types';
 	import { cn, slugify, toMediaRouteKind } from '$lib/utils';
+	import Avatar from './Avatar.svelte';
 	import Rating from './Rating.svelte';
 
 	let {
@@ -40,7 +41,7 @@
 	let spoilerHidden = $derived(hasSpoilerText && !spoilerRevealed);
 </script>
 
-<article class={cn('flex gap-3 p-3 sm:gap-4 sm:p-4', className)}>
+<article class={cn('flex gap-3 sm:gap-4', showItem ? 'p-3 sm:p-4' : 'py-3 sm:py-4', className)}>
 	{#if showItem}
 		<a
 			href={itemUrl}
@@ -76,11 +77,26 @@
 				<a
 					href={resolve('/profile/[actor]', { actor: review.author.did })}
 					class={cn(
-						'block truncate transition-colors hover:text-accent-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-400',
-						showItem ? 'mt-1 text-xs text-base-400' : 'text-sm font-semibold text-white'
+						'group flex w-fit max-w-full items-center gap-2 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-400',
+						showItem ? 'mt-1 text-xs' : 'text-sm'
 					)}
 				>
-					@{handle}
+					<Avatar src={review.author.avatarUrl} alt="" class={showItem ? 'size-5' : 'size-7'} />
+					<span class="min-w-0 truncate">
+						{#if review.author.displayName}
+							<span class="font-semibold text-white transition-colors group-hover:text-accent-300">
+								{review.author.displayName}
+							</span>
+						{/if}
+						<span
+							class={cn(
+								'transition-colors group-hover:text-accent-300',
+								review.author.displayName ? 'ml-1.5 text-base-400' : 'font-semibold text-white'
+							)}
+						>
+							@{handle}
+						</span>
+					</span>
 				</a>
 			</div>
 

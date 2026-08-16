@@ -131,10 +131,25 @@ function toMediaDetails(
 	source: MediaDetailsSource,
 	creativeWorkType: SupportedCreativeWorkType
 ): MediaDetails {
+	const metadata =
+		'release_date' in source
+			? {
+					releaseDate: source.release_date || null,
+					runtime: source.runtime ?? null,
+					numberOfSeasons: null
+				}
+			: {
+					releaseDate: source.first_air_date || null,
+					runtime: source.episode_run_time[0] ?? source.last_episode_to_air?.runtime ?? null,
+					numberOfSeasons: source.number_of_seasons || null
+				};
+
 	return {
 		...toMediaSummary(source, creativeWorkType),
 		backdrop: toTmdbImage(source.backdrop_path),
-		overview: source.overview ?? ''
+		overview: source.overview ?? '',
+		genres: source.genres.map((genre) => genre.name),
+		...metadata
 	};
 }
 

@@ -1,14 +1,11 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
-	import { untrack } from 'svelte';
 	import Avatar from './Avatar.svelte';
 	import Container from './Container.svelte';
 	import ExternalRatings from './ExternalRatings.svelte';
 	import ItemsGrid from './ItemsGrid.svelte';
-	import Rating from './Rating.svelte';
 	import Review from './Review.svelte';
-	import TabSelect from './TabSelect.svelte';
 	import TrailerDialog from './TrailerDialog.svelte';
 	import { backdropUrl, posterUrl, profileUrl } from '$lib/images';
 	import { loginDialog } from '$lib/login.svelte';
@@ -17,7 +14,6 @@
 	import type { getMediaPage } from '$lib/tmdb.server';
 	import type { ReviewCardModel } from '$lib/types';
 
-	type DetailSection = 'reviews' | 'similar' | 'cast';
 	type ItemPageData = Awaited<ReturnType<typeof getMediaPage>> & {
 		did: string | null;
 		reviews: ReviewCardModel[];
@@ -32,39 +28,71 @@
 		reviewDialog.show(data.item);
 	}
 
-	function getDefaultDetailSection(data: ItemPageData): DetailSection {
-		if (data.reviews.length > 0) return 'reviews';
-		if (data.recommendations.length > 0) return 'similar';
-		return 'cast';
+	function formatRuntime(runtime: number | null) {
+		if (!runtime) return null;
+
+		const hours = Math.floor(runtime / 60);
+		const minutes = runtime % 60;
+		if (!hours) return `${minutes}m`;
+		return minutes ? `${hours}h ${minutes}m` : `${hours}h`;
 	}
 
 	let { data }: { data: ItemPageData } = $props();
 	let canonicalUrl = $derived(`${page.url.origin}${page.url.pathname}`);
 	let ogImageUrl = $derived(`${canonicalUrl.replace(/\/$/, '')}/og.png`);
+	let mediaTypeLabel = $derived(data.item.creativeWorkType === 'tv_show' ? 'TV series' : 'Movie');
+	let releaseYear = $derived(data.item.releaseDate?.slice(0, 4) || null);
+	let seasonLabel = $derived(
+		data.item.numberOfSeasons
+			? `${data.item.numberOfSeasons} ${data.item.numberOfSeasons === 1 ? 'season' : 'seasons'}`
+			: null
+	);
+	let mediaFacts = $derived(
+		[
+			releaseYear,
+			data.item.creativeWorkType === 'tv_show' ? seasonLabel : null,
+			formatRuntime(data.item.runtime)
+		].filter((fact): fact is string => fact !== null)
+	);
+	let hasSecondaryVisual = $derived(Boolean(data.trailer_url || data.item.backdrop));
 	let averageReviewRating = $derived(
 		data.reviews.length > 0
 			? data.reviews.reduce((total, review) => total + review.rating, 0) / data.reviews.length
 			: 0
 	);
-	let selectedSection = $state<DetailSection>(untrack(() => getDefaultDetailSection(data)));
-	let showWrittenReviewsOnly = $state(true);
-	let visibleReviews = $derived(
-		showWrittenReviewsOnly ? data.reviews.filter((review) => review.text.trim()) : data.reviews
+	let showAllReviews = $state(false);
+	let showAllRecommendations = $state(false);
+	let writtenReviews = $derived(data.reviews.filter((review) => review.text.trim()));
+	let displayedReviews = $derived(showAllReviews ? writtenReviews : writtenReviews.slice(0, 3));
+	let mobileRecommendations = $derived(
+		showAllRecommendations ? data.recommendations : data.recommendations.slice(0, 6)
 	);
-	let detailTabs = $derived(
-		[
-			data.reviews.length > 0 ? { value: 'reviews' as const, label: 'reviews' } : null,
-			data.recommendations.length > 0 ? { value: 'similar' as const, label: 'similar' } : null,
-			data.cast.length > 0 ? { value: 'cast' as const, label: 'cast' } : null
-		].filter((option): option is { value: DetailSection; label: string } => option !== null)
+	let desktopRecommendations = $derived(
+		showAllRecommendations ? data.recommendations : data.recommendations.slice(0, 10)
 	);
 
 	$effect(() => {
-		if (detailTabs.length > 0 && !detailTabs.some((tab) => tab.value === selectedSection)) {
-			selectedSection = detailTabs[0].value;
+		if (data.item.tmdbId > 0 && data.item.creativeWorkType) {
+			showAllReviews = false;
+			showAllRecommendations = false;
 		}
 	});
 </script>
+
+{#snippet reviewButton()}
+	<button
+		type="button"
+		onclick={startReview}
+		class="inline-flex h-9 items-center gap-2 rounded-full border border-white/15 bg-white/[0.07] px-3.5 text-sm font-semibold text-white backdrop-blur-sm transition-colors hover:bg-white/[0.12] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70"
+	>
+		<svg class="size-4 text-accent-400" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+			<path
+				d="m12 2.75 2.82 5.71 6.3.92-4.56 4.44 1.08 6.28L12 17.13 6.36 20.1l1.08-6.28-4.56-4.44 6.3-.92L12 2.75Z"
+			/>
+		</svg>
+		review
+	</button>
+{/snippet}
 
 <svelte:head>
 	<title>{data.item.title} | atmo.watch</title>
@@ -84,129 +112,243 @@
 	<meta name="twitter:image" content={ogImageUrl} />
 </svelte:head>
 
-{#if data.item.backdrop}
-	<img
-		src={backdropUrl(data.item.backdrop, 'w780')}
-		alt=""
-		class="fixed h-full w-full object-cover object-center opacity-20"
-	/>
-{/if}
-<div class="fixed inset-0 h-full w-full bg-black/50"></div>
-
-<Container class="relative z-10 pt-4 pb-8">
-	<div class="flex gap-4 px-4 pt-8">
-		{#if data.item.poster}
+<main class="relative isolate min-h-dvh overflow-hidden bg-base-950 text-white">
+	{#if data.item.backdrop}
+		<div
+			class="pointer-events-none absolute inset-x-0 top-0 h-[36rem] overflow-hidden sm:h-[46rem]"
+		>
 			<img
-				src={posterUrl(data.item.poster, 'w500')}
-				alt="Poster for {data.item.title}"
-				class="h-36 w-24 shrink-0 rounded-lg border border-white/10 object-cover sm:h-64 sm:w-44"
+				src={backdropUrl(data.item.backdrop)}
+				alt=""
+				class="absolute inset-0 size-full scale-105 object-cover object-center opacity-35 blur-[2px]"
 			/>
-		{/if}
-
-		<div class="flex min-w-0 flex-col gap-4">
-			<h1 class="max-w-xl text-3xl font-semibold text-white sm:text-4xl">
-				{data.item.title}
-			</h1>
-			<ExternalRatings
-				imdbId={data.imdb_id}
-				imdbVotes={data.imdb_votes}
-				ratings={data.ratings}
-				streaming={data.streaming}
-			/>
-			<div class="flex flex-wrap items-center gap-2">
-				<button
-					type="button"
-					onclick={startReview}
-					class="inline-flex h-8 items-center gap-1.5 rounded-lg border border-white/15 bg-white/10 px-2.5 text-xs font-semibold text-white transition-colors hover:bg-white/15 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70"
-				>
-					<svg
-						class="size-3.5"
-						viewBox="0 0 24 24"
-						fill="none"
-						stroke="currentColor"
-						stroke-width="1.8"
-						aria-hidden="true"
-					>
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							d="m12 3.75 2.47 5.004 5.522.803-3.996 3.895.943 5.5L12 16.354l-4.939 2.598.943-5.5-3.996-3.895 5.522-.803L12 3.75Z"
-						/>
-					</svg>
-					review
-				</button>
-				{#if data.trailer_url}
-					<TrailerDialog url={data.trailer_url} title={data.item.title} />
-				{/if}
-			</div>
+			<div
+				class="absolute inset-0 bg-gradient-to-b from-black/25 via-base-950/75 to-base-950"
+			></div>
 		</div>
-	</div>
+	{/if}
 
-	<div class="px-4 pt-4 text-sm text-white">
-		<section class="mb-4 max-w-2xl">
-			<h2 class="mb-2 text-lg font-semibold">overview</h2>
-			<p>{data.item.overview}</p>
-		</section>
-	</div>
-
-	{#if detailTabs.length > 0}
-		<section class="px-4 pt-4 pb-8 text-sm text-white">
-			<h2 class="sr-only">More about {data.item.title}</h2>
-			<TabSelect bind:value={selectedSection} options={detailTabs} label="Choose detail section" />
-
-			{#if selectedSection === 'reviews' && data.reviews.length > 0}
-				<div class="mt-4 flex max-w-2xl flex-wrap items-center justify-between gap-3 px-3 sm:px-4">
-					<div class="flex items-center gap-2">
-						<Rating rating={averageReviewRating} size="size-4" />
-						<span class="font-semibold text-white">{(averageReviewRating / 2).toFixed(1)}</span>
-						<span class="text-base-400">
-							average from {data.reviews.length}
-							{data.reviews.length === 1 ? 'review' : 'reviews'}
-						</span>
-					</div>
-					<label class="flex cursor-pointer items-center gap-2 text-xs text-base-300">
-						<input
-							type="checkbox"
-							bind:checked={showWrittenReviewsOnly}
-							class="size-4 rounded border-base-700 bg-base-900 text-accent-500 focus:ring-2 focus:ring-accent-500/40 focus:ring-offset-0"
+	<Container class="relative z-10 pt-8 pb-12 sm:pt-12">
+		<div class="px-4">
+			{#if data.item.poster || hasSecondaryVisual}
+				<div
+					class={`gap-2 sm:gap-4 ${
+						data.item.poster && hasSecondaryVisual
+							? 'grid grid-cols-[minmax(0,1fr)_minmax(0,3fr)]'
+							: ''
+					}`}
+				>
+					{#if data.item.poster}
+						<img
+							src={posterUrl(data.item.poster, 'w500')}
+							alt="Poster for {data.item.title}"
+							class={`aspect-[2/3] rounded-xl border border-white/10 object-cover shadow-2xl shadow-black/30 ${
+								hasSecondaryVisual ? 'w-full' : 'w-36 sm:w-56'
+							}`}
 						/>
-						only reviews with text
-					</label>
+					{/if}
+
+					{#if data.trailer_url}
+						<div class={data.item.poster ? 'relative min-h-0 overflow-hidden' : 'aspect-video'}>
+							<TrailerDialog
+								url={data.trailer_url}
+								title={data.item.title}
+								variant="feature"
+								fill={Boolean(data.item.poster)}
+							/>
+						</div>
+					{:else if data.item.backdrop}
+						<div
+							class={`relative overflow-hidden rounded-xl border border-white/10 bg-base-900 shadow-2xl shadow-black/20 ${data.item.poster ? 'min-h-0' : 'aspect-video'}`}
+						>
+							<img
+								src={backdropUrl(data.item.backdrop)}
+								alt="Still from {data.item.title}"
+								class={data.item.poster
+									? 'absolute inset-0 size-full object-cover'
+									: 'size-full object-cover'}
+							/>
+						</div>
+					{/if}
+				</div>
+			{/if}
+
+			<header
+				class="mt-6 sm:mt-8 lg:grid lg:grid-cols-[minmax(0,1fr)_auto] lg:grid-rows-[auto_auto] lg:gap-x-8"
+			>
+				<div
+					class="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs font-medium text-base-300 sm:text-sm lg:col-start-1 lg:row-start-1"
+				>
+					<span>{mediaTypeLabel}</span>
+					{#each mediaFacts as fact (fact)}
+						<span class="text-base-600" aria-hidden="true">•</span>
+						<span>{fact}</span>
+					{/each}
 				</div>
 
-				{#if visibleReviews.length > 0}
-					<div class="mt-2 flex max-w-2xl flex-col gap-4">
-						{#each visibleReviews as review (review.uri)}
+				<div class="hidden shrink-0 lg:col-start-2 lg:row-start-1 lg:block lg:self-center">
+					<ExternalRatings
+						popfeedScore={data.reviews.length > 0 ? averageReviewRating : null}
+						popfeedRatingCount={data.reviews.length}
+						imdbId={data.imdb_id}
+						imdbVotes={data.imdb_votes}
+						ratings={data.ratings}
+					/>
+				</div>
+
+				<h1
+					class="mt-1 max-w-2xl min-w-0 text-3xl leading-tight font-semibold tracking-tight text-white sm:text-5xl lg:col-start-1 lg:row-start-2"
+				>
+					{data.item.title}
+				</h1>
+
+				<div
+					class="hidden shrink-0 lg:col-start-2 lg:row-start-2 lg:flex lg:items-center lg:justify-end lg:justify-self-end"
+				>
+					{@render reviewButton()}
+				</div>
+			</header>
+
+			<div class="mt-5 flex flex-wrap items-center gap-x-4 gap-y-3 sm:mt-6 lg:hidden">
+				<ExternalRatings
+					popfeedScore={data.reviews.length > 0 ? averageReviewRating : null}
+					popfeedRatingCount={data.reviews.length}
+					imdbId={data.imdb_id}
+					imdbVotes={data.imdb_votes}
+					ratings={data.ratings}
+				/>
+				<div class="ml-auto">
+					{@render reviewButton()}
+				</div>
+			</div>
+
+			{#if data.item.overview}
+				<section class="mt-6 border-t border-white/10 pt-6 text-sm text-white">
+					<h2 class="text-lg font-semibold tracking-tight">Overview</h2>
+					<p class="mt-4 max-w-3xl leading-6 text-base-200 sm:text-base sm:leading-7">
+						{data.item.overview}
+					</p>
+				</section>
+			{/if}
+
+			{#if writtenReviews.length > 0}
+				<section class="mt-10 border-t border-white/10 pt-6 text-sm text-white">
+					<h2 class="text-lg font-semibold tracking-tight">Reviews</h2>
+					<div class="mt-4 flex max-w-2xl flex-col gap-4">
+						{#each displayedReviews as review (review.uri)}
 							<Review {review} showItem={false} />
 						{/each}
 					</div>
-				{:else}
-					<p class="mt-4 px-3 text-sm text-base-400 sm:px-4">No reviews with text.</p>
-				{/if}
-			{:else if selectedSection === 'similar' && data.recommendations.length > 0}
-				<ItemsGrid items={data.recommendations} class="mt-4" />
-			{:else if selectedSection === 'cast' && data.cast.length > 0}
-				<div class="mt-4 grid grid-cols-3 gap-x-4 gap-y-6 sm:grid-cols-4 lg:grid-cols-5">
-					{#each data.cast as castMember (castMember.id)}
-						<a
-							href={resolve('/cast/[id]', {
-								id: `${castMember.id}-${slugify(castMember.name)}`
-							})}
-							class="flex min-w-0 flex-col items-center gap-1.5 transition-opacity hover:opacity-75"
+
+					{#if !showAllReviews && writtenReviews.length > 3}
+						<button
+							type="button"
+							onclick={() => (showAllReviews = true)}
+							class="mt-5 inline-flex h-8 items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.07] px-3 text-xs font-semibold text-white transition-colors hover:bg-white/[0.12] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70"
 						>
-							<Avatar
-								src={profileUrl(castMember.profile_path, 'h632')}
-								alt={castMember.name}
-								class="aspect-square w-full"
-							/>
-							<span class="line-clamp-2 text-center text-xs font-medium">{castMember.name}</span>
-							<span class="line-clamp-2 text-center text-xs text-base-400"
-								>{castMember.character}</span
+							see more reviews
+							<svg
+								class="size-3.5"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								aria-hidden="true"
 							>
-						</a>
-					{/each}
-				</div>
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="1.8"
+									d="m6 9 6 6 6-6"
+								/>
+							</svg>
+						</button>
+					{/if}
+				</section>
 			{/if}
-		</section>
-	{/if}
-</Container>
+
+			{#if data.recommendations.length > 0}
+				<section class="mt-10 border-t border-white/10 pt-6 text-sm text-white">
+					<h2 class="text-lg font-semibold tracking-tight">Similar</h2>
+					<div class="lg:hidden">
+						<ItemsGrid items={mobileRecommendations} class="mt-4" />
+					</div>
+					<div class="hidden lg:block">
+						<ItemsGrid items={desktopRecommendations} class="mt-4" />
+					</div>
+
+					{#if !showAllRecommendations && data.recommendations.length > 10}
+						<button
+							type="button"
+							onclick={() => (showAllRecommendations = true)}
+							class="mt-5 inline-flex h-8 items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.07] px-3 text-xs font-semibold text-white transition-colors hover:bg-white/[0.12] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70"
+						>
+							view more
+							<svg
+								class="size-3.5"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								aria-hidden="true"
+							>
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="1.8"
+									d="m6 9 6 6 6-6"
+								/>
+							</svg>
+						</button>
+					{:else if !showAllRecommendations && data.recommendations.length > 6}
+						<button
+							type="button"
+							onclick={() => (showAllRecommendations = true)}
+							class="mt-5 inline-flex h-8 items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.07] px-3 text-xs font-semibold text-white transition-colors hover:bg-white/[0.12] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70 lg:hidden"
+						>
+							view more
+							<svg
+								class="size-3.5"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								aria-hidden="true"
+							>
+								<path
+									stroke-linecap="round"
+									stroke-linejoin="round"
+									stroke-width="1.8"
+									d="m6 9 6 6 6-6"
+								/>
+							</svg>
+						</button>
+					{/if}
+				</section>
+			{/if}
+
+			{#if data.cast.length > 0}
+				<section class="mt-10 border-t border-white/10 pt-6 pb-8 text-sm text-white">
+					<h2 class="text-lg font-semibold tracking-tight">Cast</h2>
+					<div class="mt-4 grid grid-cols-3 gap-x-4 gap-y-6 sm:grid-cols-4 lg:grid-cols-5">
+						{#each data.cast as castMember (castMember.id)}
+							<a
+								href={resolve('/cast/[id]', {
+									id: `${castMember.id}-${slugify(castMember.name)}`
+								})}
+								class="flex min-w-0 flex-col items-center gap-1.5 transition-opacity hover:opacity-75"
+							>
+								<Avatar
+									src={profileUrl(castMember.profile_path, 'h632')}
+									alt={castMember.name}
+									class="aspect-square w-full"
+								/>
+								<span class="line-clamp-2 text-center text-xs font-medium">{castMember.name}</span>
+								<span class="line-clamp-2 text-center text-xs text-base-400"
+									>{castMember.character}</span
+								>
+							</a>
+						{/each}
+					</div>
+				</section>
+			{/if}
+		</div>
+	</Container>
+</main>

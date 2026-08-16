@@ -15,6 +15,10 @@ export type MediaSummary = MediaIdentity & {
 export type MediaDetails = MediaSummary & {
 	backdrop: MediaImage | null;
 	overview: string;
+	releaseDate: string | null;
+	runtime: number | null;
+	genres: string[];
+	numberOfSeasons: number | null;
 };
 
 export type MediaCredit = MediaSummary & {

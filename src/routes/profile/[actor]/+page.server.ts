@@ -14,7 +14,18 @@ export const load: PageServerLoad = async ({ parent }) => {
 
 	const reviews = response.data.records.flatMap((record) => {
 		const review = toReview(record, profile.handle);
-		return review ? [review] : [];
+		return review
+			? [
+					{
+						...review,
+						author: {
+							...review.author,
+							displayName: profile.displayName,
+							avatarUrl: profile.avatarUrl
+						}
+					}
+				]
+			: [];
 	});
 
 	const lists = await getProfileMediaLists(profile).catch((cause) => {

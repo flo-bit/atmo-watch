@@ -65,6 +65,25 @@ export function toReview(
 	};
 }
 
+function getReviewAuthor(did: string, profiles: ReviewListRecords.ProfileEntry[]): ActorSummary {
+	const bskyProfile = profiles.find(
+		(profile) => profile.did === did && profile.collection === 'app.bsky.actor.profile'
+	);
+	const popfeedProfile = profiles.find(
+		(profile) => profile.did === did && profile.collection === 'social.popfeed.actor.profile'
+	);
+	const profile = bskyProfile ?? popfeedProfile;
+	const avatar =
+		bskyProfile?.value && 'avatar' in bskyProfile.value ? bskyProfile.value.avatar : undefined;
+
+	return {
+		did,
+		handle: profile?.handle ?? did,
+		displayName: popfeedProfile?.value?.displayName ?? bskyProfile?.value?.displayName,
+		avatarUrl: avatar ? getAtprotoCdnImageUrl({ did, blob: avatar, preset: 'avatar' }) : undefined
+	};
+}
+
 function getCommentAuthor(
 	did: string,
 	profiles: Map<string, CommentListRecords.ProfileEntry>
@@ -171,14 +190,12 @@ export async function getMediaReviews(
 		throw new Error(`Could not load reviews from Contrail (${response.status})`);
 	}
 
-	const handles = new Map(
-		(response.data.profiles ?? []).map((profile) => [profile.did, profile.handle ?? profile.did])
-	);
-
+	const profiles = response.data.profiles ?? [];
 	const reviews = response.data.records.flatMap((record) => {
-		const review = toReview(record, handles.get(record.did));
+		const author = getReviewAuthor(record.did, profiles);
+		const review = toReview(record, author.handle);
 		return review?.media.tmdbId === tmdbId && review.media.creativeWorkType === creativeWorkType
-			? [review]
+			? [{ ...review, author }]
 			: [];
 	});
 

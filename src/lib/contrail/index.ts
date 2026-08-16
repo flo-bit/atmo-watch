@@ -6,7 +6,7 @@ export const contrail = createPublicServiceClient({
   endpoint: "https://api.atmo.watch",
   contractDigest: "sha256:331d01ac6beadd756e777004daf2a4e278bb3c864e91450bf7f974c4547dedd9",
   serviceDid: "did:web:api.atmo.watch#contrail",
-  scope: "rpc?lxm=*&aud=did:web:api.atmo.watch%23contrail",
+  scope: "rpc?lxm=watch.atmo.notifyOfUpdate&aud=did:web:api.atmo.watch%23contrail",
   serviceMethods: [
     "watch.atmo.comment.getRecord",
     "watch.atmo.comment.listRecords",
