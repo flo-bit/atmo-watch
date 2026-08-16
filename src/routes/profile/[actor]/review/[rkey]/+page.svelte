@@ -21,6 +21,8 @@
 	// svelte-ignore state_referenced_locally
 	let viewerLikeUri = $state(data.viewerLikeUri);
 	// svelte-ignore state_referenced_locally
+	let liked = $state(Boolean(data.viewerLikeUri));
+	// svelte-ignore state_referenced_locally
 	let likeCount = $state(data.likeCount);
 	let spoilerRevealed = $state(false);
 
@@ -63,18 +65,27 @@
 		}
 		if (liking) return;
 
+		const previousLikeUri = viewerLikeUri;
+		const wasLiked = liked;
+		const previousLikeCount = likeCount;
+		liked = !wasLiked;
+		likeCount = wasLiked ? Math.max(0, likeCount - 1) : likeCount + 1;
 		liking = true;
+
 		try {
-			if (viewerLikeUri) {
-				await unlikeReview({ reviewUri: data.review.uri, likeUri: viewerLikeUri });
+			if (wasLiked) {
+				if (!previousLikeUri) throw new Error('Could not find your like.');
+				await unlikeReview({ reviewUri: data.review.uri, likeUri: previousLikeUri });
 				viewerLikeUri = null;
-				likeCount = Math.max(0, likeCount - 1);
 			} else {
 				const result = await likeReview({ reviewUri: data.review.uri });
 				viewerLikeUri = result.uri;
-				if (result.created) likeCount += 1;
+				if (!result.created) likeCount = previousLikeCount;
 			}
 		} catch (cause) {
+			viewerLikeUri = previousLikeUri;
+			liked = wasLiked;
+			likeCount = previousLikeCount;
 			interactionError = cause instanceof Error ? cause.message : 'Could not update like.';
 		} finally {
 			liking = false;
@@ -181,15 +192,15 @@
 						type="button"
 						onclick={toggleLike}
 						disabled={liking}
-						aria-pressed={Boolean(viewerLikeUri)}
-						aria-label={`${viewerLikeUri ? 'Unlike' : 'Like'} this review${likeCount > 0 ? `, ${likeCount} ${likeCount === 1 ? 'like' : 'likes'}` : ''}`}
-						class={`inline-flex items-center gap-1.5 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent-400 disabled:cursor-wait disabled:opacity-60 ${
-							viewerLikeUri ? 'text-accent-400 hover:text-accent-300' : 'hover:text-white'
+						aria-pressed={liked}
+						aria-label={`${liked ? 'Unlike' : 'Like'} this review${likeCount > 0 ? `, ${likeCount} ${likeCount === 1 ? 'like' : 'likes'}` : ''}`}
+						class={`inline-flex items-center gap-1.5 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent-400 disabled:cursor-wait ${
+							liked ? 'text-accent-400 hover:text-accent-300' : 'hover:text-white'
 						}`}
 					>
 						<Heart
 							class="size-5"
-							fill={viewerLikeUri ? 'currentColor' : 'none'}
+							fill={liked ? 'currentColor' : 'none'}
 							strokeWidth={1.5}
 							aria-hidden="true"
 						/>

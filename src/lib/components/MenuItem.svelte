@@ -28,7 +28,7 @@
 		cn(
 			'group relative flex transition-colors',
 			variant === 'bottom'
-				? 'h-12 min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-2 py-1 text-[0.65rem] font-medium'
+				? 'h-10 w-full items-center justify-center rounded-xl'
 				: 'h-10 w-full items-center gap-3 rounded-lg p-2.5 text-sm font-semibold md:size-10',
 			active
 				? 'bg-accent-500/10 text-accent-300'
@@ -40,7 +40,7 @@
 
 {#snippet content()}
 	{@render children()}
-	<span class={variant === 'bottom' ? 'max-w-full truncate' : 'md:sr-only'}>{label}</span>
+	<span class={variant === 'bottom' ? 'sr-only' : 'md:sr-only'}>{label}</span>
 	{#if variant === 'sidebar'}
 		<span
 			class="pointer-events-none absolute left-14 hidden rounded-lg bg-accent-950/20 px-3 py-2 text-xs whitespace-nowrap text-white opacity-0 backdrop-blur-md transition-opacity group-hover:opacity-100 md:block"

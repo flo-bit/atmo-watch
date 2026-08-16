@@ -32,7 +32,7 @@ function getStreamingRegion(url: URL, request: Request) {
 	return null;
 }
 
-export const load: PageServerLoad = async ({ params, request, url }) => {
+export const load: PageServerLoad = async ({ locals, params, request, url }) => {
 	const tmdbId = parseTmdbId(params.id);
 	const creativeWorkType = parseMediaRouteKind(params.kind);
 
@@ -43,7 +43,7 @@ export const load: PageServerLoad = async ({ params, request, url }) => {
 	try {
 		const [mediaPage, reviews] = await Promise.all([
 			getMediaPage(tmdbId, creativeWorkType, getStreamingRegion(url, request)),
-			getMediaReviews(tmdbId, creativeWorkType).catch((cause) => {
+			getMediaReviews(tmdbId, creativeWorkType, locals.did).catch((cause) => {
 				console.error('Could not load reviews from Contrail', cause);
 				return [];
 			})

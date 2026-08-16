@@ -2,6 +2,7 @@
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import Container from '$lib/components/Container.svelte';
+	import TrailerDialog from '$lib/components/TrailerDialog.svelte';
 	import { calendarDayDifference, formatCalendarDate, relativeCalendarDate } from '$lib/dates';
 	import { backdropUrl, posterUrl, stillUrl } from '$lib/images';
 	import { slugify } from '$lib/utils';
@@ -102,43 +103,52 @@
 			<span class="truncate text-base-200">{data.season.name}</span>
 		</nav>
 
-		<header
-			class="mt-6 grid grid-cols-[7rem_minmax(0,1fr)] gap-4 sm:grid-cols-[11rem_minmax(0,1fr)] sm:gap-7"
-		>
+		{#if seasonPoster || data.trailer_url}
 			<div
-				class="aspect-2/3 overflow-hidden rounded-xl border border-white/10 bg-base-900 shadow-2xl shadow-black/30"
+				class={`mt-6 gap-2 sm:gap-4 ${seasonPoster && data.trailer_url ? 'grid grid-cols-[minmax(0,1fr)_minmax(0,3fr)]' : ''}`}
 			>
 				{#if seasonPoster}
 					<img
 						src={posterUrl(seasonPoster, 'w500')}
 						alt="Poster for {data.season.name} of {data.show.title}"
-						class="size-full object-cover"
+						class={`aspect-2/3 rounded-xl border border-white/10 object-cover shadow-2xl shadow-black/30 ${data.trailer_url ? 'w-full' : 'w-36 sm:w-56'}`}
 					/>
 				{/if}
-			</div>
 
-			<div class="min-w-0 self-center">
-				<div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-base-300 sm:text-sm">
-					{#if seasonStatus}<span>{seasonStatus}</span>{/if}
-					{#if seasonStatus && seasonDateRange}
-						<span class="text-base-600" aria-hidden="true">•</span>
-					{/if}
-					{#if seasonDateRange}<span>{seasonDateRange}</span>{/if}
-					{#if seasonDateRange}<span class="text-base-600" aria-hidden="true">•</span>{/if}
-					<span
-						>{data.season.episodeCount}
-						{data.season.episodeCount === 1 ? 'episode' : 'episodes'}</span
-					>
-					{#if data.network}
-						<span class="text-base-600" aria-hidden="true">•</span>
-						<span>{data.network}</span>
-					{/if}
-				</div>
-				<h1 class="mt-1 text-2xl leading-tight font-semibold tracking-tight sm:text-4xl">
-					{data.season.name}
-				</h1>
-				<p class="mt-1 text-sm font-medium text-base-300 sm:text-base">{data.show.title}</p>
+				{#if data.trailer_url}
+					<div class={seasonPoster ? 'relative min-h-0 overflow-hidden' : 'aspect-video'}>
+						<TrailerDialog
+							url={data.trailer_url}
+							title={`${data.show.title} ${data.season.name}`}
+							variant="feature"
+							fill={Boolean(seasonPoster)}
+						/>
+					</div>
+				{/if}
 			</div>
+		{/if}
+
+		<header class="mt-6 sm:mt-8">
+			<div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-base-300 sm:text-sm">
+				{#if seasonStatus}<span>{seasonStatus}</span>{/if}
+				{#if seasonStatus && seasonDateRange}
+					<span class="text-base-600" aria-hidden="true">•</span>
+				{/if}
+				{#if seasonDateRange}<span>{seasonDateRange}</span>{/if}
+				{#if seasonDateRange}<span class="text-base-600" aria-hidden="true">•</span>{/if}
+				<span
+					>{data.season.episodeCount}
+					{data.season.episodeCount === 1 ? 'episode' : 'episodes'}</span
+				>
+				{#if data.network}
+					<span class="text-base-600" aria-hidden="true">•</span>
+					<span>{data.network}</span>
+				{/if}
+			</div>
+			<h1 class="mt-1 text-3xl leading-tight font-semibold tracking-tight sm:text-5xl">
+				{data.season.name}
+			</h1>
+			<p class="mt-1 text-sm font-medium text-base-300 sm:text-base">{data.show.title}</p>
 		</header>
 
 		{#if data.season.overview}
@@ -154,17 +164,15 @@
 			<h2 class="text-lg font-semibold tracking-tight">Episodes</h2>
 
 			{#if data.episodes.length > 0}
-				<div class="mt-4 flex flex-col gap-4">
+				<div class="mt-4 flex flex-col gap-7">
 					{#each data.episodes as episode (episode.id)}
 						{@const dayDifference = calendarDayDifference(episode.airDate, data.today)}
 						{@const isUpcoming = dayDifference !== null && dayDifference >= 0}
 						<article
 							id={`episode-${episode.episodeNumber}`}
-							class={`scroll-mt-6 overflow-hidden rounded-xl border bg-white/[0.05] sm:grid sm:grid-cols-[12rem_minmax(0,1fr)] ${
-								isUpcoming ? 'border-accent-500/30' : 'border-white/10'
-							}`}
+							class="scroll-mt-6 sm:grid sm:grid-cols-[12rem_minmax(0,1fr)] sm:gap-4"
 						>
-							<div class="aspect-video bg-base-900">
+							<div class="aspect-video overflow-hidden rounded-lg bg-base-900">
 								{#if episode.still}
 									<img
 										src={stillUrl(episode.still, 'w300')}
@@ -184,7 +192,7 @@
 								{/if}
 							</div>
 
-							<div class="min-w-0 p-4 sm:p-5">
+							<div class="min-w-0 pt-3 sm:self-center sm:pt-0">
 								<div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-base-400">
 									<span class="font-semibold text-base-200">
 										{episodeCode(episode.seasonNumber, episode.episodeNumber)}
@@ -220,11 +228,7 @@
 					{/each}
 				</div>
 			{:else}
-				<div
-					class="mt-4 rounded-xl border border-white/10 bg-white/[0.05] p-5 text-sm text-base-300"
-				>
-					Episode information has not been announced yet.
-				</div>
+				<p class="mt-4 text-sm text-base-300">Episode information has not been announced yet.</p>
 			{/if}
 		</section>
 
@@ -238,7 +242,7 @@
 								id: showId,
 								season: String(data.previousSeason.seasonNumber)
 							})}
-							class="block rounded-xl border border-white/10 bg-white/[0.05] p-3 transition-colors hover:bg-white/[0.1] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70"
+							class="block py-2 transition-opacity hover:opacity-75 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70"
 						>
 							<span class="text-xs text-base-500">Previous</span>
 							<span class="mt-1 block text-sm font-semibold text-white"
@@ -255,7 +259,7 @@
 								id: showId,
 								season: String(data.nextSeason.seasonNumber)
 							})}
-							class="block rounded-xl border border-white/10 bg-white/[0.05] p-3 text-right transition-colors hover:bg-white/[0.1] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70"
+							class="block py-2 text-right transition-opacity hover:opacity-75 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70"
 						>
 							<span class="text-xs text-base-500">Next</span>
 							<span class="mt-1 block text-sm font-semibold text-white"

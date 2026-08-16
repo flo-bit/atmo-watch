@@ -57,18 +57,12 @@
 			? `${data.item.numberOfSeasons} ${data.item.numberOfSeasons === 1 ? 'season' : 'seasons'}`
 			: null
 	);
-	let episodeLabel = $derived(
-		data.item.numberOfEpisodes
-			? `${data.item.numberOfEpisodes} ${data.item.numberOfEpisodes === 1 ? 'episode' : 'episodes'}`
-			: null
-	);
 	let mediaFacts = $derived(
 		[
 			releaseYear,
 			data.item.creativeWorkType === 'tv_show' ? formatSeriesStatus(data.item.status) : null,
 			data.item.creativeWorkType === 'tv_show' ? seasonLabel : null,
-			data.item.creativeWorkType === 'tv_show' ? episodeLabel : null,
-			formatRuntime(data.item.runtime)
+			data.item.creativeWorkType === 'movie' ? formatRuntime(data.item.runtime) : null
 		].filter((fact): fact is string => fact !== null)
 	);
 	let hasSecondaryVisual = $derived(Boolean(data.trailer_url || data.item.backdrop));
@@ -265,7 +259,7 @@
 					<h2 class="text-lg font-semibold tracking-tight">Reviews</h2>
 					<div class="mt-4 flex max-w-2xl flex-col gap-4">
 						{#each displayedReviews as review (review.uri)}
-							<Review {review} showItem={false} />
+							<Review {review} viewerDid={data.did} showItem={false} />
 						{/each}
 					</div>
 

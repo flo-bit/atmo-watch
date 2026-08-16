@@ -3,6 +3,8 @@
 	import { isCanonicalResourceUri, parseCanonicalResourceUri } from '@atcute/lexicons';
 	import { EyeOff, Heart, Image as ImageIcon, MessageCircle } from '@lucide/svelte';
 	import { posterUrl } from '$lib/images';
+	import { loginDialog } from '$lib/login.svelte';
+	import { likeReview, unlikeReview } from '$lib/review-interactions.remote';
 	import type { ReviewCardModel } from '$lib/types';
 	import { cn, slugify, toMediaRouteKind } from '$lib/utils';
 	import Avatar from './Avatar.svelte';
@@ -10,10 +12,12 @@
 
 	let {
 		review,
+		viewerDid = null,
 		showItem = true,
 		class: className
 	}: {
 		review: ReviewCardModel;
+		viewerDid?: string | null;
 		showItem?: boolean;
 		class?: string;
 	} = $props();
@@ -39,6 +43,50 @@
 	let hasSpoilerText = $derived(review.containsSpoilers && Boolean(text));
 	let spoilerRevealed = $state(false);
 	let spoilerHidden = $derived(hasSpoilerText && !spoilerRevealed);
+	let liking = $state(false);
+	let interactionError = $state('');
+	// These are local snapshots so likes can update optimistically.
+	// svelte-ignore state_referenced_locally
+	let viewerLikeUri = $state(review.viewerLikeUri ?? null);
+	// svelte-ignore state_referenced_locally
+	let liked = $state(Boolean(review.viewerLikeUri));
+	// svelte-ignore state_referenced_locally
+	let likeCount = $state(review.likeCount);
+
+	async function toggleLike() {
+		interactionError = '';
+		if (!viewerDid) {
+			loginDialog.show();
+			return;
+		}
+		if (liking) return;
+
+		const previousLikeUri = viewerLikeUri;
+		const wasLiked = liked;
+		const previousLikeCount = likeCount;
+		liked = !wasLiked;
+		likeCount = wasLiked ? Math.max(0, likeCount - 1) : likeCount + 1;
+		liking = true;
+
+		try {
+			if (wasLiked) {
+				if (!previousLikeUri) throw new Error('Could not find your like.');
+				await unlikeReview({ reviewUri: review.uri, likeUri: previousLikeUri });
+				viewerLikeUri = null;
+			} else {
+				const result = await likeReview({ reviewUri: review.uri });
+				viewerLikeUri = result.uri;
+				if (!result.created) likeCount = previousLikeCount;
+			}
+		} catch (cause) {
+			viewerLikeUri = previousLikeUri;
+			liked = wasLiked;
+			likeCount = previousLikeCount;
+			interactionError = cause instanceof Error ? cause.message : 'Could not update like.';
+		} finally {
+			liking = false;
+		}
+	}
 </script>
 
 <article class={cn('flex gap-3 sm:gap-4', showItem ? 'p-3 sm:p-4' : 'py-3 sm:py-4', className)}>
@@ -136,27 +184,40 @@
 				{/if}
 			</div>
 
-			<a
-				href={reviewUrl}
-				aria-label={`Open review of ${review.media.title}`}
-				class="mt-3 flex w-fit items-center gap-3 text-xs text-base-500 transition-colors hover:text-base-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-400"
-			>
-				<span
-					class="inline-flex items-center gap-1"
-					aria-label={`${review.likeCount} ${review.likeCount === 1 ? 'like' : 'likes'}`}
+			<div class="mt-3 flex w-fit items-center gap-3 text-xs text-base-500">
+				<button
+					type="button"
+					onclick={toggleLike}
+					disabled={liking}
+					aria-pressed={liked}
+					aria-label={`${liked ? 'Unlike' : 'Like'} this review${likeCount > 0 ? `, ${likeCount} ${likeCount === 1 ? 'like' : 'likes'}` : ''}`}
+					class={cn(
+						'-m-1.5 inline-flex min-h-7 min-w-7 items-center justify-center gap-1 rounded-md p-1.5 transition-colors focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-accent-400 disabled:cursor-wait',
+						liked ? 'text-accent-400 hover:text-accent-300' : 'hover:text-base-300'
+					)}
 				>
-					<Heart class="size-4" strokeWidth={1.5} aria-hidden="true" />
-					{#if review.likeCount > 0}<span>{review.likeCount}</span>{/if}
-				</span>
+					<Heart
+						class="size-3.5"
+						fill={liked ? 'currentColor' : 'none'}
+						strokeWidth={1.5}
+						aria-hidden="true"
+					/>
+					{#if likeCount > 0}<span>{likeCount}</span>{/if}
+				</button>
 
-				<span
-					class="inline-flex items-center gap-1"
-					aria-label={`${review.commentCount} ${review.commentCount === 1 ? 'comment' : 'comments'}`}
+				<a
+					href={reviewUrl}
+					aria-label={`${review.commentCount} ${review.commentCount === 1 ? 'comment' : 'comments'} on this review`}
+					class="-m-1.5 inline-flex min-h-7 min-w-7 items-center justify-center gap-1 rounded-md p-1.5 transition-colors hover:text-base-300 focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-accent-400"
 				>
-					<MessageCircle class="size-4" strokeWidth={1.5} aria-hidden="true" />
+					<MessageCircle class="size-3.5" strokeWidth={1.5} aria-hidden="true" />
 					{#if review.commentCount > 0}<span>{review.commentCount}</span>{/if}
-				</span>
-			</a>
+				</a>
+			</div>
+
+			{#if interactionError}
+				<p class="mt-2 text-xs text-red-300" role="status">{interactionError}</p>
+			{/if}
 		{:else}
 			<div class="mt-4">
 				<Rating rating={review.rating} size="size-6" />

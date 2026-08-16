@@ -1,3 +1,4 @@
+import { isCanonicalResourceUri, parseCanonicalResourceUri, type Did } from '@atcute/lexicons';
 import { getAtprotoCdnImageUrl } from '$lib/atproto/images';
 import { contrail } from '$lib/contrail';
 import type * as CommentListRecords from '$lib/contrail/types/types/watch/atmo/comment/listRecords';
@@ -175,6 +176,33 @@ export async function getReviewInteractions(reviewUri: string, viewerDid: string
 	};
 }
 
+export async function getViewerReviewLikes(viewerDid: Did | null | undefined) {
+	const viewerLikes = new Map<string, string>();
+	if (!viewerDid) return viewerLikes;
+
+	let cursor: string | undefined;
+	do {
+		const response = await contrail.get('watch.atmo.like.listRecords', {
+			params: { actor: viewerDid, cursor, limit: 200 }
+		});
+		if (!response.ok) {
+			throw new Error(`Could not load viewer likes from Contrail (${response.status})`);
+		}
+
+		for (const like of response.data.records) {
+			const subjectUri = like.value.subjectUri;
+			if (!isCanonicalResourceUri(subjectUri)) continue;
+			if (parseCanonicalResourceUri(subjectUri).collection !== 'social.popfeed.feed.review') {
+				continue;
+			}
+			viewerLikes.set(subjectUri, like.uri);
+		}
+		cursor = response.data.cursor;
+	} while (cursor);
+
+	return viewerLikes;
+}
+
 export async function getRecentlyReviewedMedia(): Promise<MediaSummary[]> {
 	const response = await contrail.get('watch.atmo.review.listRecords', {
 		params: { limit: 200, order: 'desc' }
@@ -204,7 +232,8 @@ export async function getRecentlyReviewedMedia(): Promise<MediaSummary[]> {
 
 export async function getMediaReviews(
 	tmdbId: number,
-	creativeWorkType: SupportedCreativeWorkType
+	creativeWorkType: SupportedCreativeWorkType,
+	viewerDid?: Did | null
 ): Promise<ReviewCardModel[]> {
 	const params = {
 		creativeWorkType,
@@ -212,7 +241,13 @@ export async function getMediaReviews(
 		limit: 200,
 		profiles: true
 	};
-	const response = await contrail.get('watch.atmo.review.listRecords', { params });
+	const [response, viewerLikes] = await Promise.all([
+		contrail.get('watch.atmo.review.listRecords', { params }),
+		getViewerReviewLikes(viewerDid).catch((cause) => {
+			console.error('Could not load viewer review likes from Contrail', cause);
+			return new Map<string, string>();
+		})
+	]);
 
 	if (!response.ok) {
 		throw new Error(`Could not load reviews from Contrail (${response.status})`);
@@ -223,7 +258,13 @@ export async function getMediaReviews(
 		const author = getReviewAuthor(record.did, profiles);
 		const review = toReview(record, author.handle);
 		return review?.media.tmdbId === tmdbId && review.media.creativeWorkType === creativeWorkType
-			? [{ ...review, author }]
+			? [
+					{
+						...review,
+						author,
+						viewerLikeUri: viewerLikes.get(review.uri) ?? null
+					}
+				]
 			: [];
 	});
 

@@ -43,6 +43,7 @@ const MEDIA_APPENDS: [
 	'images'
 ] = ['credits', 'recommendations', 'external_ids', 'videos', 'watch/providers', 'images'];
 const PERSON_APPENDS: ['combined_credits'] = ['combined_credits'];
+const TV_SEASON_APPENDS: ['videos'] = ['videos'];
 
 const HOUR = 60 * 60;
 const WEEK = 7 * 24 * HOUR;
@@ -261,7 +262,10 @@ function getTrailerUrl(videos: VideoItem[]) {
 	const trailer =
 		videos.find(
 			(video) => video.site === 'YouTube' && video.type === 'Trailer' && video.official
-		) ?? videos.find((video) => video.site === 'YouTube' && video.type === 'Trailer');
+		) ??
+		videos.find((video) => video.site === 'YouTube' && video.type === 'Trailer') ??
+		videos.find((video) => video.site === 'YouTube' && video.type === 'Teaser' && video.official) ??
+		videos.find((video) => video.site === 'YouTube' && video.type === 'Teaser');
 
 	return trailer ? `https://www.youtube.com/watch?v=${encodeURIComponent(trailer.key)}` : null;
 }
@@ -454,10 +458,11 @@ export async function getTvSeasonPage(tmdbId: number, seasonNumber: number) {
 	const cache = getPublicDataCache(TV_SCHEDULE_TTL);
 	const [show, seasonSource] = await Promise.all([
 		getTvScheduleSource(tmdbId, cache),
-		cachePublicData(cache, `tmdb:tv-season:v1:${tmdbId}:${seasonNumber}`, () =>
+		cachePublicData(cache, `tmdb:tv-season:v2:${tmdbId}:${seasonNumber}`, () =>
 			getClient().tv_seasons.details({
 				series_id: tmdbId,
-				season_number: seasonNumber
+				season_number: seasonNumber,
+				append_to_response: TV_SEASON_APPENDS
 			})
 		)
 	]);
@@ -490,7 +495,8 @@ export async function getTvSeasonPage(tmdbId: number, seasonNumber: number) {
 			navigationIndex >= 0 && navigationIndex < navigableSeasons.length - 1
 				? navigableSeasons[navigationIndex + 1]
 				: null,
-		network: show.networks?.[0]?.name ?? null
+		network: show.networks?.[0]?.name ?? null,
+		trailer_url: getTrailerUrl(seasonSource.videos.results)
 	};
 }
 

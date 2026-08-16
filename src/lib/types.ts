@@ -65,6 +65,7 @@ export type ReviewCardModel = {
 	containsSpoilers: boolean;
 	likeCount: number;
 	commentCount: number;
+	viewerLikeUri?: string | null;
 };
 
 export type ReviewCommentModel = {
