@@ -8,6 +8,8 @@
 	import ItemsGrid from './ItemsGrid.svelte';
 	import Review from './Review.svelte';
 	import TrailerDialog from './TrailerDialog.svelte';
+	import TvScheduleCard from './TvScheduleCard.svelte';
+	import TvSeasons from './TvSeasons.svelte';
 	import { backdropUrl, posterUrl, profileUrl } from '$lib/images';
 	import { loginDialog } from '$lib/login.svelte';
 	import { reviewDialog } from '$lib/review.svelte';
@@ -18,6 +20,7 @@
 	type ItemPageData = Awaited<ReturnType<typeof getMediaPage>> & {
 		did: string | null;
 		reviews: ReviewCardModel[];
+		today: string;
 	};
 
 	function startReview() {
@@ -38,6 +41,12 @@
 		return minutes ? `${hours}h ${minutes}m` : `${hours}h`;
 	}
 
+	function formatSeriesStatus(status: string | null) {
+		if (!status) return null;
+		if (status === 'Returning Series') return 'Returning';
+		return status[0].toUpperCase() + status.slice(1).toLowerCase();
+	}
+
 	let { data }: { data: ItemPageData } = $props();
 	let canonicalUrl = $derived(`${page.url.origin}${page.url.pathname}`);
 	let ogImageUrl = $derived(`${canonicalUrl.replace(/\/$/, '')}/og.png`);
@@ -48,10 +57,17 @@
 			? `${data.item.numberOfSeasons} ${data.item.numberOfSeasons === 1 ? 'season' : 'seasons'}`
 			: null
 	);
+	let episodeLabel = $derived(
+		data.item.numberOfEpisodes
+			? `${data.item.numberOfEpisodes} ${data.item.numberOfEpisodes === 1 ? 'episode' : 'episodes'}`
+			: null
+	);
 	let mediaFacts = $derived(
 		[
 			releaseYear,
+			data.item.creativeWorkType === 'tv_show' ? formatSeriesStatus(data.item.status) : null,
 			data.item.creativeWorkType === 'tv_show' ? seasonLabel : null,
+			data.item.creativeWorkType === 'tv_show' ? episodeLabel : null,
 			formatRuntime(data.item.runtime)
 		].filter((fact): fact is string => fact !== null)
 	);
@@ -222,6 +238,10 @@
 				</div>
 			</div>
 
+			{#if data.item.creativeWorkType === 'tv_show' && data.nextEpisode?.airDate}
+				<TvScheduleCard item={data.item} nextEpisode={data.nextEpisode} today={data.today} />
+			{/if}
+
 			{#if data.item.overview}
 				<section class="mt-6 border-t border-white/10 pt-6 text-sm text-white">
 					<h2 class="text-lg font-semibold tracking-tight">Overview</h2>
@@ -229,6 +249,15 @@
 						{data.item.overview}
 					</p>
 				</section>
+			{/if}
+
+			{#if data.item.creativeWorkType === 'tv_show'}
+				<TvSeasons
+					item={data.item}
+					seasons={data.seasons}
+					nextEpisode={data.nextEpisode}
+					today={data.today}
+				/>
 			{/if}
 
 			{#if writtenReviews.length > 0}

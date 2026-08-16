@@ -11,6 +11,8 @@ import {
 	type PersonCombinedCastCredit,
 	type PersonDetails as TmdbPersonDetails,
 	type TVDetailsWithAppends,
+	type TVEpisodeItem,
+	type TVSeasonItem,
 	type TVSeriesDetails,
 	type TVSeriesResultItem,
 	type VideoItem,
@@ -27,6 +29,8 @@ import type {
 	PersonDetails,
 	StreamingAvailability,
 	SupportedCreativeWorkType,
+	TvEpisodeSummary,
+	TvSeasonSummary,
 	WatchProvider
 } from './types';
 
@@ -43,6 +47,7 @@ const PERSON_APPENDS: ['combined_credits'] = ['combined_credits'];
 const HOUR = 60 * 60;
 const WEEK = 7 * 24 * HOUR;
 const MEDIA_DATA_TTL = WEEK;
+const TV_SCHEDULE_TTL = 3 * HOUR;
 const DISCOVERY_TTL = 6 * HOUR;
 const SEARCH_TTL = HOUR;
 
@@ -65,6 +70,7 @@ type MediaSummarySource =
 	MovieDetails | MovieResultItem | TVSeriesDetails | TVSeriesResultItem | PersonCombinedCastCredit;
 type MediaDetailsSource =
 	MovieDetailsWithAppends<typeof MEDIA_APPENDS> | TVDetailsWithAppends<typeof MEDIA_APPENDS>;
+type MediaCoreDetailsSource = MovieDetails | TVSeriesDetails;
 type TmdbMediaType = 'movie' | 'tv';
 
 let client: TMDB | undefined;
@@ -110,6 +116,15 @@ function getMediaSource(
 	});
 }
 
+function getTvScheduleSource(
+	tmdbId: number,
+	cache = getPublicDataCache(TV_SCHEDULE_TTL)
+): Promise<TVSeriesDetails> {
+	return cachePublicData(cache, `tmdb:tv-schedule:v1:${tmdbId}`, () =>
+		getClient().tv_series.details({ series_id: tmdbId })
+	);
+}
+
 function fromTmdbMediaType(mediaType: TmdbMediaType): SupportedCreativeWorkType {
 	return mediaType === 'tv' ? 'tv_show' : 'movie';
 }
@@ -131,7 +146,7 @@ function toMediaSummary(
 }
 
 function toMediaDetails(
-	source: MediaDetailsSource,
+	source: MediaCoreDetailsSource,
 	creativeWorkType: SupportedCreativeWorkType
 ): MediaDetails {
 	const metadata =
@@ -139,12 +154,16 @@ function toMediaDetails(
 			? {
 					releaseDate: source.release_date || null,
 					runtime: source.runtime ?? null,
-					numberOfSeasons: null
+					numberOfSeasons: null,
+					numberOfEpisodes: null,
+					status: null
 				}
 			: {
 					releaseDate: source.first_air_date || null,
 					runtime: source.episode_run_time[0] ?? source.last_episode_to_air?.runtime ?? null,
-					numberOfSeasons: source.number_of_seasons || null
+					numberOfSeasons: source.number_of_seasons || null,
+					numberOfEpisodes: source.number_of_episodes || null,
+					status: source.status ?? null
 				};
 
 	return {
@@ -169,6 +188,33 @@ function toCastMember(person: Cast): CastMember {
 		name: person.name,
 		character: person.character,
 		profile_path: person.profile_path ?? null
+	};
+}
+
+function toTvEpisode(source: TVEpisodeItem | null | undefined): TvEpisodeSummary | null {
+	if (!source) return null;
+	return {
+		id: source.id,
+		name: source.name,
+		overview: source.overview ?? '',
+		seasonNumber: source.season_number,
+		episodeNumber: source.episode_number,
+		episodeType: source.episode_type ?? null,
+		airDate: source.air_date || null,
+		runtime: source.runtime ?? null,
+		still: toTmdbImage(source.still_path)
+	};
+}
+
+function toTvSeason(source: TVSeasonItem): TvSeasonSummary {
+	return {
+		id: source.id,
+		name: source.name,
+		overview: source.overview ?? '',
+		seasonNumber: source.season_number,
+		episodeCount: source.episode_count,
+		airDate: source.air_date || null,
+		poster: toTmdbImage(source.poster_path)
 	};
 }
 
@@ -285,18 +331,32 @@ export async function getMediaPage(
 	region: string | null
 ) {
 	const cache = getPublicDataCache(MEDIA_DATA_TTL);
-	const details = await getMediaSource(tmdbId, creativeWorkType, cache);
+	const [details, currentTvDetails] = await Promise.all([
+		getMediaSource(tmdbId, creativeWorkType, cache),
+		creativeWorkType === 'tv_show'
+			? getTvScheduleSource(tmdbId).catch((cause) => {
+					console.error('Could not refresh TV schedule data from TMDB', cause);
+					return null;
+				})
+			: Promise.resolve(null)
+	]);
 	const omdb = details.external_ids.imdb_id
 		? await getRatings(details.external_ids.imdb_id, cache)
 		: EMPTY_OMDB_DATA;
+	const tvDetails =
+		currentTvDetails ?? ('first_air_date' in details ? (details as TVSeriesDetails) : null);
 
 	return {
-		item: toMediaDetails(details, creativeWorkType),
+		item: toMediaDetails(tvDetails ?? details, creativeWorkType),
 		recommendations: details.recommendations.results.map((item) =>
 			toMediaSummary(item, creativeWorkType)
 		),
 		cast: details.credits.cast.map(toCastMember),
 		backdrops: toBackdropGallery(details),
+		seasons: (tvDetails?.seasons ?? []).map(toTvSeason),
+		nextEpisode: toTvEpisode(tvDetails?.next_episode_to_air),
+		lastEpisode: toTvEpisode(tvDetails?.last_episode_to_air),
+		network: tvDetails?.networks?.[0]?.name ?? null,
 		imdb_id: details.external_ids.imdb_id ?? null,
 		imdb_votes: omdb.imdbVotes,
 		ratings: omdb.ratings,
@@ -388,6 +448,50 @@ export async function getDetails(
 	const cache = getPublicDataCache(MEDIA_DATA_TTL);
 	const details = await getMediaSource(tmdbId, creativeWorkType, cache);
 	return toMediaDetails(details, creativeWorkType);
+}
+
+export async function getTvSeasonPage(tmdbId: number, seasonNumber: number) {
+	const cache = getPublicDataCache(TV_SCHEDULE_TTL);
+	const [show, seasonSource] = await Promise.all([
+		getTvScheduleSource(tmdbId, cache),
+		cachePublicData(cache, `tmdb:tv-season:v1:${tmdbId}:${seasonNumber}`, () =>
+			getClient().tv_seasons.details({
+				series_id: tmdbId,
+				season_number: seasonNumber
+			})
+		)
+	]);
+	const seasons = (show.seasons ?? []).map(toTvSeason);
+	const navigableSeasons = seasons
+		.filter((season) => season.seasonNumber > 0)
+		.sort((left, right) => left.seasonNumber - right.seasonNumber);
+	const navigationIndex = navigableSeasons.findIndex(
+		(season) => season.seasonNumber === seasonNumber
+	);
+	const season: TvSeasonSummary = {
+		id: seasonSource.id,
+		name: seasonSource.name,
+		overview: seasonSource.overview ?? '',
+		seasonNumber: seasonSource.season_number,
+		episodeCount: seasonSource.episodes.length,
+		airDate: seasonSource.air_date || null,
+		poster: toTmdbImage(seasonSource.poster_path)
+	};
+
+	return {
+		show: toMediaDetails(show, 'tv_show'),
+		season,
+		episodes: seasonSource.episodes.flatMap((source) => {
+			const episode = toTvEpisode(source);
+			return episode ? [episode] : [];
+		}),
+		previousSeason: navigationIndex > 0 ? navigableSeasons[navigationIndex - 1] : null,
+		nextSeason:
+			navigationIndex >= 0 && navigationIndex < navigableSeasons.length - 1
+				? navigableSeasons[navigationIndex + 1]
+				: null,
+		network: show.networks?.[0]?.name ?? null
+	};
 }
 
 function toRecordDate(value: string | null | undefined) {

@@ -49,7 +49,7 @@ export const load: PageServerLoad = async ({ params, request, url }) => {
 			})
 		]);
 
-		return { ...mediaPage, reviews };
+		return { ...mediaPage, reviews, today: new Date().toISOString().slice(0, 10) };
 	} catch (cause) {
 		if (cause instanceof TMDBError && cause.http_status_code === 404) {
 			error(404, 'Not found');

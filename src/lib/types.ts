@@ -19,6 +19,30 @@ export type MediaDetails = MediaSummary & {
 	runtime: number | null;
 	genres: string[];
 	numberOfSeasons: number | null;
+	numberOfEpisodes: number | null;
+	status: string | null;
+};
+
+export type TvEpisodeSummary = {
+	id: number;
+	name: string;
+	overview: string;
+	seasonNumber: number;
+	episodeNumber: number;
+	episodeType: string | null;
+	airDate: string | null;
+	runtime: number | null;
+	still: MediaImage | null;
+};
+
+export type TvSeasonSummary = {
+	id: number;
+	name: string;
+	overview: string;
+	seasonNumber: number;
+	episodeCount: number;
+	airDate: string | null;
+	poster: MediaImage | null;
 };
 
 export type MediaCredit = MediaSummary & {

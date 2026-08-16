@@ -3,7 +3,8 @@ import {
 	type BackdropSize,
 	type LogoSize,
 	type PosterSize,
-	type ProfileSize
+	type ProfileSize,
+	type StillSize
 } from '@lorenzopant/tmdb/image';
 import type { MediaImage } from './types';
 
@@ -25,4 +26,9 @@ export function posterUrl(image: MediaImage | null | undefined, size: PosterSize
 
 export function profileUrl(path: string | null | undefined, size: ProfileSize = 'h632') {
 	return path ? images.profile(path, size) : undefined;
+}
+
+export function stillUrl(image: MediaImage | null | undefined, size: StillSize = 'w300') {
+	if (!image) return undefined;
+	return image.source === 'tmdb' ? images.still(image.path, size) : image.url;
 }
