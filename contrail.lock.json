@@ -3,7 +3,7 @@
   "version": 1,
   "endpoint": "https://api.atmo.watch",
   "namespace": "watch.atmo",
-  "contractDigest": "sha256:13d95e3935100499b0d7d30deaa3daebff2150c6bdb118dc33015235897fb126",
+  "contractDigest": "sha256:331d01ac6beadd756e777004daf2a4e278bb3c864e91450bf7f974c4547dedd9",
   "lexiconDigest": "sha256:f4f7b4ddbb358fc1c701329b0bdde8f085bb17c238197c91f8a2a62233343afd",
   "methods": [
     "watch.atmo.comment.getRecord",
@@ -30,7 +30,7 @@
   ],
   "serviceAuth": {
     "type": "atproto-service-auth",
-    "audience": "did:web:api.atmo.watch",
+    "audience": "did:web:api.atmo.watch#contrail",
     "methods": [
       {
         "id": "watch.atmo.notifyOfUpdate",

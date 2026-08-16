@@ -13,7 +13,7 @@ export const config: ContrailConfig = {
 	},
 	notify: true,
 	serviceAuth: {
-		audience: 'did:web:api.atmo.watch',
+		audience: 'did:web:api.atmo.watch#contrail',
 		methods: ['notifyOfUpdate']
 	},
 	maintenance: { optimize: true },

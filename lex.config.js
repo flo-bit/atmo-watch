@@ -2,8 +2,8 @@
 export default {
   contrail: {
     endpoint: "https://api.atmo.watch",
-    serviceDid: "did:web:api.atmo.watch",
-    scope: "rpc?lxm=*&aud=did:web:api.atmo.watch",
+    serviceDid: "did:web:api.atmo.watch#contrail",
+    scope: "rpc?lxm=watch.atmo.notifyOfUpdate&aud=did:web:api.atmo.watch%23contrail",
     collections: [
       "app.bsky.actor.profile",
       "social.popfeed.actor.profile",
