@@ -7,8 +7,8 @@ import type * as ReviewListRecords from '$lib/contrail/types/types/watch/atmo/re
 import type {
 	ActorSummary,
 	MediaImage,
-	MediaSummary,
 	ReviewCardModel,
+	ReviewFeedPage,
 	ReviewCommentModel,
 	SupportedCreativeWorkType
 } from '$lib/types';
@@ -203,31 +203,45 @@ export async function getViewerReviewLikes(viewerDid: Did | null | undefined) {
 	return viewerLikes;
 }
 
-export async function getRecentlyReviewedMedia(): Promise<MediaSummary[]> {
-	const response = await contrail.get('watch.atmo.review.listRecords', {
-		params: { limit: 200, order: 'desc' }
+export async function getRecentReviewsPage({
+	cursor,
+	limit,
+	viewerDid
+}: {
+	cursor?: string;
+	limit: number;
+	viewerDid?: Did | null;
+}): Promise<ReviewFeedPage> {
+	const response = await contrail.get('watch.atmo.review.listWrittenRecords', {
+		params: {
+			cursor,
+			limit,
+			order: 'desc',
+			profiles: true,
+			...(viewerDid ? { hydrateLikes: 50 } : {})
+		}
 	});
 
 	if (!response.ok) {
 		throw new Error(`Could not load recent reviews from Contrail (${response.status})`);
 	}
 
-	const seen = new Set<string>();
-	const media: MediaSummary[] = [];
+	const profiles = response.data.profiles ?? [];
+	const reviews = response.data.records.flatMap((record) => {
+		const author = getReviewAuthor(record.did, profiles);
+		const review = toReview(record, author.handle);
+		if (!review?.text.trim()) return [];
 
-	for (const record of response.data.records) {
-		const review = toReview(record);
-		if (!review?.media.poster) continue;
+		return [
+			{
+				...review,
+				author,
+				viewerLikeUri: record.likes?.find((like) => like.did === viewerDid)?.uri ?? null
+			}
+		];
+	});
 
-		const key = `${review.media.creativeWorkType}:${review.media.tmdbId}`;
-		if (seen.has(key)) continue;
-
-		seen.add(key);
-		media.push(review.media);
-		if (media.length === 20) break;
-	}
-
-	return media;
+	return { reviews, cursor: response.data.cursor ?? null };
 }
 
 export async function getMediaReviews(

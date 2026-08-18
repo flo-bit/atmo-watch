@@ -27,7 +27,8 @@ export default defineLexiconConfig({
           "social.popfeed.feed.list",
           "social.popfeed.feed.listItem",
           "social.popfeed.feed.review",
-          "social.popfeed.richtext.facet"
+          "social.popfeed.richtext.facet",
+          "watch.atmo.review.listRecords"
         ],
       },
     ],

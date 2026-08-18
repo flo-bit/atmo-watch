@@ -94,7 +94,7 @@
 		<a
 			href={itemUrl}
 			aria-label={review.media.title}
-			class="block aspect-2/3 w-16 shrink-0 self-start overflow-hidden rounded-md bg-base-900 transition-opacity hover:opacity-75 sm:w-20"
+			class="block aspect-2/3 w-16 shrink-0 self-start overflow-hidden rounded-md border border-white/10 bg-base-900 transition-opacity hover:opacity-75 sm:w-20"
 		>
 			{#if imageUrl}
 				<img

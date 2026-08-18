@@ -68,6 +68,11 @@ export type ReviewCardModel = {
 	viewerLikeUri?: string | null;
 };
 
+export type ReviewFeedPage = {
+	reviews: ReviewCardModel[];
+	cursor: string | null;
+};
+
 export type ReviewCommentModel = {
 	uri: string;
 	author: ActorSummary;

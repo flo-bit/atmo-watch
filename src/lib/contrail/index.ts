@@ -4,7 +4,7 @@ import type {} from "./types/index.js";
 
 export const contrail = createPublicServiceClient({
   endpoint: "https://api.atmo.watch",
-  contractDigest: "sha256:331d01ac6beadd756e777004daf2a4e278bb3c864e91450bf7f974c4547dedd9",
+  contractDigest: "sha256:edfc8edad45272bc6a66e56d2ea4bc61d1d7f3724304fdd492f9486c33d4032c",
   serviceDid: "did:web:api.atmo.watch#contrail",
   scope: "rpc?lxm=watch.atmo.notifyOfUpdate&aud=did:web:api.atmo.watch%23contrail",
   serviceMethods: [
@@ -21,6 +21,7 @@ export const contrail = createPublicServiceClient({
     "watch.atmo.notifyOfUpdate",
     "watch.atmo.review.getRecord",
     "watch.atmo.review.listRecords",
+    "watch.atmo.review.listWrittenRecords",
   ],
   collections: [
     "app.bsky.actor.profile",

@@ -14,3 +14,4 @@ export * as WatchAtmoListItemListRecords from "./types/watch/atmo/listItem/listR
 export * as WatchAtmoNotifyOfUpdate from "./types/watch/atmo/notifyOfUpdate.js";
 export * as WatchAtmoReviewGetRecord from "./types/watch/atmo/review/getRecord.js";
 export * as WatchAtmoReviewListRecords from "./types/watch/atmo/review/listRecords.js";
+export * as WatchAtmoReviewListWrittenRecords from "./types/watch/atmo/review/listWrittenRecords.js";

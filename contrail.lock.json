@@ -3,8 +3,8 @@
   "version": 1,
   "endpoint": "https://api.atmo.watch",
   "namespace": "watch.atmo",
-  "contractDigest": "sha256:331d01ac6beadd756e777004daf2a4e278bb3c864e91450bf7f974c4547dedd9",
-  "lexiconDigest": "sha256:f4f7b4ddbb358fc1c701329b0bdde8f085bb17c238197c91f8a2a62233343afd",
+  "contractDigest": "sha256:edfc8edad45272bc6a66e56d2ea4bc61d1d7f3724304fdd492f9486c33d4032c",
+  "lexiconDigest": "sha256:b81b7755af0e9755979eb3846efa10b1e7032c40d5682590a7aec7de0a651bb1",
   "methods": [
     "watch.atmo.comment.getRecord",
     "watch.atmo.comment.listRecords",
@@ -17,7 +17,8 @@
     "watch.atmo.listItem.getRecord",
     "watch.atmo.listItem.listRecords",
     "watch.atmo.review.getRecord",
-    "watch.atmo.review.listRecords"
+    "watch.atmo.review.listRecords",
+    "watch.atmo.review.listWrittenRecords"
   ],
   "collections": [
     "app.bsky.actor.profile",

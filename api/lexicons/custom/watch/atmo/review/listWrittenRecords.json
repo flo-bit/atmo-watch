@@ -1,0 +1,65 @@
+{
+  "lexicon": 1,
+  "id": "watch.atmo.review.listWrittenRecords",
+  "defs": {
+    "main": {
+      "type": "query",
+      "description": "Query social.popfeed.feed.review records with non-empty text",
+      "parameters": {
+        "type": "params",
+        "properties": {
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 200,
+            "default": 50
+          },
+          "cursor": {
+            "type": "string"
+          },
+          "profiles": {
+            "type": "boolean",
+            "description": "Include indexed profile and identity information"
+          },
+          "hydrateLikes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 50,
+            "description": "Number of likes records to embed"
+          },
+          "order": {
+            "type": "string",
+            "knownValues": ["asc", "desc"],
+            "description": "Sort direction"
+          }
+        }
+      },
+      "output": {
+        "encoding": "application/json",
+        "schema": {
+          "type": "object",
+          "required": ["records"],
+          "properties": {
+            "records": {
+              "type": "array",
+              "items": {
+                "type": "ref",
+                "ref": "watch.atmo.review.listRecords#record"
+              }
+            },
+            "cursor": {
+              "type": "string"
+            },
+            "profiles": {
+              "type": "array",
+              "items": {
+                "type": "ref",
+                "ref": "watch.atmo.review.listRecords#profileEntry"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

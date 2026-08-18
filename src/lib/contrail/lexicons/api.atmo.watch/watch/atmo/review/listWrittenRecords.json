@@ -1,0 +1,70 @@
+{
+  "defs": {
+    "main": {
+      "description": "Query social.popfeed.feed.review records with non-empty text",
+      "output": {
+        "encoding": "application/json",
+        "schema": {
+          "properties": {
+            "cursor": {
+              "type": "string"
+            },
+            "profiles": {
+              "items": {
+                "ref": "watch.atmo.review.listRecords#profileEntry",
+                "type": "ref"
+              },
+              "type": "array"
+            },
+            "records": {
+              "items": {
+                "ref": "watch.atmo.review.listRecords#record",
+                "type": "ref"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "records"
+          ],
+          "type": "object"
+        }
+      },
+      "parameters": {
+        "properties": {
+          "cursor": {
+            "type": "string"
+          },
+          "hydrateLikes": {
+            "description": "Number of likes records to embed",
+            "maximum": 50,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "limit": {
+            "default": 50,
+            "maximum": 200,
+            "minimum": 1,
+            "type": "integer"
+          },
+          "order": {
+            "description": "Sort direction",
+            "knownValues": [
+              "asc",
+              "desc"
+            ],
+            "type": "string"
+          },
+          "profiles": {
+            "description": "Include indexed profile and identity information",
+            "type": "boolean"
+          }
+        },
+        "type": "params"
+      },
+      "type": "query"
+    }
+  },
+  "id": "watch.atmo.review.listWrittenRecords",
+  "lexicon": 1
+}
