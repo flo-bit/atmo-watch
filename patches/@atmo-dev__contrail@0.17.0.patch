@@ -205,3 +205,16 @@ index 17dbf762cee1c563435300cd1a9395acc3ec17a3..9404a89bc40c836e67cd81b7bd73ac03
      audience: string;
      /** Built-in methods that require a method-bound AT Protocol service token. */
      methods: AtprotoServiceAuthMethod[];
+diff --git a/dist/worker/index.js b/dist/worker/index.js
+index a5f20d65d608bb3d7254242d1090f91d5054df52..3ed71769608206514842d0cb49e6bd8dd528de03 100644
+--- a/dist/worker/index.js
++++ b/dist/worker/index.js
+@@ -15,7 +15,7 @@ import "../chunk-KN4SCF66.js";
+ function createWorker(config, options = {}) {
+   const binding = options.binding ?? "DB";
+   if (options.publicService) {
+-    normalizePublicServiceEndpoint(options.publicService.endpoint);
++    normalizePublicServiceEndpoint(options.publicService.endpoint, options.publicService);
+     validatePublicServiceLexicons(config, options.lexicons ?? []);
+   }
+   const contrail = new Contrail({ ...config, lexicons: options.lexicons });

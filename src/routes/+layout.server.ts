@@ -1,6 +1,6 @@
 import type { Did } from '@atcute/lexicons';
 import { getAtprotoCdnImageUrl } from '$lib/atproto/images';
-import { contrail } from '$lib/contrail';
+import { contrail } from '$lib/contrail-active';
 import type { LayoutServerLoad } from './$types';
 
 async function getViewerAvatar(did: Did) {

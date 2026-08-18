@@ -1,6 +1,6 @@
 import { isCanonicalResourceUri, parseCanonicalResourceUri, type Did } from '@atcute/lexicons';
 import { getAtprotoCdnImageUrl } from '$lib/atproto/images';
-import { contrail } from '$lib/contrail';
+import { contrail, contrailMethods } from '$lib/contrail-active';
 import type * as CommentListRecords from '$lib/contrail/types/types/watch/atmo/comment/listRecords';
 import type * as LikeListRecords from '$lib/contrail/types/types/watch/atmo/like/listRecords';
 import type * as ReviewListRecords from '$lib/contrail/types/types/watch/atmo/review/listRecords';
@@ -17,6 +17,9 @@ type ReviewRecord = Pick<
 	ReviewListRecords.Record,
 	'uri' | 'did' | 'value' | 'likesCount' | 'commentsCount'
 >;
+
+const REVIEW_LIST_METHOD = 'watch.atmo.review.listRecords' as const;
+const WRITTEN_REVIEW_LIST_METHOD = 'watch.atmo.review.listWrittenRecords' as const;
 
 function getCreativeWorkType(value: string): SupportedCreativeWorkType | undefined {
 	if (value === 'movie' || value === 'tv_show') return value;
@@ -212,7 +215,11 @@ export async function getRecentReviewsPage({
 	limit: number;
 	viewerDid?: Did | null;
 }): Promise<ReviewFeedPage> {
-	const response = await contrail.get('watch.atmo.review.listWrittenRecords', {
+	const supportsWrittenReviewQuery = (contrailMethods as readonly string[]).includes(
+		WRITTEN_REVIEW_LIST_METHOD
+	);
+	const method = supportsWrittenReviewQuery ? WRITTEN_REVIEW_LIST_METHOD : REVIEW_LIST_METHOD;
+	const response = await contrail.get(method as typeof REVIEW_LIST_METHOD, {
 		params: {
 			cursor,
 			limit,

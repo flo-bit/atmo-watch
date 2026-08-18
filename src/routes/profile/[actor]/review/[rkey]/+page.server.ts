@@ -1,7 +1,7 @@
 import { error } from '@sveltejs/kit';
 import type { ResourceUri } from '@atcute/lexicons';
 import { isRecordKey } from '@atcute/lexicons/syntax';
-import { contrail } from '$lib/contrail';
+import { contrail } from '$lib/contrail-active';
 import { getReviewInteractions, toReview } from '$lib/reviews.server';
 import type { PageServerLoad } from './$types';
 

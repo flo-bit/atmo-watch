@@ -6,6 +6,9 @@
 	"observability": {
 		"enabled": true
 	},
+	"vars": {
+		"CONTRAIL_PUBLIC_ENDPOINT": "https://api.atmo.watch"
+	},
 	"routes": [
 		{
 			"pattern": "api.atmo.watch",

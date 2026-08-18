@@ -4,7 +4,7 @@
 	"private": true,
 	"type": "module",
 	"scripts": {
-		"dev": "contrail dev --wrangler",
+		"dev": "node ../scripts/ensure-api-dev-vars.mjs && contrail dev --wrangler",
 		"deploy": "wrangler deploy",
 		"backfill:dev": "contrail backfill",
 		"backfill:remote": "contrail backfill --remote",

@@ -1,5 +1,5 @@
 import { getAtprotoCdnImageUrl } from '$lib/atproto/images';
-import { contrail } from '$lib/contrail';
+import { contrail } from '$lib/contrail-active';
 import type * as ListRecords from '$lib/contrail/types/types/watch/atmo/list/listRecords';
 import type * as ListItemRecords from '$lib/contrail/types/types/watch/atmo/listItem/listRecords';
 import type { ActorSummary, MediaImage, MediaListModel, MediaSummary } from '$lib/types';

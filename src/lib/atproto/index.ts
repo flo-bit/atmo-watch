@@ -4,7 +4,7 @@ import { createAtprotoAuth } from '@svelte-atproto/oauth/server';
 import { cloudflareKV } from '@svelte-atproto/oauth/server/stores/cloudflare';
 import { building } from '$app/environment';
 import { env } from '$env/dynamic/private';
-import { contrail } from '$lib/contrail';
+import { contrail } from '$lib/contrail-active';
 
 // To enable signup, add: signupPDS: 'https://your-pds.example/'
 export const atproto = createAtprotoAuth({

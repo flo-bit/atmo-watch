@@ -1,5 +1,5 @@
 import { getAtprotoCdnImageUrl } from '$lib/atproto/images';
-import { contrail } from '$lib/contrail';
+import { contrail } from '$lib/contrail-active';
 import { isActorIdentifier } from '@atcute/lexicons/syntax';
 import { error } from '@sveltejs/kit';
 import type { LayoutServerLoad } from './$types';

@@ -37,7 +37,7 @@ pnpm api:dev
 pnpm --dir api backfill:dev
 ```
 
-Wrangler stores the local D1 database under `api/.wrangler/`.
+Wrangler stores the local D1 database under `api/.wrangler/`. The dev command creates an ignored `api/.dev.vars` with the loopback public-service endpoint so local consumers receive a contract for `http://127.0.0.1:8787`; production continues to advertise `https://api.atmo.watch` from `wrangler.jsonc`.
 
 ## Updating the contract
 
