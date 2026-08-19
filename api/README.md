@@ -18,7 +18,7 @@ Collection reads, profiles, and `watch.atmo.getCursor` are anonymous. Profile re
 Create the production database:
 
 ```bash
-pnpm --dir api exec wrangler d1 create atmo-watch-contrail-g20260815
+pnpm --dir api exec wrangler d1 create atmo-watch-contrail-g20260819
 ```
 
 Copy the returned database ID into `api/wrangler.jsonc`, then deploy and backfill:
