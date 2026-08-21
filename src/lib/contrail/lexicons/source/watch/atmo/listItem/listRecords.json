@@ -1,0 +1,238 @@
+{
+  "lexicon": 1,
+  "id": "watch.atmo.listItem.listRecords",
+  "defs": {
+    "main": {
+      "type": "query",
+      "description": "Query social.popfeed.feed.listItem records",
+      "parameters": {
+        "type": "params",
+        "properties": {
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 200,
+            "default": 50
+          },
+          "cursor": {
+            "type": "string"
+          },
+          "actor": {
+            "type": "string",
+            "format": "at-identifier",
+            "description": "Filter by an indexed DID or cached handle"
+          },
+          "profiles": {
+            "type": "boolean",
+            "description": "Include indexed profile and identity information"
+          },
+          "addedAtMin": {
+            "type": "string",
+            "description": "Minimum value for addedAt"
+          },
+          "addedAtMax": {
+            "type": "string",
+            "description": "Maximum value for addedAt"
+          },
+          "creativeWorkType": {
+            "type": "string",
+            "description": "Filter by creativeWorkType"
+          },
+          "identifiersTmdbId": {
+            "type": "string",
+            "description": "Filter by identifiers.tmdbId"
+          },
+          "identifiersTmdbTvSeriesId": {
+            "type": "string",
+            "description": "Filter by identifiers.tmdbTvSeriesId"
+          },
+          "listType": {
+            "type": "string",
+            "description": "Filter by listType"
+          },
+          "listUri": {
+            "type": "string",
+            "description": "Filter by listUri"
+          },
+          "status": {
+            "type": "string",
+            "description": "Filter by status"
+          },
+          "hydrateList": {
+            "type": "boolean",
+            "description": "Embed the referenced list record"
+          },
+          "sort": {
+            "type": "string",
+            "knownValues": [
+              "addedAt",
+              "creativeWorkType",
+              "identifiersTmdbId",
+              "identifiersTmdbTvSeriesId",
+              "listType",
+              "listUri",
+              "status"
+            ],
+            "description": "Field to sort by (default: time_us)"
+          },
+          "order": {
+            "type": "string",
+            "knownValues": [
+              "asc",
+              "desc"
+            ],
+            "description": "Sort direction"
+          }
+        }
+      },
+      "output": {
+        "encoding": "application/json",
+        "schema": {
+          "type": "object",
+          "required": [
+            "records"
+          ],
+          "properties": {
+            "records": {
+              "type": "array",
+              "items": {
+                "type": "ref",
+                "ref": "#record"
+              }
+            },
+            "cursor": {
+              "type": "string"
+            },
+            "profiles": {
+              "type": "array",
+              "items": {
+                "type": "ref",
+                "ref": "#profileEntry"
+              }
+            }
+          }
+        }
+      }
+    },
+    "record": {
+      "type": "object",
+      "required": [
+        "uri",
+        "cid",
+        "value",
+        "did",
+        "collection",
+        "rkey",
+        "time_us"
+      ],
+      "properties": {
+        "uri": {
+          "type": "string",
+          "format": "at-uri"
+        },
+        "cid": {
+          "type": "string",
+          "format": "cid"
+        },
+        "value": {
+          "type": "ref",
+          "ref": "social.popfeed.feed.listItem#main"
+        },
+        "did": {
+          "type": "string",
+          "format": "did"
+        },
+        "collection": {
+          "type": "string",
+          "format": "nsid"
+        },
+        "rkey": {
+          "type": "string"
+        },
+        "time_us": {
+          "type": "integer"
+        },
+        "list": {
+          "type": "ref",
+          "ref": "#refListRecord"
+        }
+      }
+    },
+    "refListRecord": {
+      "type": "object",
+      "required": [
+        "uri",
+        "value",
+        "did",
+        "collection",
+        "rkey",
+        "time_us"
+      ],
+      "properties": {
+        "uri": {
+          "type": "string",
+          "format": "at-uri"
+        },
+        "cid": {
+          "type": "string",
+          "format": "cid"
+        },
+        "value": {
+          "type": "ref",
+          "ref": "social.popfeed.feed.list#main"
+        },
+        "did": {
+          "type": "string",
+          "format": "did"
+        },
+        "collection": {
+          "type": "string",
+          "format": "nsid"
+        },
+        "rkey": {
+          "type": "string"
+        },
+        "time_us": {
+          "type": "integer"
+        }
+      }
+    },
+    "profileEntry": {
+      "type": "object",
+      "required": [
+        "did"
+      ],
+      "properties": {
+        "did": {
+          "type": "string",
+          "format": "did"
+        },
+        "handle": {
+          "type": "string"
+        },
+        "uri": {
+          "type": "string",
+          "format": "at-uri"
+        },
+        "cid": {
+          "type": "string",
+          "format": "cid"
+        },
+        "value": {
+          "type": "union",
+          "refs": [
+            "app.bsky.actor.profile#main",
+            "social.popfeed.actor.profile#main"
+          ]
+        },
+        "collection": {
+          "type": "string",
+          "format": "nsid"
+        },
+        "rkey": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

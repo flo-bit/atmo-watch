@@ -1,5 +1,5 @@
 import { error } from '@sveltejs/kit';
-import { contrail } from '$lib/contrail-active';
+import { contrail } from '$lib/contrail-client.server';
 import { getProfileMediaLists } from '$lib/lists.server';
 import { getViewerReviewLikes, toReview } from '$lib/reviews.server';
 import type { PageServerLoad } from './$types';

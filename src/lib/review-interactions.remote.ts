@@ -4,7 +4,7 @@ import { isCanonicalResourceUri, parseCanonicalResourceUri } from '@atcute/lexic
 import type { CanonicalResourceUri, Did } from '@atcute/lexicons';
 import { createTID } from '@svelte-atproto/oauth/helper';
 import * as v from 'valibot';
-import { contrail } from '$lib/contrail-active';
+import { contrail } from '$lib/contrail-client.server';
 
 const REVIEW_COLLECTION = 'social.popfeed.feed.review';
 const LIKE_COLLECTION = 'social.popfeed.feed.like';

@@ -25,4 +25,3 @@ vite.config.ts.timestamp-*
 test-results
 
 .contrail/
-/src/lib/contrail-active/

@@ -1,6 +1,6 @@
 import { isCanonicalResourceUri, parseCanonicalResourceUri, type Did } from '@atcute/lexicons';
 import { getAtprotoCdnImageUrl } from '$lib/atproto/images';
-import { contrail, contrailMethods } from '$lib/contrail-active';
+import { contrail, contrailMethods } from '$lib/contrail-client.server';
 import type * as CommentListRecords from '$lib/contrail/types/types/watch/atmo/comment/listRecords';
 import type * as LikeListRecords from '$lib/contrail/types/types/watch/atmo/like/listRecords';
 import type * as ReviewListRecords from '$lib/contrail/types/types/watch/atmo/review/listRecords';

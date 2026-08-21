@@ -2,8 +2,12 @@
 export default {
   contrail: {
     endpoint: "https://api.atmo.watch",
-    serviceDid: "did:web:api.atmo.watch#contrail",
-    scope: "rpc?lxm=watch.atmo.notifyOfUpdate&aud=did:web:api.atmo.watch%23contrail",
+    serviceDid: "did:web:api.atmo.watch",
+    serviceAudience: "did:web:api.atmo.watch#contrail",
+    scope: "rpc?aud=did:web:api.atmo.watch%23contrail&lxm=watch.atmo.notifyOfUpdate",
+    protectedMethods: [
+      "watch.atmo.notifyOfUpdate",
+    ],
     collections: [
       "app.bsky.actor.profile",
       "social.popfeed.actor.profile",
@@ -15,7 +19,7 @@ export default {
     ],
   },
   generate: {
-    files: ["src/lib/contrail/lexicons/**/*.json"],
+    files: ["src/lib/contrail/lexicons/source/**/*.json"],
     outdir: "src/lib/contrail/types/",
   },
 };

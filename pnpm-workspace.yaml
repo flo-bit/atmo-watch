@@ -4,6 +4,3 @@ packages:
 allowBuilds:
   esbuild: true
   workerd: true
-
-patchedDependencies:
-  '@atmo-dev/contrail@0.17.0': patches/@atmo-dev__contrail@0.17.0.patch

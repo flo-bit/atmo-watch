@@ -1,0 +1,72 @@
+{
+  "defs": {
+    "externalLink": {
+      "properties": {
+        "service": {
+          "description": "Name of the external service (e.g., 'Twitter', 'GitHub').",
+          "maxLength": 100,
+          "type": "string"
+        },
+        "url": {
+          "description": "URL to the user's profile on the external service.",
+          "format": "uri",
+          "type": "string"
+        }
+      },
+      "required": [
+        "service",
+        "url"
+      ],
+      "type": "object"
+    },
+    "main": {
+      "description": "A declaration of a user's profile information.",
+      "key": "literal:self",
+      "record": {
+        "properties": {
+          "banner": {
+            "accept": [
+              "image/png",
+              "image/jpeg"
+            ],
+            "description": "Larger horizontal image to display behind profile view. Have not fully cut over yet so may not be shown",
+            "maxSize": 1000000,
+            "type": "blob"
+          },
+          "bannerUrl": {
+            "description": "Optional URL to a banner image. DEPRECATED - soon to be ignored",
+            "format": "uri",
+            "type": "string"
+          },
+          "createdAt": {
+            "format": "datetime",
+            "type": "string"
+          },
+          "description": {
+            "description": "Free-form profile description text.",
+            "maxGraphemes": 256,
+            "maxLength": 2560,
+            "type": "string"
+          },
+          "displayName": {
+            "maxGraphemes": 64,
+            "maxLength": 640,
+            "type": "string"
+          },
+          "externalLinks": {
+            "description": "List of external links to the user's profiles on other services.",
+            "items": {
+              "ref": "#externalLink",
+              "type": "ref"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "type": "record"
+    }
+  },
+  "id": "social.popfeed.actor.profile",
+  "lexicon": 1
+}

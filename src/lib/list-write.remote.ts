@@ -5,7 +5,7 @@ import type { Client } from '@atcute/client';
 import { isCanonicalResourceUri, parseCanonicalResourceUri } from '@atcute/lexicons';
 import type { CanonicalResourceUri, Did, Nsid } from '@atcute/lexicons';
 import * as v from 'valibot';
-import { contrail } from '$lib/contrail-active';
+import { contrail } from '$lib/contrail-client.server';
 import type { Main as ListRecord } from '$lib/contrail/types/types/social/popfeed/feed/list';
 import type { Main as ListItemRecord } from '$lib/contrail/types/types/social/popfeed/feed/listItem';
 import { backdropUrl } from '$lib/images';

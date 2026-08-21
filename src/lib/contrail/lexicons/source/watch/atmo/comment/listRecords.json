@@ -1,0 +1,167 @@
+{
+  "lexicon": 1,
+  "id": "watch.atmo.comment.listRecords",
+  "defs": {
+    "main": {
+      "type": "query",
+      "description": "Query social.popfeed.feed.comment records",
+      "parameters": {
+        "type": "params",
+        "properties": {
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 200,
+            "default": 50
+          },
+          "cursor": {
+            "type": "string"
+          },
+          "actor": {
+            "type": "string",
+            "format": "at-identifier",
+            "description": "Filter by an indexed DID or cached handle"
+          },
+          "profiles": {
+            "type": "boolean",
+            "description": "Include indexed profile and identity information"
+          },
+          "rootUri": {
+            "type": "string",
+            "description": "Filter by rootUri"
+          },
+          "subjectType": {
+            "type": "string",
+            "description": "Filter by subjectType"
+          },
+          "subjectUri": {
+            "type": "string",
+            "description": "Filter by subjectUri"
+          },
+          "sort": {
+            "type": "string",
+            "knownValues": [
+              "rootUri",
+              "subjectType",
+              "subjectUri"
+            ],
+            "description": "Field to sort by (default: time_us)"
+          },
+          "order": {
+            "type": "string",
+            "knownValues": [
+              "asc",
+              "desc"
+            ],
+            "description": "Sort direction"
+          }
+        }
+      },
+      "output": {
+        "encoding": "application/json",
+        "schema": {
+          "type": "object",
+          "required": [
+            "records"
+          ],
+          "properties": {
+            "records": {
+              "type": "array",
+              "items": {
+                "type": "ref",
+                "ref": "#record"
+              }
+            },
+            "cursor": {
+              "type": "string"
+            },
+            "profiles": {
+              "type": "array",
+              "items": {
+                "type": "ref",
+                "ref": "#profileEntry"
+              }
+            }
+          }
+        }
+      }
+    },
+    "record": {
+      "type": "object",
+      "required": [
+        "uri",
+        "cid",
+        "value",
+        "did",
+        "collection",
+        "rkey",
+        "time_us"
+      ],
+      "properties": {
+        "uri": {
+          "type": "string",
+          "format": "at-uri"
+        },
+        "cid": {
+          "type": "string",
+          "format": "cid"
+        },
+        "value": {
+          "type": "ref",
+          "ref": "social.popfeed.feed.comment#main"
+        },
+        "did": {
+          "type": "string",
+          "format": "did"
+        },
+        "collection": {
+          "type": "string",
+          "format": "nsid"
+        },
+        "rkey": {
+          "type": "string"
+        },
+        "time_us": {
+          "type": "integer"
+        }
+      }
+    },
+    "profileEntry": {
+      "type": "object",
+      "required": [
+        "did"
+      ],
+      "properties": {
+        "did": {
+          "type": "string",
+          "format": "did"
+        },
+        "handle": {
+          "type": "string"
+        },
+        "uri": {
+          "type": "string",
+          "format": "at-uri"
+        },
+        "cid": {
+          "type": "string",
+          "format": "cid"
+        },
+        "value": {
+          "type": "union",
+          "refs": [
+            "app.bsky.actor.profile#main",
+            "social.popfeed.actor.profile#main"
+          ]
+        },
+        "collection": {
+          "type": "string",
+          "format": "nsid"
+        },
+        "rkey": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}

@@ -4,9 +4,10 @@
 	"private": true,
 	"type": "module",
 	"scripts": {
-		"dev": "node ../scripts/ensure-api-dev-vars.mjs && contrail dev --wrangler",
+		"dev": "contrail dev --sqlite ../.contrail/dev.sqlite",
+		"dev:local": "contrail dev --sqlite ../.contrail/dev.sqlite",
 		"deploy": "wrangler deploy",
-		"backfill:dev": "contrail backfill",
+		"backfill:dev": "contrail backfill --sqlite ../.contrail/dev.sqlite",
 		"backfill:remote": "contrail backfill --remote",
 		"lexicons": "contrail lexicons generate --public",
 		"lexicons:all": "contrail lexicons all --public",
@@ -14,7 +15,7 @@
 		"check": "pnpm run lexicons:check && tsc --noEmit"
 	},
 	"dependencies": {
-		"@atmo-dev/contrail": "^0.17.0"
+		"@atmo-dev/contrail": "^0.19.0"
 	},
 	"devDependencies": {
 		"@atcute/lex-cli": "^3.2.1",

@@ -37,7 +37,7 @@ pnpm api:dev
 pnpm --dir api backfill:dev
 ```
 
-Wrangler stores the local D1 database under `api/.wrangler/`. The dev command creates an ignored `api/.dev.vars` with the loopback public-service endpoint so local consumers receive a contract for `http://127.0.0.1:8787`; production continues to advertise `https://api.atmo.watch` from `wrangler.jsonc`.
+Contrail's local development server stores its SQLite database under the repository's ignored `.contrail/` directory and serves the source contract at `http://127.0.0.1:8787`. It does not alter the production provider lock.
 
 ## Updating the contract
 
@@ -46,14 +46,13 @@ pnpm --dir api lexicons:all
 pnpm api:check
 ```
 
-After the production service is live, connect the web app to it from the repository root:
+Regenerate the web app's source API from the repository root before deployment:
 
 ```bash
-rm -rf src/lib/contrail contrail.lock.json
-pnpm exec contrail connect https://api.atmo.watch \
-  --out src/lib/contrail/lexicons \
-  --client src/lib/contrail/index.ts \
-  --client-types src/lib/contrail/types/index.ts
+pnpm contrail:generate
+pnpm api:check
+pnpm api:deploy
+pnpm contrail:update:prod
 ```
 
-Review and commit the regenerated client, lock, Lexicons, and types.
+The source connection updates types and local client metadata without changing the production lock. The final command reconnects to the deployed service and updates that lock. Review and commit the regenerated client, lock, Lexicons, and types.
