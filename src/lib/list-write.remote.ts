@@ -63,6 +63,11 @@ const createListWithItemSchema = v.object({
 	description: v.pipe(v.string(), v.trim(), v.maxLength(500))
 });
 
+const setWatchedSchema = v.object({
+	media: mediaSchema,
+	watched: v.boolean()
+});
+
 type RepoRecord = {
 	uri: string;
 	cid: string;
@@ -261,7 +266,8 @@ async function createList(
 	client: Client,
 	did: Did,
 	name: string,
-	description: string
+	description: string,
+	listType?: string
 ): Promise<StoredList> {
 	const response = await contrail.authenticated(client).post('com.atproto.repo.createRecord', {
 		input: {
@@ -272,6 +278,7 @@ async function createList(
 				$type: LIST_COLLECTION,
 				name,
 				...(description ? { description } : {}),
+				...(listType ? { listType } : {}),
 				createdAt: new Date().toISOString(),
 				ordered: false,
 				tags: []
@@ -285,7 +292,7 @@ async function createList(
 		error(502, 'The list returned an invalid URI');
 	}
 
-	return { uri: response.data.uri, name };
+	return { uri: response.data.uri, name, ...(listType ? { listType } : {}) };
 }
 
 async function createListItem(
@@ -296,6 +303,7 @@ async function createListItem(
 	prepared: PreparedListItem
 ) {
 	const { metadata, poster } = prepared;
+	const addedAt = new Date().toISOString();
 	const record = {
 		$type: LIST_ITEM_COLLECTION,
 		listUri: list.uri,
@@ -306,7 +314,8 @@ async function createListItem(
 		},
 		creativeWorkType: media.creativeWorkType,
 		title: metadata.title,
-		addedAt: new Date().toISOString(),
+		addedAt,
+		...(list.listType === 'watched' ? { completedAt: addedAt, status: '#finished' as const } : {}),
 		genres: metadata.genres,
 		...(poster ? { poster } : {}),
 		...(media.posterUrl ? { posterUrl: media.posterUrl } : {}),
@@ -400,3 +409,60 @@ export const createListWithItem = command(
 		return { uri: list.uri, name: list.name, selected: true };
 	}
 );
+
+function defaultWatchedListName(
+	creativeWorkType: v.InferOutput<typeof mediaIdentitySchema>['creativeWorkType']
+) {
+	return creativeWorkType === 'movie' ? 'Watched Movies' : 'Watched Shows';
+}
+
+function isWatchedList(
+	list: StoredList,
+	creativeWorkType: v.InferOutput<typeof mediaIdentitySchema>['creativeWorkType']
+) {
+	return list.listType === 'watched' || list.name === defaultWatchedListName(creativeWorkType);
+}
+
+export const loadWatchedStatus = command(mediaIdentitySchema, async (media) => {
+	const { client, did } = requireSession();
+	const { lists, items } = await loadListData(client, did);
+	const watchedListUris = new Set(
+		lists.filter((list) => isWatchedList(list, media.creativeWorkType)).map((list) => list.uri)
+	);
+
+	return {
+		watched: items.some(
+			(item) =>
+				watchedListUris.has(item.value.listUri as CanonicalResourceUri) && isMediaItem(item, media)
+		)
+	};
+});
+
+export const setWatchedStatus = command(setWatchedSchema, async ({ media, watched }) => {
+	const { client, did } = requireSession();
+	const { lists, items } = await loadListData(client, did);
+	const watchedLists = lists.filter((list) => isWatchedList(list, media.creativeWorkType));
+	const watchedListUris = new Set(watchedLists.map((list) => list.uri));
+	const matchingItems = items.filter(
+		(item) =>
+			watchedListUris.has(item.value.listUri as CanonicalResourceUri) && isMediaItem(item, media)
+	);
+
+	if (watched && matchingItems.length === 0) {
+		const list =
+			watchedLists.find((candidate) => candidate.listType === 'watched') ??
+			watchedLists[0] ??
+			(await createList(
+				client,
+				did,
+				defaultWatchedListName(media.creativeWorkType),
+				'',
+				'watched'
+			));
+		await createListItem(client, did, list, media, await prepareListItem(client, media));
+	} else if (!watched && matchingItems.length > 0) {
+		await deleteListItems(client, did, matchingItems);
+	}
+
+	return { watched };
+});

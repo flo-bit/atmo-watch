@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
 	import { DropdownMenu } from 'bits-ui';
+	import { BookmarkPlus } from '@lucide/svelte';
 	import { untrack } from 'svelte';
 	import { posterUrl } from '$lib/images';
 	import { createListDialog } from '$lib/list.svelte';
@@ -14,7 +15,15 @@
 		selected: boolean;
 	};
 
-	let { item, did }: { item: MediaSummary; did: string | null } = $props();
+	let {
+		item,
+		did,
+		variant = 'icon'
+	}: {
+		item: MediaSummary;
+		did: string | null;
+		variant?: 'icon' | 'action';
+	} = $props();
 	let open = $state(false);
 	let lists = $state<ListOption[]>([]);
 	let loading = $state(false);
@@ -101,28 +110,35 @@
 	}
 </script>
 
-<DropdownMenu.Root {open} onOpenChange={handleOpenChange}>
+<DropdownMenu.Root bind:open onOpenChange={handleOpenChange}>
 	<DropdownMenu.Trigger
 		title="Add to list"
-		class="inline-flex size-9 items-center justify-center rounded-full border border-white/15 bg-white/[0.07] text-white backdrop-blur-sm transition-colors hover:bg-white/[0.12] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70 data-[state=open]:bg-white/[0.12]"
+		class={variant === 'action'
+			? 'group flex min-w-0 flex-col items-center gap-2 rounded-xl px-1 py-2 text-center text-white transition-colors hover:text-accent-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70 lg:gap-0 lg:p-0'
+			: 'inline-flex size-9 items-center justify-center rounded-full border border-white/15 bg-white/[0.07] text-white backdrop-blur-sm transition-colors hover:bg-white/[0.12] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70 data-[state=open]:bg-white/[0.12]'}
 	>
-		<svg
-			class="size-4 text-accent-400"
-			viewBox="0 0 24 24"
-			fill="none"
-			stroke="currentColor"
-			stroke-width="1.8"
-			aria-hidden="true"
+		<span
+			class={variant === 'action'
+				? 'inline-flex size-10 items-center justify-center rounded-full border border-white/10 bg-white/10 text-white shadow-lg shadow-black/10 backdrop-blur-sm transition-colors group-hover:bg-white/15 group-data-[state=open]:bg-white/15 lg:size-9'
+				: 'contents'}
 		>
-			<path stroke-linecap="round" d="M16 5H3M11 12H3M16 19H3M18 9v6M21 12h-6" />
-		</svg>
-		<span class="sr-only">Add to list</span>
+			<BookmarkPlus
+				class={variant === 'action' ? 'size-4' : 'size-4 text-accent-400'}
+				strokeWidth={1.8}
+				aria-hidden="true"
+			/>
+		</span>
+		{#if variant === 'action'}
+			<span class="text-xs leading-4 font-medium text-base-200 lg:sr-only">add to list</span>
+		{:else}
+			<span class="sr-only">Add to list</span>
+		{/if}
 	</DropdownMenu.Trigger>
 
 	<DropdownMenu.Portal>
 		<DropdownMenu.Content
 			side="bottom"
-			align="end"
+			align={variant === 'action' ? 'center' : 'end'}
 			sideOffset={8}
 			avoidCollisions={false}
 			loop={true}

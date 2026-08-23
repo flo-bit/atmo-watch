@@ -14,11 +14,15 @@
 		review,
 		viewerDid = null,
 		showItem = true,
+		compact = false,
+		onOpen,
 		class: className
 	}: {
 		review: ReviewCardModel;
 		viewerDid?: string | null;
 		showItem?: boolean;
+		compact?: boolean;
+		onOpen?: () => void;
 		class?: string;
 	} = $props();
 
@@ -52,6 +56,21 @@
 	let liked = $state(Boolean(review.viewerLikeUri));
 	// svelte-ignore state_referenced_locally
 	let likeCount = $state(review.likeCount);
+
+	function openReview(event: MouseEvent) {
+		if (!onOpen) return;
+		const target = event.target;
+		if (target instanceof Element && target.closest('a, button, input, textarea, select')) return;
+		onOpen();
+	}
+
+	function handleOpenKeydown(event: KeyboardEvent) {
+		if (!onOpen || event.target !== event.currentTarget || !['Enter', ' '].includes(event.key)) {
+			return;
+		}
+		event.preventDefault();
+		onOpen();
+	}
 
 	async function toggleLike() {
 		interactionError = '';
@@ -89,7 +108,19 @@
 	}
 </script>
 
-<article class={cn('flex gap-3 sm:gap-4', showItem ? 'p-3 sm:p-4' : 'py-3 sm:py-4', className)}>
+<article
+	onclick={openReview}
+	onkeydown={handleOpenKeydown}
+	role={onOpen ? 'button' : undefined}
+	aria-label={onOpen ? `Read the full review by @${handle}` : undefined}
+	class={cn(
+		'flex gap-3 sm:gap-4',
+		compact ? 'p-4' : showItem ? 'p-3 sm:p-4' : 'py-3 sm:py-4',
+		onOpen &&
+			'cursor-pointer transition-colors hover:border-white/20 hover:bg-black/35 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70',
+		className
+	)}
+>
 	{#if showItem}
 		<a
 			href={itemUrl}
@@ -111,7 +142,7 @@
 		</a>
 	{/if}
 
-	<div class="min-w-0 flex-1 py-0.5">
+	<div class={cn('min-w-0 flex-1 py-0.5', compact && 'flex flex-col')}>
 		<header class="flex items-start justify-between gap-3">
 			<div class="min-w-0">
 				{#if showItem}
@@ -146,9 +177,14 @@
 						</span>
 					</span>
 				</a>
+				{#if compact && text}
+					<div class="mt-2">
+						<Rating rating={review.rating} size="size-4" />
+					</div>
+				{/if}
 			</div>
 
-			{#if text}
+			{#if text && !compact}
 				<Rating rating={review.rating} size="size-3.5" />
 			{/if}
 		</header>
@@ -164,6 +200,7 @@
 				<p
 					class={cn(
 						'text-sm leading-6 break-words whitespace-pre-wrap text-base-100',
+						compact && 'line-clamp-6',
 						spoilerHidden && 'pointer-events-none opacity-35 blur-sm select-none'
 					)}
 					aria-hidden={spoilerHidden}
@@ -184,7 +221,12 @@
 				{/if}
 			</div>
 
-			<div class="mt-3 flex w-fit items-center gap-3 text-xs text-base-500">
+			<div
+				class={cn(
+					'flex w-fit items-center gap-3 text-xs text-base-500',
+					compact ? 'mt-auto pt-3' : 'mt-3'
+				)}
+			>
 				<button
 					type="button"
 					onclick={toggleLike}

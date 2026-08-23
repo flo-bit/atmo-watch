@@ -24,9 +24,6 @@
 			.sort((left, right) => left.seasonNumber - right.seasonNumber),
 		...seasons.filter((season) => season.seasonNumber === 0)
 	]);
-	let showMoreClass = $derived(
-		orderedSeasons.length > 10 ? '' : orderedSeasons.length > 6 ? 'lg:hidden' : 'sm:hidden'
-	);
 	let showId = $derived(`${item.tmdbId}-${slugify(item.title)}`);
 
 	$effect(() => {
@@ -34,10 +31,7 @@
 	});
 
 	function seasonLayoutClass(index: number) {
-		if (showAllSeasons || index < 4) return 'block';
-		if (index < 6) return 'hidden sm:block';
-		if (index < 10) return 'hidden lg:block';
-		return 'hidden';
+		return showAllSeasons || index < 10 ? 'lg:block' : 'lg:hidden';
 	}
 
 	function seasonStatus(season: TvSeasonSummary) {
@@ -59,7 +53,9 @@
 {#if orderedSeasons.length > 0}
 	<section class="mt-10 border-t border-white/10 pt-6 text-sm text-white">
 		<h2 class="text-lg font-semibold tracking-tight">Seasons</h2>
-		<div class="mt-4 grid grid-cols-2 gap-x-3 gap-y-6 sm:grid-cols-3 sm:gap-x-4 lg:grid-cols-5">
+		<div
+			class="mt-4 flex snap-x snap-mandatory [scrollbar-width:none] gap-3 overflow-x-auto overscroll-x-contain pb-3 lg:grid lg:grid-cols-5 lg:gap-x-4 lg:gap-y-6 lg:overflow-visible lg:pb-0 [&::-webkit-scrollbar]:hidden"
+		>
 			{#each orderedSeasons as season, index (season.id)}
 				<a
 					href={resolve('/[kind]/[id]/season/[season]', {
@@ -67,7 +63,7 @@
 						id: showId,
 						season: String(season.seasonNumber)
 					})}
-					class={`${seasonLayoutClass(index)} group min-w-0 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white/70`}
+					class={`${seasonLayoutClass(index)} group block w-32 min-w-0 shrink-0 snap-start focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white/70 sm:w-36 lg:w-auto`}
 				>
 					<div
 						class="relative aspect-2/3 overflow-hidden rounded-lg border border-white/10 bg-base-900"
@@ -107,11 +103,11 @@
 			{/each}
 		</div>
 
-		{#if !showAllSeasons && orderedSeasons.length > 4}
+		{#if !showAllSeasons && orderedSeasons.length > 10}
 			<button
 				type="button"
 				onclick={() => (showAllSeasons = true)}
-				class={`mt-5 inline-flex h-8 items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.07] px-3 text-xs font-semibold text-white transition-colors hover:bg-white/[0.12] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70 ${showMoreClass}`}
+				class="mt-5 hidden h-8 items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.07] px-3 text-xs font-semibold text-white transition-colors hover:bg-white/[0.12] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70 lg:inline-flex"
 			>
 				show all seasons
 				<svg

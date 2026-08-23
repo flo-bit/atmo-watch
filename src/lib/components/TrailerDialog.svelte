@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { Dialog } from 'bits-ui';
+	import { Film } from '@lucide/svelte';
 	import { cn } from '$lib/utils';
 
 	let {
@@ -11,7 +12,7 @@
 	}: {
 		url: string;
 		title: string;
-		variant?: 'button' | 'feature';
+		variant?: 'button' | 'feature' | 'action';
 		fill?: boolean;
 		class?: string;
 	} = $props();
@@ -82,6 +83,20 @@
 				<span class="absolute right-3 bottom-2.5 left-3 flex items-center gap-2 text-white">
 					<span class="text-xs font-semibold tracking-wide sm:text-sm">Watch trailer</span>
 				</span>
+			</Dialog.Trigger>
+		{:else if variant === 'action'}
+			<Dialog.Trigger
+				class={cn(
+					'group flex min-w-0 flex-col items-center gap-2 rounded-xl px-1 py-2 text-center text-white transition-colors hover:text-accent-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70 lg:gap-0 lg:p-0',
+					className
+				)}
+			>
+				<span
+					class="inline-flex size-10 items-center justify-center rounded-full border border-white/10 bg-white/10 text-white shadow-lg shadow-black/10 backdrop-blur-sm transition-colors group-hover:bg-white/15 lg:size-9"
+				>
+					<Film class="size-4" strokeWidth={1.8} aria-hidden="true" />
+				</span>
+				<span class="text-xs leading-4 font-medium text-base-200 lg:sr-only">watch trailer</span>
 			</Dialog.Trigger>
 		{:else}
 			<Dialog.Trigger

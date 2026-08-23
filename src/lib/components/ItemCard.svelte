@@ -40,12 +40,17 @@
 
 	{#if showTitle}
 		<h3 class="mt-2 text-sm font-medium text-base-50 sm:text-base">
-			<a href={itemUrl}>
+			<a href={itemUrl} data-sveltekit-preload-data="hover">
 				<span aria-hidden="true" class="absolute inset-0"></span>
 				<span class="line-clamp-2">{item.title}</span>
 			</a>
 		</h3>
 	{:else}
-		<a href={itemUrl} aria-label={item.title} class="absolute inset-0 z-30"></a>
+		<a
+			href={itemUrl}
+			aria-label={item.title}
+			class="absolute inset-0 z-30"
+			data-sveltekit-preload-data="hover"
+		></a>
 	{/if}
 </div>

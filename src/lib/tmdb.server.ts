@@ -1,5 +1,10 @@
 import { env } from '$env/dynamic/private';
-import { cachePublicData, getPublicDataCache } from '$lib/cache.server';
+import {
+	cachePublicData,
+	getPublicDataCache,
+	readPublicDataCache,
+	writePublicDataCache
+} from '$lib/cache.server';
 import {
 	TMDB,
 	TMDBError,
@@ -48,6 +53,8 @@ const TV_SEASON_APPENDS: ['videos'] = ['videos'];
 const HOUR = 60 * 60;
 const WEEK = 7 * 24 * HOUR;
 const MEDIA_DATA_TTL = WEEK;
+const OMDB_DATA_TTL = 30 * 24 * HOUR;
+const OMDB_TRANSIENT_FAILURE_TTL = HOUR;
 const TV_SCHEDULE_TTL = 3 * HOUR;
 const DISCOVERY_TTL = 6 * HOUR;
 const SEARCH_TTL = HOUR;
@@ -67,6 +74,13 @@ type OmdbFetchResult = {
 	cacheable: boolean;
 };
 
+type OmdbResponse = {
+	Response: 'True' | 'False';
+	Error?: string;
+	Ratings?: Array<{ Source: string; Value: string }>;
+	imdbVotes?: string;
+};
+
 type MediaSummarySource =
 	MovieDetails | MovieResultItem | TVSeriesDetails | TVSeriesResultItem | PersonCombinedCastCredit;
 type MediaDetailsSource =
@@ -76,6 +90,8 @@ type TmdbMediaType = 'movie' | 'tv';
 
 let client: TMDB | undefined;
 let clientToken: string | undefined;
+let omdbBlock: { keyFingerprint: string; until: number } | undefined;
+const pendingRatings = new Map<string, Promise<OmdbData>>();
 
 function getClient() {
 	const token = env.TMDB_ACCESS_TOKEN ?? env.TMDB_API_KEY;
@@ -226,6 +242,16 @@ function toBackdropGallery(source: MediaDetailsSource): MediaImage[] {
 		.map((path) => ({ source: 'tmdb', path }));
 }
 
+function getTitleLogo(source: MediaDetailsSource) {
+	const logos = source.images.logos;
+	const logo =
+		logos.find((candidate) => candidate.iso_639_1 === 'en') ??
+		logos.find((candidate) => !candidate.iso_639_1) ??
+		logos[0];
+
+	return logo ? { path: logo.file_path, width: logo.width, height: logo.height } : null;
+}
+
 const regionNames = new Intl.DisplayNames(['en'], { type: 'region' });
 
 function getRegionName(code: string) {
@@ -281,35 +307,82 @@ function toPersonDetails(person: TmdbPersonDetails): PersonDetails {
 	};
 }
 
-export async function getRatings(
+function getOmdbQuotaFailureTtl() {
+	const now = new Date();
+	const nextUtcDay = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1);
+	return Math.max(HOUR, Math.ceil((nextUtcDay - now.getTime()) / 1000));
+}
+
+function isOmdbQuotaFailure(response: Response, data: OmdbResponse | null) {
+	return response.status === 429 || /request limit reached/i.test(data?.Error ?? '');
+}
+
+async function getOmdbKeyFingerprint(apiKey: string) {
+	const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(apiKey));
+	return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('');
+}
+
+async function loadRatings(
 	imdbId: string,
-	cache = getPublicDataCache(MEDIA_DATA_TTL)
+	cache: ReturnType<typeof getPublicDataCache>,
+	failureCache: ReturnType<typeof getPublicDataCache>,
+	quotaCache: ReturnType<typeof getPublicDataCache>
 ): Promise<OmdbData> {
-	if (!env.OMDB_API_KEY) return EMPTY_OMDB_DATA;
+	const ratingsKey = `omdb:ratings:${imdbId}`;
+	const cached = await readPublicDataCache<OmdbFetchResult>(cache, ratingsKey);
+	if (cached !== undefined) return cached.data;
+	const apiKey = env.OMDB_API_KEY;
+	if (!apiKey) return EMPTY_OMDB_DATA;
 
-	const result = await cachePublicData<OmdbFetchResult>(
-		cache,
-		`omdb:ratings:${imdbId}`,
-		async () => {
-			const url = new URL('https://www.omdbapi.com/');
-			url.searchParams.set('i', imdbId);
-			url.searchParams.set('apikey', env.OMDB_API_KEY);
+	const keyFingerprint = await getOmdbKeyFingerprint(apiKey);
+	const now = Date.now();
+	const quotaKey = `omdb:quota-exhausted:${keyFingerprint}`;
+	if (
+		(omdbBlock?.keyFingerprint === keyFingerprint && now < omdbBlock.until) ||
+		(await readPublicDataCache<boolean>(quotaCache, quotaKey)) === true
+	) {
+		return EMPTY_OMDB_DATA;
+	}
 
-			try {
-				const response = await fetch(url);
-				if (!response.ok) return { data: EMPTY_OMDB_DATA, cacheable: false };
+	const failureKey = `omdb:failure:${keyFingerprint}:${imdbId}`;
+	if ((await readPublicDataCache<boolean>(failureCache, failureKey)) === true) {
+		return EMPTY_OMDB_DATA;
+	}
 
-				const data = (await response.json()) as {
-					Response: 'True' | 'False';
-					Ratings?: Array<{ Source: string; Value: string }>;
-					imdbVotes?: string;
-				};
+	const url = new URL('https://www.omdbapi.com/');
+	url.searchParams.set('i', imdbId);
+	url.searchParams.set('apikey', apiKey);
 
-				if (data.Response === 'False') {
-					return { data: EMPTY_OMDB_DATA, cacheable: true };
-				}
+	let response: Response;
+	let data: OmdbResponse | null = null;
 
-				return {
+	try {
+		response = await fetch(url);
+		data = (await response.json()) as OmdbResponse;
+	} catch (cause) {
+		console.error(`OMDb request for ${imdbId} failed`, cause);
+		await writePublicDataCache(failureCache, failureKey, true);
+		return EMPTY_OMDB_DATA;
+	}
+
+	if (isOmdbQuotaFailure(response, data)) {
+		const ttl = getOmdbQuotaFailureTtl();
+		omdbBlock = { keyFingerprint, until: Date.now() + ttl * 1000 };
+		await writePublicDataCache(quotaCache, quotaKey, true);
+		console.warn(`OMDb request quota is exhausted; pausing requests for ${ttl} seconds`);
+		return EMPTY_OMDB_DATA;
+	}
+
+	if (!response.ok) {
+		console.warn(`OMDb request for ${imdbId} failed with HTTP ${response.status}`);
+		await writePublicDataCache(failureCache, failureKey, true);
+		return EMPTY_OMDB_DATA;
+	}
+
+	const result: OmdbFetchResult =
+		data.Response === 'False'
+			? { data: EMPTY_OMDB_DATA, cacheable: true }
+			: {
 					data: {
 						ratings: (data.Ratings ?? []).map((rating) => ({
 							source: rating.Source,
@@ -319,14 +392,26 @@ export async function getRatings(
 					},
 					cacheable: true
 				};
-			} catch {
-				return { data: EMPTY_OMDB_DATA, cacheable: false };
-			}
-		},
-		(value) => value.cacheable
-	);
 
+	await writePublicDataCache(cache, ratingsKey, result);
 	return result.data;
+}
+
+export function getRatings(
+	imdbId: string,
+	cache = getPublicDataCache(OMDB_DATA_TTL),
+	failureCache = getPublicDataCache(OMDB_TRANSIENT_FAILURE_TTL),
+	quotaCache = getPublicDataCache(getOmdbQuotaFailureTtl())
+): Promise<OmdbData> {
+	const pendingKey = `${env.OMDB_API_KEY ?? ''}:${imdbId}`;
+	const pending = pendingRatings.get(pendingKey);
+	if (pending) return pending;
+
+	const request = loadRatings(imdbId, cache, failureCache, quotaCache).finally(() => {
+		pendingRatings.delete(pendingKey);
+	});
+	pendingRatings.set(pendingKey, request);
+	return request;
 }
 
 export async function getMediaPage(
@@ -335,6 +420,9 @@ export async function getMediaPage(
 	region: string | null
 ) {
 	const cache = getPublicDataCache(MEDIA_DATA_TTL);
+	const omdbCache = getPublicDataCache(OMDB_DATA_TTL);
+	const omdbFailureCache = getPublicDataCache(OMDB_TRANSIENT_FAILURE_TTL);
+	const omdbQuotaCache = getPublicDataCache(getOmdbQuotaFailureTtl());
 	const [details, currentTvDetails] = await Promise.all([
 		getMediaSource(tmdbId, creativeWorkType, cache),
 		creativeWorkType === 'tv_show'
@@ -345,7 +433,7 @@ export async function getMediaPage(
 			: Promise.resolve(null)
 	]);
 	const omdb = details.external_ids.imdb_id
-		? await getRatings(details.external_ids.imdb_id, cache)
+		? await getRatings(details.external_ids.imdb_id, omdbCache, omdbFailureCache, omdbQuotaCache)
 		: EMPTY_OMDB_DATA;
 	const tvDetails =
 		currentTvDetails ?? ('first_air_date' in details ? (details as TVSeriesDetails) : null);
@@ -357,6 +445,7 @@ export async function getMediaPage(
 		),
 		cast: details.credits.cast.map(toCastMember),
 		backdrops: toBackdropGallery(details),
+		logo: getTitleLogo(details),
 		seasons: (tvDetails?.seasons ?? []).map(toTvSeason),
 		nextEpisode: toTvEpisode(tvDetails?.next_episode_to_air),
 		lastEpisode: toTvEpisode(tvDetails?.last_episode_to_air),

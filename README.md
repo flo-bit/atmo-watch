@@ -2,6 +2,8 @@
 
 review movies and tv shows with your atmosphere account, using popfeed.social's lexicons.
 
+movie and show data by tmdb
+
 ## API Worker
 
 The public Contrail API is a separate Cloudflare Worker under [`api/`](api/README.md). Contrail's generated client supports both the deployed target and the local API:

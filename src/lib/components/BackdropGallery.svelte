@@ -40,12 +40,14 @@
 
 <svelte:window onkeydown={handleKeydown} />
 
-<div class="mt-4 grid gap-3 sm:grid-cols-2">
+<div
+	class="mt-4 flex snap-x snap-mandatory [scrollbar-width:none] gap-3 overflow-x-auto overscroll-x-contain pb-3 lg:grid lg:grid-cols-2 lg:overflow-visible lg:pb-0 [&::-webkit-scrollbar]:hidden"
+>
 	{#each images as image, index (image.source === 'tmdb' ? image.path : image.url)}
 		<button
 			type="button"
 			onclick={() => openImage(index)}
-			class="group overflow-hidden rounded-xl border border-white/10 bg-base-900 text-left transition-opacity hover:opacity-80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70"
+			class="group w-[82vw] max-w-sm shrink-0 snap-start overflow-hidden rounded-xl border border-white/10 bg-base-900 text-left transition-opacity hover:opacity-80 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70 lg:w-auto lg:max-w-none"
 			aria-label={`Open backdrop ${index + 1} of ${images.length} for ${title}`}
 		>
 			<img

@@ -19,32 +19,48 @@ export function getPublicDataCache(ttl: number): PublicDataCache | undefined {
 	}
 }
 
+function versionedKey(key: string) {
+	return `${CACHE_VERSION}:${key}`;
+}
+
+export async function readPublicDataCache<T>(
+	cache: PublicDataCache | undefined,
+	key: string
+): Promise<T | undefined> {
+	if (!cache) return undefined;
+
+	try {
+		return (await cache.get(versionedKey(key))) as T | undefined;
+	} catch {
+		// Treat KV errors as cache misses.
+		return undefined;
+	}
+}
+
+export async function writePublicDataCache(
+	cache: PublicDataCache | undefined,
+	key: string,
+	value: unknown
+): Promise<void> {
+	if (!cache) return;
+
+	try {
+		await cache.set(versionedKey(key), value);
+	} catch {
+		// A failed cache write should not fail the request.
+	}
+}
+
 export async function cachePublicData<T>(
 	cache: PublicDataCache | undefined,
 	key: string,
 	load: () => Promise<T>,
 	shouldCache: (value: T) => boolean = () => true
 ): Promise<T> {
-	const versionedKey = `${CACHE_VERSION}:${key}`;
-
-	if (cache) {
-		try {
-			const cached = await cache.get(versionedKey);
-			if (cached !== undefined) return cached as T;
-		} catch {
-			// Treat KV errors as cache misses.
-		}
-	}
+	const cached = await readPublicDataCache<T>(cache, key);
+	if (cached !== undefined) return cached;
 
 	const value = await load();
-
-	if (cache && shouldCache(value)) {
-		try {
-			await cache.set(versionedKey, value);
-		} catch {
-			// A failed cache write should not fail the request.
-		}
-	}
-
+	if (shouldCache(value)) await writePublicDataCache(cache, key, value);
 	return value;
 }
