@@ -5,6 +5,7 @@
 	import MediaCollection from '$lib/components/MediaCollection.svelte';
 	import Review from '$lib/components/Review.svelte';
 	import SearchCommand from '$lib/components/SearchCommand.svelte';
+	import TrendingCarousel from '$lib/components/TrendingCarousel.svelte';
 	import type { ReviewFeedPage } from '$lib/types';
 	import type { PageData } from './$types';
 
@@ -76,15 +77,21 @@
 </svelte:head>
 
 <main class="min-h-dvh bg-base-950 pb-12 text-base-50">
-	<Container class="px-4">
-		<h1 class="sr-only">Search movies and TV shows</h1>
+	<h1 class="sr-only">Search movies and TV shows</h1>
 
-		<div class="mx-auto w-full max-w-xl pt-[18vh] sm:pt-[22vh]">
+	{#if data.trending.length > 0}
+		<TrendingCarousel items={data.trending} />
+	{/if}
+
+	<Container class="px-4">
+		<div
+			class={`mx-auto w-full max-w-xl ${data.trending.length > 0 ? 'mt-8' : 'pt-[18vh] sm:pt-[22vh]'}`}
+		>
 			<SearchCommand did={data.did} />
 		</div>
 
 		{#if collections.length > 0 || reviews.length > 0 || cursor}
-			<div class="mt-20 pb-12">
+			<div class={`${data.trending.length > 0 ? 'mt-12' : 'mt-20'} pb-12`}>
 				{#if collections.length > 0}
 					<div class="space-y-12">
 						{#each collections as collection, index (collection.title)}
@@ -140,7 +147,7 @@
 					</section>
 				{/if}
 			</div>
-		{:else}
+		{:else if data.trending.length === 0}
 			<p class="mt-20 pb-12 text-sm text-base-400">
 				No movies, shows, or reviews are available right now.
 			</p>

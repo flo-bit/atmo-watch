@@ -29,6 +29,7 @@ import type {
 	ExternalRating,
 	MediaCredit,
 	MediaDetails,
+	MediaFeature,
 	MediaImage,
 	MediaSummary,
 	MediaVideo,
@@ -495,6 +496,7 @@ export async function getMediaPage(
 
 async function loadHomePage() {
 	const empty = {
+		trending: [] as MediaFeature[],
 		currentlyInTheaters: [] as MediaSummary[],
 		popularMovies: [] as MediaSummary[],
 		popularShows: [] as MediaSummary[]
@@ -507,10 +509,18 @@ async function loadHomePage() {
 		return empty;
 	}
 
-	const [theatersResult, popularMoviesResult, popularTvResult] = await Promise.allSettled([
+	const [
+		theatersResult,
+		popularMoviesResult,
+		popularTvResult,
+		trendingMoviesResult,
+		trendingTvResult
+	] = await Promise.allSettled([
 		tmdb.movie_lists.now_playing({ page: 1, region: 'US' }),
 		tmdb.movie_lists.popular({ page: 1, region: 'US' }),
-		tmdb.tv_lists.popular({ page: 1 })
+		tmdb.tv_lists.popular({ page: 1 }),
+		tmdb.trending.movies({ time_window: 'day' }),
+		tmdb.trending.tv({ time_window: 'day' })
 	]);
 
 	const currentlyInTheaters =
@@ -532,14 +542,69 @@ async function loadHomePage() {
 					.filter((item) => item.poster)
 			: [];
 
-	return { currentlyInTheaters, popularMovies, popularShows };
+	const trendingMovies =
+		trendingMoviesResult.status === 'fulfilled'
+			? trendingMoviesResult.value.results.filter((item) => item.backdrop_path).slice(0, 10)
+			: [];
+	const trendingShows =
+		trendingTvResult.status === 'fulfilled'
+			? trendingTvResult.value.results.filter((item) => item.backdrop_path).slice(0, 10)
+			: [];
+	const trendingCandidates: Array<{
+		tmdbId: number;
+		creativeWorkType: SupportedCreativeWorkType;
+	}> = [];
+	for (let index = 0; index < Math.max(trendingMovies.length, trendingShows.length); index += 1) {
+		if (trendingMovies[index]) {
+			trendingCandidates.push({ tmdbId: trendingMovies[index].id, creativeWorkType: 'movie' });
+		}
+		if (trendingShows[index]) {
+			trendingCandidates.push({ tmdbId: trendingShows[index].id, creativeWorkType: 'tv_show' });
+		}
+	}
+
+	const mediaCache = getPublicDataCache(MEDIA_DATA_TTL);
+	const omdbCache = getPublicDataCache(OMDB_DATA_TTL);
+	const omdbFailureCache = getPublicDataCache(OMDB_TRANSIENT_FAILURE_TTL);
+	const omdbQuotaCache = getPublicDataCache(getOmdbQuotaFailureTtl());
+	const trending = (
+		await Promise.all(
+			trendingCandidates.map(async ({ tmdbId, creativeWorkType }) => {
+				try {
+					const details = await getMediaSource(tmdbId, creativeWorkType, mediaCache);
+					const item = toMediaDetails(details, creativeWorkType);
+					if (!item.backdrop) return null;
+
+					const imdbId = details.external_ids.imdb_id ?? null;
+					const omdb = imdbId
+						? await getRatings(imdbId, omdbCache, omdbFailureCache, omdbQuotaCache)
+						: EMPTY_OMDB_DATA;
+					return {
+						item,
+						logo: getTitleLogo(details),
+						imdbId,
+						imdbVotes: omdb.imdbVotes,
+						ratings: omdb.ratings
+					} satisfies MediaFeature;
+				} catch (cause) {
+					console.error(`Could not load trending ${creativeWorkType} ${tmdbId} from TMDB`, cause);
+					return null;
+				}
+			})
+		)
+	).filter((feature): feature is MediaFeature => feature !== null);
+
+	return { trending, currentlyInTheaters, popularMovies, popularShows };
 }
 
 export function getHomePage() {
 	const cache = getPublicDataCache(DISCOVERY_TTL);
-	return cachePublicData(cache, 'tmdb:home:v2', loadHomePage, (data) =>
+	return cachePublicData(cache, 'tmdb:home:v5', loadHomePage, (data) =>
 		Boolean(
-			data.currentlyInTheaters.length || data.popularMovies.length || data.popularShows.length
+			data.trending.length ||
+			data.currentlyInTheaters.length ||
+			data.popularMovies.length ||
+			data.popularShows.length
 		)
 	);
 }

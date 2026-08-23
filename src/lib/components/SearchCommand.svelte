@@ -28,6 +28,9 @@
 	let hasSearched = $state(false);
 	let searchError = $state('');
 	let resultsOpen = $state(false);
+	let rootElement = $state<HTMLElement | null>(null);
+	let resultsPlacement = $state<'above' | 'below'>('below');
+	let resultsMaxHeight = $state(384);
 
 	function reviewItem(item: MediaSummary) {
 		resultsOpen = false;
@@ -53,6 +56,22 @@
 		if (!(next instanceof Node) || !root.contains(next)) {
 			resultsOpen = false;
 		}
+	}
+
+	function updateResultsPlacement() {
+		if (!rootElement) return;
+
+		const rect = rootElement.getBoundingClientRect();
+		const viewport = window.visualViewport;
+		const viewportTop = viewport?.offsetTop ?? 0;
+		const viewportBottom = viewportTop + (viewport?.height ?? window.innerHeight);
+		const gap = 8;
+		const spaceAbove = Math.max(0, rect.top - viewportTop - gap);
+		const spaceBelow = Math.max(0, viewportBottom - rect.bottom - gap);
+
+		resultsPlacement = spaceAbove > spaceBelow && spaceBelow < 384 ? 'above' : 'below';
+		const availableSpace = resultsPlacement === 'above' ? spaceAbove : spaceBelow;
+		resultsMaxHeight = Math.max(64, Math.min(384, Math.floor(availableSpace)));
 	}
 
 	async function search(term: string, controller: AbortController) {
@@ -81,6 +100,25 @@
 	}
 
 	$effect(() => {
+		if (!resultsOpen || query.trim().length < 2 || !rootElement) return;
+
+		const frame = window.requestAnimationFrame(updateResultsPlacement);
+		const viewport = window.visualViewport;
+		window.addEventListener('resize', updateResultsPlacement);
+		window.addEventListener('scroll', updateResultsPlacement, true);
+		viewport?.addEventListener('resize', updateResultsPlacement);
+		viewport?.addEventListener('scroll', updateResultsPlacement);
+
+		return () => {
+			window.cancelAnimationFrame(frame);
+			window.removeEventListener('resize', updateResultsPlacement);
+			window.removeEventListener('scroll', updateResultsPlacement, true);
+			viewport?.removeEventListener('resize', updateResultsPlacement);
+			viewport?.removeEventListener('scroll', updateResultsPlacement);
+		};
+	});
+
+	$effect(() => {
 		const term = query.trim();
 
 		results = [];
@@ -104,6 +142,7 @@
 </script>
 
 <Command.Root
+	bind:ref={rootElement}
 	shouldFilter={false}
 	onfocusin={() => (resultsOpen = true)}
 	onfocusout={handleFocusOut}
@@ -153,7 +192,11 @@
 
 	{#if resultsOpen && query.trim().length >= 2}
 		<Command.List
-			class="absolute top-[calc(100%+0.5rem)] right-0 left-0 z-50 max-h-96 overflow-y-auto rounded-2xl border border-white/10 bg-base-950/95 p-2 shadow-2xl shadow-black/50 backdrop-blur-xl"
+			class={cn(
+				'absolute right-0 left-0 z-50 overflow-y-auto rounded-2xl border border-white/10 bg-base-950/95 p-2 shadow-2xl shadow-black/50 backdrop-blur-xl',
+				resultsPlacement === 'above' ? 'bottom-[calc(100%+0.5rem)]' : 'top-[calc(100%+0.5rem)]'
+			)}
+			style={`max-height: ${resultsMaxHeight}px`}
 		>
 			<Command.Viewport>
 				{#if searching}

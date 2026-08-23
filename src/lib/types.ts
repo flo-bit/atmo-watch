@@ -23,6 +23,20 @@ export type MediaDetails = MediaSummary & {
 	status: string | null;
 };
 
+export type MediaLogo = {
+	path: string;
+	width: number;
+	height: number;
+};
+
+export type MediaFeature = {
+	item: MediaDetails;
+	logo: MediaLogo | null;
+	imdbId: string | null;
+	imdbVotes: string | null;
+	ratings: ExternalRating[];
+};
+
 export type MediaVideo = {
 	id: string;
 	key: string;

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { MediaImage } from '$lib/types';
+	import type { MediaImage, MediaLogo } from '$lib/types';
 	import { backdropUrl, logoUrl, posterUrl, stillUrl } from '$lib/images';
 
 	let {
@@ -15,7 +15,7 @@
 		backdrop?: MediaImage | null;
 		backdropVariant?: 'backdrop' | 'still';
 		fallbackPoster?: MediaImage | null;
-		logo?: { path: string; width: number; height: number } | null;
+		logo?: MediaLogo | null;
 		href?: string;
 		titleIsHeading?: boolean;
 	} = $props();
@@ -43,7 +43,7 @@
 		<h1
 			class={titleLogoUrl
 				? 'sr-only'
-				: 'text-[2.5rem] leading-[1.05] font-bold tracking-tight text-white drop-shadow-xl sm:text-5xl'}
+				: 'media-page-wordmark text-[2.5rem] leading-[1.05] font-bold tracking-tight text-white drop-shadow-xl sm:text-5xl'}
 		>
 			{title}
 		</h1>
@@ -51,7 +51,7 @@
 		<span
 			class={titleLogoUrl
 				? 'sr-only'
-				: 'block text-[2.5rem] leading-[1.05] font-bold tracking-tight text-white drop-shadow-xl sm:text-5xl'}
+				: 'media-page-wordmark block text-[2.5rem] leading-[1.05] font-bold tracking-tight text-white drop-shadow-xl sm:text-5xl'}
 		>
 			{title}
 		</span>
@@ -66,7 +66,7 @@
 				width={logo?.width}
 				height={logo?.height}
 				fetchpriority="high"
-				class="mx-auto max-h-36 w-full max-w-[20rem] object-contain drop-shadow-[0_4px_16px_rgba(0,0,0,0.8)] sm:max-w-sm"
+				class="media-page-wordmark mx-auto max-h-36 w-full max-w-[20rem] object-contain drop-shadow-[0_4px_16px_rgba(0,0,0,0.8)] sm:max-w-sm"
 			/>
 		</picture>
 	{/if}
@@ -90,7 +90,7 @@
 						<img
 							src={imageUrl}
 							alt=""
-							class="size-full object-cover object-center"
+							class="media-page-backdrop size-full object-cover object-center"
 							style="-webkit-mask-image: linear-gradient(to bottom, black 0%, black 40%, transparent 100%); mask-image: linear-gradient(to bottom, black 0%, black 40%, transparent 100%);"
 						/>
 					</picture>
@@ -103,7 +103,7 @@
 					<img
 						src={imageUrl}
 						alt=""
-						class="pointer-events-none absolute inset-0 z-0 size-full object-cover object-center"
+						class="media-page-backdrop pointer-events-none absolute inset-0 z-0 size-full object-cover object-center"
 						style="-webkit-mask-image: linear-gradient(to bottom, black 0%, black 40%, transparent 100%); mask-image: linear-gradient(to bottom, black 0%, black 40%, transparent 100%);"
 					/>
 				</picture>
