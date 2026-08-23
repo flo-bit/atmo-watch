@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { Dialog } from 'bits-ui';
+	import HorizontalScroller from './HorizontalScroller.svelte';
 	import { backdropUrl } from '$lib/images';
 	import type { MediaImage } from '$lib/types';
 
@@ -40,8 +41,9 @@
 
 <svelte:window onkeydown={handleKeydown} />
 
-<div
-	class="mt-4 flex snap-x snap-mandatory [scrollbar-width:none] gap-3 overflow-x-auto overscroll-x-contain pb-3 lg:grid lg:grid-cols-2 lg:overflow-visible lg:pb-0 [&::-webkit-scrollbar]:hidden"
+<HorizontalScroller
+	class="mt-4 gap-3 pb-3 lg:grid lg:grid-cols-2 lg:overflow-visible lg:pb-0"
+	label={`Backdrops for ${title}`}
 >
 	{#each images as image, index (image.source === 'tmdb' ? image.path : image.url)}
 		<button
@@ -58,7 +60,7 @@
 			/>
 		</button>
 	{/each}
-</div>
+</HorizontalScroller>
 
 <Dialog.Root bind:open>
 	<Dialog.Portal>

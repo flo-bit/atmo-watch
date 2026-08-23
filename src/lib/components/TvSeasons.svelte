@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
+	import HorizontalScroller from './HorizontalScroller.svelte';
 	import { calendarDayDifference, formatCalendarDate } from '$lib/dates';
 	import { posterUrl } from '$lib/images';
 	import type { MediaDetails, TvEpisodeSummary, TvSeasonSummary } from '$lib/types';
@@ -53,8 +54,9 @@
 {#if orderedSeasons.length > 0}
 	<section class="mt-10 border-t border-white/10 pt-6 text-sm text-white">
 		<h2 class="text-lg font-semibold tracking-tight">Seasons</h2>
-		<div
-			class="mt-4 flex snap-x snap-mandatory [scrollbar-width:none] gap-3 overflow-x-auto overscroll-x-contain pb-3 lg:grid lg:grid-cols-5 lg:gap-x-4 lg:gap-y-6 lg:overflow-visible lg:pb-0 [&::-webkit-scrollbar]:hidden"
+		<HorizontalScroller
+			class="mt-4 gap-3 pb-3 lg:grid lg:grid-cols-5 lg:gap-x-4 lg:gap-y-6 lg:overflow-visible lg:pb-0"
+			label="Seasons"
 		>
 			{#each orderedSeasons as season, index (season.id)}
 				<a
@@ -101,7 +103,7 @@
 					</div>
 				</a>
 			{/each}
-		</div>
+		</HorizontalScroller>
 
 		{#if !showAllSeasons && orderedSeasons.length > 10}
 			<button

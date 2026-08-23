@@ -30,9 +30,7 @@
 			variant === 'bottom'
 				? 'h-10 w-full items-center justify-center rounded-xl'
 				: 'h-10 w-full items-center gap-3 rounded-lg p-2.5 text-sm font-semibold md:size-10',
-			active
-				? 'bg-accent-500/10 text-accent-300'
-				: 'text-base-300 hover:bg-white/10 hover:text-white',
+			active ? 'text-accent-300' : 'text-base-300 hover:bg-white/10 hover:text-white',
 			className
 		)
 	);

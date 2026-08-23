@@ -23,6 +23,14 @@ export type MediaDetails = MediaSummary & {
 	status: string | null;
 };
 
+export type MediaVideo = {
+	id: string;
+	key: string;
+	name: string;
+	type: string;
+	official: boolean;
+};
+
 export type TvEpisodeSummary = {
 	id: number;
 	name: string;

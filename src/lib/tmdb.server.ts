@@ -31,6 +31,7 @@ import type {
 	MediaDetails,
 	MediaImage,
 	MediaSummary,
+	MediaVideo,
 	PersonDetails,
 	StreamingAvailability,
 	SupportedCreativeWorkType,
@@ -284,6 +285,38 @@ function toStreamingAvailability(
 	};
 }
 
+function toMediaVideos(videos: VideoItem[]): MediaVideo[] {
+	const typeOrder = new Map([
+		['Trailer', 0],
+		['Teaser', 1],
+		['Clip', 2],
+		['Featurette', 3],
+		['Behind the Scenes', 4]
+	]);
+	const seen = new Set<string>();
+
+	return [...videos]
+		.filter((video) => {
+			if (video.site !== 'YouTube' || !video.key || seen.has(video.key)) return false;
+			seen.add(video.key);
+			return true;
+		})
+		.sort(
+			(left, right) =>
+				Number(right.official) - Number(left.official) ||
+				(typeOrder.get(left.type) ?? 99) - (typeOrder.get(right.type) ?? 99) ||
+				right.published_at.localeCompare(left.published_at)
+		)
+		.slice(0, 12)
+		.map((video) => ({
+			id: video.id || video.key,
+			key: video.key,
+			name: video.name || video.type,
+			type: video.type,
+			official: video.official
+		}));
+}
+
 function getTrailerUrl(videos: VideoItem[]) {
 	const trailer =
 		videos.find(
@@ -454,6 +487,7 @@ export async function getMediaPage(
 		imdb_votes: omdb.imdbVotes,
 		ratings: omdb.ratings,
 		trailer_url: getTrailerUrl(details.videos.results),
+		videos: toMediaVideos(details.videos.results),
 		streaming: region ? toStreamingAvailability(details['watch/providers'], region) : null
 	};
 }

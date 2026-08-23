@@ -8,12 +8,14 @@
 	import BackdropGallery from './BackdropGallery.svelte';
 	import Container from './Container.svelte';
 	import ExternalRatings from './ExternalRatings.svelte';
+	import HorizontalScroller from './HorizontalScroller.svelte';
 	import ItemCard from './ItemCard.svelte';
 	import ItemsGrid from './ItemsGrid.svelte';
 	import Review from './Review.svelte';
 	import TrailerDialog from './TrailerDialog.svelte';
 	import TvScheduleCard from './TvScheduleCard.svelte';
 	import TvSeasons from './TvSeasons.svelte';
+	import VideoGallery from './VideoGallery.svelte';
 	import WatchedButton from './WatchedButton.svelte';
 	import { backdropUrl, logoUrl, posterUrl, profileUrl } from '$lib/images';
 	import { loginDialog } from '$lib/login.svelte';
@@ -300,9 +302,7 @@
 			{#if writtenReviews.length > 0}
 				<section class="mt-10 border-t border-white/10 pt-6 text-sm text-white">
 					<h2 class="text-lg font-semibold tracking-tight">Reviews</h2>
-					<div
-						class="mt-4 flex snap-x snap-mandatory [scrollbar-width:none] items-stretch gap-3 overflow-x-auto overscroll-x-contain pb-3 lg:hidden [&::-webkit-scrollbar]:hidden"
-					>
+					<HorizontalScroller class="mt-4 items-stretch gap-3 pb-3 lg:hidden" label="Reviews">
 						{#each writtenReviews as review (review.uri)}
 							<Review
 								{review}
@@ -313,7 +313,7 @@
 								class="w-[82vw] max-w-sm shrink-0 snap-start rounded-xl border border-white/10 bg-black/25 backdrop-blur-xl"
 							/>
 						{/each}
-					</div>
+					</HorizontalScroller>
 					<div class="mt-4 hidden max-w-2xl flex-col gap-4 lg:flex">
 						{#each displayedReviews as review (review.uri)}
 							<Review {review} viewerDid={data.did} showItem={false} />
@@ -346,18 +346,23 @@
 				</section>
 			{/if}
 
+			{#if data.videos.length > 0}
+				<section class="mt-10 border-t border-white/10 pt-6 text-sm text-white">
+					<h2 class="text-lg font-semibold tracking-tight">Videos</h2>
+					<VideoGallery videos={data.videos} title={data.item.title} />
+				</section>
+			{/if}
+
 			{#if data.recommendations.length > 0}
 				<section class="mt-10 border-t border-white/10 pt-6 text-sm text-white">
 					<h2 class="text-lg font-semibold tracking-tight">Similar</h2>
-					<div
-						class="mt-4 flex snap-x snap-mandatory [scrollbar-width:none] gap-3 overflow-x-auto overscroll-x-contain pb-3 lg:hidden [&::-webkit-scrollbar]:hidden"
-					>
+					<HorizontalScroller class="mt-4 gap-3 pb-3 lg:hidden" label="Similar titles">
 						{#each data.recommendations as item (`${item.creativeWorkType}:${item.tmdbId}`)}
 							<div class="w-32 shrink-0 snap-start sm:w-36">
 								<ItemCard {item} />
 							</div>
 						{/each}
-					</div>
+					</HorizontalScroller>
 					<div class="hidden lg:block">
 						<ItemsGrid items={desktopRecommendations} class="mt-4" />
 					</div>
@@ -391,8 +396,9 @@
 			{#if data.cast.length > 0}
 				<section class="mt-10 border-t border-white/10 pt-6 text-sm text-white">
 					<h2 class="text-lg font-semibold tracking-tight">Cast</h2>
-					<div
-						class="mt-4 flex snap-x snap-mandatory [scrollbar-width:none] gap-4 overflow-x-auto overscroll-x-contain pb-3 lg:grid lg:grid-cols-5 lg:gap-x-4 lg:gap-y-6 lg:overflow-visible lg:pb-0 [&::-webkit-scrollbar]:hidden"
+					<HorizontalScroller
+						class="mt-4 gap-4 pb-3 lg:grid lg:grid-cols-5 lg:gap-x-4 lg:gap-y-6 lg:overflow-visible lg:pb-0"
+						label="Cast"
 					>
 						{#each data.cast as castMember, index (castMember.id)}
 							<a
@@ -412,7 +418,7 @@
 								>
 							</a>
 						{/each}
-					</div>
+					</HorizontalScroller>
 
 					{#if !showAllCast && data.cast.length > 10}
 						<button

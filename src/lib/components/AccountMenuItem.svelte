@@ -43,7 +43,7 @@
 		<Avatar
 			src={avatarUrl}
 			alt=""
-			class={variant === 'bottom' ? 'size-6 shrink-0' : 'size-7 shrink-0'}
+			class={`${variant === 'bottom' ? 'size-6' : 'size-7'} shrink-0 ${active ? 'ring-2 ring-accent-400 ring-offset-1 ring-offset-base-950' : ''}`}
 		/>
 	{:else}
 		<UserRound class="size-5 shrink-0" strokeWidth={1.5} aria-hidden="true" />
