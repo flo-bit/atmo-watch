@@ -3,7 +3,7 @@
   "version": 2,
   "endpoint": "https://api.atmo.watch",
   "namespace": "watch.atmo",
-  "lexiconDigest": "sha256:b81b7755af0e9755979eb3846efa10b1e7032c40d5682590a7aec7de0a651bb1",
+  "lexiconDigest": "sha256:500c81b7c35eb01da551312cfa1bb0d88719ded0f54bda3704cf2296ad44f0b0",
   "methods": [
     "watch.atmo.comment.getRecord",
     "watch.atmo.comment.listRecords",
@@ -17,7 +17,9 @@
     "watch.atmo.listItem.listRecords",
     "watch.atmo.review.getRecord",
     "watch.atmo.review.listRecords",
-    "watch.atmo.review.listWrittenRecords"
+    "watch.atmo.review.listWrittenRecords",
+    "watch.atmo.video.getRecord",
+    "watch.atmo.video.listRecords"
   ],
   "collections": [
     "app.bsky.actor.profile",
@@ -26,7 +28,8 @@
     "social.popfeed.feed.like",
     "social.popfeed.feed.list",
     "social.popfeed.feed.listItem",
-    "social.popfeed.feed.review"
+    "social.popfeed.feed.review",
+    "watch.atmo.alpha.video"
   ],
   "serviceAuth": {
     "type": "atproto-service-auth",

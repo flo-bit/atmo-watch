@@ -2,7 +2,7 @@
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import { Dialog } from 'bits-ui';
-	import { X } from '@lucide/svelte';
+	import { Plus, X } from '@lucide/svelte';
 	import AddToListMenu from './AddToListMenu.svelte';
 	import Avatar from './Avatar.svelte';
 	import BackdropGallery from './BackdropGallery.svelte';
@@ -22,6 +22,7 @@
 	import { loginDialog } from '$lib/login.svelte';
 	import { reviewDialog } from '$lib/review.svelte';
 	import { slugify } from '$lib/utils';
+	import { videoDialog } from '$lib/video.svelte';
 	import type { getMediaPage } from '$lib/tmdb.server';
 	import type { ReviewCardModel } from '$lib/types';
 
@@ -38,6 +39,15 @@
 		}
 
 		reviewDialog.show(data.item);
+	}
+
+	function startVideoSubmission() {
+		if (!data.did) {
+			loginDialog.show();
+			return;
+		}
+
+		videoDialog.show(data.item);
 	}
 
 	function formatRuntime(runtime: number | null) {
@@ -293,12 +303,24 @@
 				</section>
 			{/if}
 
-			{#if data.videos.length > 0}
-				<section class="mt-10 border-t border-white/10 pt-6 text-sm text-white">
+			<section class="mt-10 border-t border-white/10 pt-6 text-sm text-white">
+				<div class="flex items-center justify-between gap-4">
 					<h2 class="text-lg font-semibold tracking-tight">Videos</h2>
+					<button
+						type="button"
+						onclick={startVideoSubmission}
+						class="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.07] px-3 text-xs font-semibold text-white transition-colors hover:bg-white/[0.12] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70"
+					>
+						<Plus class="size-3.5" strokeWidth={1.8} aria-hidden="true" />
+						submit video
+					</button>
+				</div>
+				{#if data.videos.length > 0}
 					<VideoGallery videos={data.videos} title={data.item.title} />
-				</section>
-			{/if}
+				{:else}
+					<p class="mt-4 text-sm text-base-400">No videos have been added yet.</p>
+				{/if}
+			</section>
 
 			{#if data.recommendations.length > 0}
 				<section class="mt-10 border-t border-white/10 pt-6 text-sm text-white">

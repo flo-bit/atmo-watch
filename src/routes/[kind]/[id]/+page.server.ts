@@ -3,6 +3,7 @@ import type { PageServerLoad } from './$types';
 import { getMediaReviews } from '$lib/reviews.server';
 import { getMediaPage, TMDBError } from '$lib/tmdb.server';
 import { parseMediaRouteKind, parseTmdbId } from '$lib/utils';
+import { getMediaSubmittedVideos } from '$lib/videos.server';
 
 function normalizeRegion(value: string | null | undefined) {
 	const region = value?.trim().toUpperCase();
@@ -41,15 +42,24 @@ export const load: PageServerLoad = async ({ locals, params, request, url }) => 
 	}
 
 	try {
-		const [mediaPage, reviews] = await Promise.all([
+		const [mediaPage, reviews, submittedVideos] = await Promise.all([
 			getMediaPage(tmdbId, creativeWorkType, getStreamingRegion(url, request)),
 			getMediaReviews(tmdbId, creativeWorkType, locals.did).catch((cause) => {
 				console.error('Could not load reviews from Contrail', cause);
 				return [];
+			}),
+			getMediaSubmittedVideos(tmdbId, creativeWorkType).catch((cause) => {
+				console.error('Could not load submitted videos from Contrail', cause);
+				return [];
 			})
 		]);
 
-		return { ...mediaPage, reviews, today: new Date().toISOString().slice(0, 10) };
+		return {
+			...mediaPage,
+			videos: [...mediaPage.videos, ...submittedVideos],
+			reviews,
+			today: new Date().toISOString().slice(0, 10)
+		};
 	} catch (cause) {
 		if (cause instanceof TMDBError && cause.http_status_code === 404) {
 			error(404, 'Not found');

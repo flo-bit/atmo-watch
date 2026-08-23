@@ -13,7 +13,7 @@ export const atproto = createAtprotoAuth({
 	cookieSecret: env.COOKIE_SECRET || (building ? 'build-only-cookie-secret' : undefined),
 	clientAssertionKey: env.CLIENT_ASSERTION_KEY,
 	scope: [
-		'atproto repo:social.popfeed.feed.review repo:social.popfeed.feed.comment repo:social.popfeed.feed.like repo:social.popfeed.feed.list repo:social.popfeed.feed.listItem blob:*/*',
+		'atproto repo:social.popfeed.feed.review repo:social.popfeed.feed.comment repo:social.popfeed.feed.like repo:social.popfeed.feed.list repo:social.popfeed.feed.listItem repo:watch.atmo.alpha.video blob:*/*',
 		contrail.scope
 	]
 		.filter(Boolean)

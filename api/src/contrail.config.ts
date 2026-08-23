@@ -18,6 +18,20 @@ export const config: ContrailConfig = {
 	},
 	maintenance: { optimize: true },
 	collections: {
+		video: {
+			collection: 'watch.atmo.alpha.video',
+			validate: true,
+			queryable: {
+				youtubeId: {},
+				videoType: {},
+				creativeWorkType: {},
+				'identifiers.tmdbId': {},
+				'identifiers.tmdbTvSeriesId': {},
+				'identifiers.seasonNumber': {},
+				'identifiers.episodeNumber': {},
+				createdAt: { type: 'range' }
+			}
+		},
 		review: {
 			collection: 'social.popfeed.feed.review',
 			queryable: {

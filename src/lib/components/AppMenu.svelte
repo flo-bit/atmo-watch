@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/state';
+	import { Clapperboard } from '@lucide/svelte';
 	import AccountMenuItem from './AccountMenuItem.svelte';
 	import MenuItem from './MenuItem.svelte';
 	import SearchMenuItem from './SearchMenuItem.svelte';
@@ -33,17 +34,25 @@
 			{@render homeIcon()}
 		</MenuItem>
 
+		<MenuItem href="/videos" label="Videos" active={page.url.pathname === '/videos'}>
+			<Clapperboard class="size-5 shrink-0" strokeWidth={1.5} aria-hidden="true" />
+		</MenuItem>
+
 		<SearchMenuItem {did} />
 		<AccountMenuItem {did} {avatarUrl} />
 	</nav>
 </aside>
 
 <nav
-	class="fixed inset-x-0 bottom-0 z-50 grid w-full grid-cols-3 gap-1 border-t border-white/10 bg-base-950/90 px-1 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] shadow-2xl shadow-black/40 backdrop-blur-xl md:hidden"
+	class="fixed inset-x-0 bottom-0 z-50 grid w-full grid-cols-4 gap-1 border-t border-white/10 bg-base-950/90 px-1 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] shadow-2xl shadow-black/40 backdrop-blur-xl md:hidden"
 	aria-label="Main navigation"
 >
 	<MenuItem href="/" label="Home" active={page.url.pathname === '/'} variant="bottom">
 		{@render homeIcon()}
+	</MenuItem>
+
+	<MenuItem href="/videos" label="Videos" active={page.url.pathname === '/videos'} variant="bottom">
+		<Clapperboard class="size-5 shrink-0" strokeWidth={1.5} aria-hidden="true" />
 	</MenuItem>
 
 	<SearchMenuItem {did} variant="bottom" />

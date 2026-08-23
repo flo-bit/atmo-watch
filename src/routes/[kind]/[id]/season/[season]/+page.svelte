@@ -1,12 +1,16 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
+	import { ImagePlus } from '@lucide/svelte';
 	import Container from '$lib/components/Container.svelte';
 	import MediaHero from '$lib/components/MediaHero.svelte';
 	import TrailerDialog from '$lib/components/TrailerDialog.svelte';
+	import VideoGallery from '$lib/components/VideoGallery.svelte';
 	import { calendarDayDifference, formatCalendarDate, relativeCalendarDate } from '$lib/dates';
 	import { backdropUrl, posterUrl, stillUrl } from '$lib/images';
+	import { loginDialog } from '$lib/login.svelte';
 	import { slugify } from '$lib/utils';
+	import { videoDialog } from '$lib/video.svelte';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -19,6 +23,32 @@
 	let canonicalUrl = $derived(`${page.url.origin}${page.url.pathname}`);
 	let seasonStatus = $derived(getSeasonStatus());
 	let seasonDateRange = $derived(getSeasonDateRange());
+
+	function requireLogin() {
+		if (data.did) return true;
+		loginDialog.show();
+		return false;
+	}
+
+	function submitSeasonVideo() {
+		if (!requireLogin()) return;
+		videoDialog.show({
+			creativeWorkType: 'tv_season',
+			tmdbId: data.season.id,
+			tmdbTvSeriesId: data.show.tmdbId,
+			seasonNumber: data.season.seasonNumber,
+			title: `${data.show.title}: ${data.season.name}`,
+			poster: seasonPoster,
+			episodeOptions: data.episodes.map((episode) => ({
+				tmdbId: episode.id,
+				tmdbTvSeriesId: data.show.tmdbId,
+				seasonNumber: episode.seasonNumber,
+				episodeNumber: episode.episodeNumber,
+				title: `${data.show.title}: ${episodeCode(episode.seasonNumber, episode.episodeNumber)} ${episode.name}`,
+				label: `${episodeCode(episode.seasonNumber, episode.episodeNumber)} — ${episode.name}`
+			}))
+		});
+	}
 
 	function formatRuntime(runtime: number | null) {
 		return runtime ? `${runtime}m` : null;
@@ -140,11 +170,29 @@
 				{/if}
 			</div>
 
-			{#if data.trailer_url}
-				<div class="mt-5 flex justify-center">
-					<TrailerDialog url={data.trailer_url} title={`${data.show.title} ${data.season.name}`} />
-				</div>
-			{/if}
+			<div class="mt-5 flex flex-wrap justify-center gap-2">
+				{#if data.trailer_url}
+					<TrailerDialog
+						url={data.trailer_url}
+						title={`${data.show.title} ${data.season.name}`}
+						variant="action"
+						iconOnly={true}
+					/>
+				{/if}
+				<button
+					type="button"
+					onclick={submitSeasonVideo}
+					aria-label="Submit a video"
+					title="Submit video"
+					class="group flex min-w-0 flex-col items-center gap-2 rounded-xl px-1 py-2 text-center text-white transition-colors hover:text-accent-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70 lg:gap-0 lg:p-0"
+				>
+					<span
+						class="inline-flex size-10 items-center justify-center rounded-full border border-white/10 bg-white/10 text-white shadow-lg shadow-black/10 backdrop-blur-sm transition-colors group-hover:bg-white/15 lg:size-9"
+					>
+						<ImagePlus class="size-4" strokeWidth={1.8} aria-hidden="true" />
+					</span>
+				</button>
+			</div>
 		</header>
 	</section>
 
@@ -158,7 +206,19 @@
 			</section>
 		{/if}
 
-		<section class={`${data.season.overview ? 'mt-10 ' : ''}border-t border-white/10 pt-6`}>
+		{#if data.submittedVideos.length > 0}
+			<section class={`${data.season.overview ? 'mt-10 ' : ''}border-t border-white/10 pt-6`}>
+				<h2 class="text-lg font-semibold tracking-tight">Submitted videos</h2>
+				<VideoGallery
+					videos={data.submittedVideos}
+					title={`${data.show.title} ${data.season.name}`}
+				/>
+			</section>
+		{/if}
+
+		<section
+			class={`${data.season.overview || data.submittedVideos.length > 0 ? 'mt-10 ' : ''}border-t border-white/10 pt-6`}
+		>
 			<h2 class="text-lg font-semibold tracking-tight">Episodes</h2>
 
 			{#if data.episodes.length > 0}

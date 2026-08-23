@@ -20,6 +20,8 @@ export const contrailApi = {
     "watch.atmo.review.getRecord",
     "watch.atmo.review.listRecords",
     "watch.atmo.review.listWrittenRecords",
+    "watch.atmo.video.getRecord",
+    "watch.atmo.video.listRecords",
   ],
   protectedMethods: [
     "watch.atmo.notifyOfUpdate",
@@ -32,6 +34,7 @@ export const contrailApi = {
     "social.popfeed.feed.list",
     "social.popfeed.feed.listItem",
     "social.popfeed.feed.review",
+    "watch.atmo.alpha.video",
   ],
   notifyMethod: "watch.atmo.notifyOfUpdate",
 } as const;
@@ -59,6 +62,8 @@ export const contrailTarget = {
     "watch.atmo.review.getRecord",
     "watch.atmo.review.listRecords",
     "watch.atmo.review.listWrittenRecords",
+    "watch.atmo.video.getRecord",
+    "watch.atmo.video.listRecords",
   ],
   collections: [
     "app.bsky.actor.profile",
@@ -68,6 +73,7 @@ export const contrailTarget = {
     "social.popfeed.feed.list",
     "social.popfeed.feed.listItem",
     "social.popfeed.feed.review",
+    "watch.atmo.alpha.video",
   ],
   notifyMethod: "watch.atmo.notifyOfUpdate",
 } as const;

@@ -1,0 +1,133 @@
+{
+  "defs": {
+    "identifiers": {
+      "properties": {
+        "episodeNumber": {
+          "description": "Episode number when targeting an episode.",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "seasonNumber": {
+          "description": "Season number when targeting a season or episode.",
+          "minimum": 0,
+          "type": "integer"
+        },
+        "tmdbId": {
+          "description": "TMDB ID of the exact movie, show, season, or episode.",
+          "type": "string"
+        },
+        "tmdbTvSeriesId": {
+          "description": "TMDB ID of the containing TV series.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "tmdbId"
+      ],
+      "type": "object"
+    },
+    "main": {
+      "description": "A user-submitted video associated with a movie, TV show, season, or episode.",
+      "key": "tid",
+      "record": {
+        "properties": {
+          "channelName": {
+            "description": "Name of the YouTube channel when the video was submitted.",
+            "maxLength": 500,
+            "type": "string"
+          },
+          "channelUrl": {
+            "description": "URL of the YouTube channel when the video was submitted.",
+            "format": "uri",
+            "maxLength": 2048,
+            "type": "string"
+          },
+          "containsSpoilers": {
+            "description": "Whether the video may contain spoilers.",
+            "type": "boolean"
+          },
+          "createdAt": {
+            "format": "datetime",
+            "type": "string"
+          },
+          "creativeWorkType": {
+            "description": "The specificity of the creative work associated with this video.",
+            "enum": [
+              "movie",
+              "tv_show",
+              "tv_season",
+              "tv_episode"
+            ],
+            "type": "string"
+          },
+          "identifiers": {
+            "ref": "#identifiers",
+            "type": "ref"
+          },
+          "thumbnailUrl": {
+            "description": "Thumbnail URL returned by YouTube when the video was submitted.",
+            "format": "uri",
+            "maxLength": 2048,
+            "type": "string"
+          },
+          "title": {
+            "description": "Title of the associated movie, show, season, or episode.",
+            "maxLength": 1000,
+            "type": "string"
+          },
+          "videoTitle": {
+            "description": "Title returned by YouTube when the video was submitted.",
+            "maxLength": 500,
+            "type": "string"
+          },
+          "videoType": {
+            "description": "The kind of video being submitted.",
+            "knownValues": [
+              "trailer",
+              "teaser",
+              "scene",
+              "clip",
+              "deleted_scene",
+              "featurette",
+              "behind_the_scenes",
+              "interview",
+              "blooper",
+              "supercut",
+              "recap",
+              "review",
+              "analysis",
+              "reaction",
+              "fan_edit",
+              "other"
+            ],
+            "type": "string"
+          },
+          "videoUrl": {
+            "description": "Canonical YouTube URL for the submitted video.",
+            "format": "uri",
+            "maxLength": 2048,
+            "type": "string"
+          },
+          "youtubeId": {
+            "description": "YouTube video ID parsed from videoUrl.",
+            "maxLength": 64,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "videoUrl",
+          "youtubeId",
+          "videoType",
+          "creativeWorkType",
+          "identifiers",
+          "createdAt"
+        ],
+        "type": "object"
+      },
+      "type": "record"
+    }
+  },
+  "id": "watch.atmo.alpha.video",
+  "lexicon": 1
+}

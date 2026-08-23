@@ -2,6 +2,8 @@ import type {} from '@atcute/lexicons';
 import * as v from '@atcute/lexicons/validations';
 import type {} from '@atcute/lexicons/ambient';
 import * as AppBskyActorProfile from "../../../app/bsky/actor/profile.js";
+import * as SocialPopfeedActorProfile from "../../../social/popfeed/actor/profile.js";
+import * as SocialPopfeedFeedComment from "../../../social/popfeed/feed/comment.js";
 
 const _mainSchema = /*#__PURE__*/ v.query(
 	"watch.atmo.comment.listRecords",
@@ -26,9 +28,29 @@ const _mainSchema = /*#__PURE__*/ v.query(
 					50
 				),
 				/**
+				 * Sort direction
+				 */
+				"order": /*#__PURE__*/ v.optional(/*#__PURE__*/ v.string<"asc" | "desc" | (string & {})>()),
+				/**
 				 * Include indexed profile and identity information
 				 */
 				"profiles": /*#__PURE__*/ v.optional(/*#__PURE__*/ v.boolean()),
+				/**
+				 * Filter by rootUri
+				 */
+				"rootUri": /*#__PURE__*/ v.optional(/*#__PURE__*/ v.string()),
+				/**
+				 * Field to sort by (default: time_us)
+				 */
+				"sort": /*#__PURE__*/ v.optional(/*#__PURE__*/ v.string<"rootUri" | "subjectType" | "subjectUri" | (string & {})>()),
+				/**
+				 * Filter by subjectType
+				 */
+				"subjectType": /*#__PURE__*/ v.optional(/*#__PURE__*/ v.string()),
+				/**
+				 * Filter by subjectUri
+				 */
+				"subjectUri": /*#__PURE__*/ v.optional(/*#__PURE__*/ v.string()),
 			}
 		),
 		"output": {
@@ -57,20 +79,27 @@ const _profileEntrySchema = /*#__PURE__*/ v.object(
 		"rkey": /*#__PURE__*/ v.optional(/*#__PURE__*/ v.string()),
 		"uri": /*#__PURE__*/ v.optional(/*#__PURE__*/ v.resourceUriString()),
 		get "value"() {
-			return /*#__PURE__*/ v.optional(AppBskyActorProfile.mainSchema)
+			return /*#__PURE__*/ v.optional(/*#__PURE__*/ v.variant([
+				AppBskyActorProfile.mainSchema,
+				SocialPopfeedActorProfile.mainSchema
+			]))
 		},
 	}
 );
-const _recordSchema = /*#__PURE__*/ v.object({
-	"$type": /*#__PURE__*/ v.optional(/*#__PURE__*/ v.literal("watch.atmo.comment.listRecords#record")),
-	"cid": /*#__PURE__*/ v.cidString(),
-	"collection": /*#__PURE__*/ v.nsidString(),
-	"did": /*#__PURE__*/ v.didString(),
-	"rkey": /*#__PURE__*/ v.string(),
-	"time_us": /*#__PURE__*/ v.integer(),
-	"uri": /*#__PURE__*/ v.resourceUriString(),
-	"value": /*#__PURE__*/ v.unknown(),
-});
+const _recordSchema = /*#__PURE__*/ v.object(
+	{
+		"$type": /*#__PURE__*/ v.optional(/*#__PURE__*/ v.literal("watch.atmo.comment.listRecords#record")),
+		"cid": /*#__PURE__*/ v.cidString(),
+		"collection": /*#__PURE__*/ v.nsidString(),
+		"did": /*#__PURE__*/ v.didString(),
+		"rkey": /*#__PURE__*/ v.string(),
+		"time_us": /*#__PURE__*/ v.integer(),
+		"uri": /*#__PURE__*/ v.resourceUriString(),
+		get "value"() {
+			return SocialPopfeedFeedComment.mainSchema
+		},
+	}
+);
 type main$schematype = typeof _mainSchema;
 type profileEntry$schematype = typeof _profileEntrySchema;
 type record$schematype = typeof _recordSchema;

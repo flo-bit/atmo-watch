@@ -24,4 +24,7 @@ vite.config.ts.timestamp-*
 # Playwright
 test-results
 
+# Video uploader resume checkpoint
+/data/video-submissions/.upload-state.json
+
 .contrail/

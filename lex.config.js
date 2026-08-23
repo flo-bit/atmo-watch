@@ -16,6 +16,7 @@ export default {
       "social.popfeed.feed.list",
       "social.popfeed.feed.listItem",
       "social.popfeed.feed.review",
+      "watch.atmo.alpha.video",
     ],
   },
   generate: {

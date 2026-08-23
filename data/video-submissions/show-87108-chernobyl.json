@@ -1,0 +1,1103 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-08-23T22:57:06.525Z",
+  "collection": "watch.atmo.alpha.video",
+  "media": {
+    "kind": "show",
+    "tmdbId": 87108,
+    "title": "Chernobyl",
+    "year": "2019"
+  },
+  "discovery": {
+    "queries": [
+      "Chernobyl 2019 official trailer HBO",
+      "Chernobyl 2019 teaser trailer HBO",
+      "Chernobyl HBO official featurette making of",
+      "Chernobyl HBO behind the scenes production design",
+      "Chernobyl 2019 cast interviews Jared Harris Stellan Skarsgard Emily Watson",
+      "Chernobyl Craig Mazin interview HBO",
+      "Chernobyl Johan Renck interview director",
+      "Chernobyl 2019 Jared Harris interview Valery Legasov",
+      "Chernobyl 2019 Stellan Skarsgard interview Boris Shcherbina",
+      "Chernobyl 2019 Emily Watson interview Ulana Khomyuk",
+      "Chernobyl 2019 Paul Ritter interview Anatoly Dyatlov",
+      "Chernobyl 2019 Jessie Buckley Adam Nagaitis interview Ignatenko",
+      "Chernobyl HBO Valery Legasov best scenes",
+      "Chernobyl HBO Boris Shcherbina best scenes",
+      "Chernobyl HBO Ulana Khomyuk best scenes",
+      "Chernobyl HBO Anatoly Dyatlov best scenes",
+      "Chernobyl HBO Lyudmilla Ignatenko scenes",
+      "Chernobyl HBO Vasily Ignatenko firefighter scenes",
+      "Chernobyl HBO Pavel and Bacho scenes Barry Keoghan Fares Fares",
+      "Chernobyl HBO General Tarakanov rooftop speech",
+      "Chernobyl HBO General Pikalov radiation measurement scene",
+      "Chernobyl HBO Legasov and Shcherbina relationship scenes",
+      "Chernobyl HBO miners tunnel scene Glukhov",
+      "Chernobyl HBO divers scene draining the tanks",
+      "Chernobyl episode 1 1:23:45 recap",
+      "Chernobyl episode 1 1:23:45 reactor explosion scene",
+      "Chernobyl episode 1 1:23:45 control room Dyatlov scene",
+      "Chernobyl episode 1 1:23:45 bridge of death scene",
+      "Chernobyl episode 2 Please Remain Calm recap",
+      "Chernobyl episode 2 Please Remain Calm helicopter crash scene",
+      "Chernobyl episode 2 Please Remain Calm evacuation Pripyat scene",
+      "Chernobyl episode 3 Open Wide O Earth recap",
+      "Chernobyl episode 3 Open Wide O Earth hospital scenes",
+      "Chernobyl episode 3 Open Wide O Earth miners scene",
+      "Chernobyl episode 4 The Happiness of All Mankind recap",
+      "Chernobyl episode 4 The Happiness of All Mankind liquidators rooftop scene",
+      "Chernobyl episode 4 The Happiness of All Mankind animal control Pavel scene",
+      "Chernobyl episode 5 Vichnaya Pamyat recap",
+      "Chernobyl episode 5 Vichnaya Pamyat trial scene",
+      "Chernobyl episode 5 Vichnaya Pamyat Legasov explanation RBMK reactor",
+      "Chernobyl HBO miniseries recap all episodes",
+      "Chernobyl 2019 ending explained Vichnaya Pamyat",
+      "Chernobyl HBO historical accuracy explained",
+      "Chernobyl HBO fact vs fiction",
+      "Chernobyl HBO nuclear reactor accident explained",
+      "Chernobyl HBO real people Valery Legasov Boris Shcherbina Lyudmilla Ignatenko",
+      "Chernobyl HBO review miniseries",
+      "Chernobyl HBO retrospective analysis",
+      "Chernobyl HBO sound design score Hildur Gudnadottir",
+      "Chernobyl HBO bloopers gag reel"
+    ],
+    "searchPlan": {
+      "model": "openai-codex/gpt-5.5",
+      "notes": "Exactly 50 distinct searches covering official promos, production, cast/creator interviews, character scenes, all five episodes, recaps, historical accuracy, technical explanation, reviews, and analysis within the single miniseries season.",
+      "queries": [
+        {
+          "query": "Chernobyl 2019 official trailer HBO",
+          "intent": "Find the main official HBO trailer for the miniseries."
+        },
+        {
+          "query": "Chernobyl 2019 teaser trailer HBO",
+          "intent": "Find early teaser or announcement promo material."
+        },
+        {
+          "query": "Chernobyl HBO official featurette making of",
+          "intent": "Find official making-of featurettes about production."
+        },
+        {
+          "query": "Chernobyl HBO behind the scenes production design",
+          "intent": "Find videos on recreating Soviet-era Pripyat and the plant."
+        },
+        {
+          "query": "Chernobyl 2019 cast interviews Jared Harris Stellan Skarsgard Emily Watson",
+          "intent": "Find ensemble cast interviews for the miniseries."
+        },
+        {
+          "query": "Chernobyl Craig Mazin interview HBO",
+          "intent": "Find creator Craig Mazin discussing writing and historical approach."
+        },
+        {
+          "query": "Chernobyl Johan Renck interview director",
+          "intent": "Find director interviews about visual style and staging."
+        },
+        {
+          "query": "Chernobyl 2019 Jared Harris interview Valery Legasov",
+          "intent": "Find Jared Harris discussing his portrayal of Valery Legasov."
+        },
+        {
+          "query": "Chernobyl 2019 Stellan Skarsgard interview Boris Shcherbina",
+          "intent": "Find Stellan Skarsgard discussing Boris Shcherbina."
+        },
+        {
+          "query": "Chernobyl 2019 Emily Watson interview Ulana Khomyuk",
+          "intent": "Find Emily Watson discussing her composite scientist character."
+        },
+        {
+          "query": "Chernobyl 2019 Paul Ritter interview Anatoly Dyatlov",
+          "intent": "Find Paul Ritter or cast discussions of Dyatlov."
+        },
+        {
+          "query": "Chernobyl 2019 Jessie Buckley Adam Nagaitis interview Ignatenko",
+          "intent": "Find interviews about Lyudmilla and Vasily Ignatenko storyline."
+        },
+        {
+          "query": "Chernobyl HBO Valery Legasov best scenes",
+          "intent": "Find character-focused compilations of Legasov's key scenes."
+        },
+        {
+          "query": "Chernobyl HBO Boris Shcherbina best scenes",
+          "intent": "Find character-focused compilations of Shcherbina scenes."
+        },
+        {
+          "query": "Chernobyl HBO Ulana Khomyuk best scenes",
+          "intent": "Find Ulana Khomyuk-focused scenes and compilations."
+        },
+        {
+          "query": "Chernobyl HBO Anatoly Dyatlov best scenes",
+          "intent": "Find Dyatlov's most memorable confrontations and denial scenes."
+        },
+        {
+          "query": "Chernobyl HBO Lyudmilla Ignatenko scenes",
+          "intent": "Find scenes centered on Lyudmilla Ignatenko's story."
+        },
+        {
+          "query": "Chernobyl HBO Vasily Ignatenko firefighter scenes",
+          "intent": "Find scenes focused on Vasily and the firefighters."
+        },
+        {
+          "query": "Chernobyl HBO Pavel and Bacho scenes Barry Keoghan Fares Fares",
+          "intent": "Find episode 4 scenes involving Pavel and Bacho."
+        },
+        {
+          "query": "Chernobyl HBO General Tarakanov rooftop speech",
+          "intent": "Find the famous liquidator rooftop speech scene."
+        },
+        {
+          "query": "Chernobyl HBO General Pikalov radiation measurement scene",
+          "intent": "Find General Pikalov vehicle/radiation measurement clip."
+        },
+        {
+          "query": "Chernobyl HBO Legasov and Shcherbina relationship scenes",
+          "intent": "Find clips and compilations of the Legasov-Shcherbina dynamic."
+        },
+        {
+          "query": "Chernobyl HBO miners tunnel scene Glukhov",
+          "intent": "Find the miners' recruitment and tunnel storyline clips."
+        },
+        {
+          "query": "Chernobyl HBO divers scene draining the tanks",
+          "intent": "Find the basement divers mission clip."
+        },
+        {
+          "query": "Chernobyl episode 1 1:23:45 recap",
+          "intent": "Find episode 1 recap videos."
+        },
+        {
+          "query": "Chernobyl episode 1 1:23:45 reactor explosion scene",
+          "intent": "Find episode-specific clips of the explosion aftermath."
+        },
+        {
+          "query": "Chernobyl episode 1 1:23:45 control room Dyatlov scene",
+          "intent": "Find control room scenes with Dyatlov, Akimov, and Toptunov."
+        },
+        {
+          "query": "Chernobyl episode 1 1:23:45 bridge of death scene",
+          "intent": "Find clips or discussions of the Bridge of Death moment."
+        },
+        {
+          "query": "Chernobyl episode 2 Please Remain Calm recap",
+          "intent": "Find episode 2 recap videos."
+        },
+        {
+          "query": "Chernobyl episode 2 Please Remain Calm helicopter crash scene",
+          "intent": "Find the helicopter crash scene and analyses."
+        },
+        {
+          "query": "Chernobyl episode 2 Please Remain Calm evacuation Pripyat scene",
+          "intent": "Find clips of Pripyat evacuation and public announcements."
+        },
+        {
+          "query": "Chernobyl episode 3 Open Wide O Earth recap",
+          "intent": "Find episode 3 recap videos."
+        },
+        {
+          "query": "Chernobyl episode 3 Open Wide O Earth hospital scenes",
+          "intent": "Find hospital and radiation sickness scenes from episode 3."
+        },
+        {
+          "query": "Chernobyl episode 3 Open Wide O Earth miners scene",
+          "intent": "Find episode 3 miners storyline clips."
+        },
+        {
+          "query": "Chernobyl episode 4 The Happiness of All Mankind recap",
+          "intent": "Find episode 4 recap videos."
+        },
+        {
+          "query": "Chernobyl episode 4 The Happiness of All Mankind liquidators rooftop scene",
+          "intent": "Find rooftop graphite-clearing scene from episode 4."
+        },
+        {
+          "query": "Chernobyl episode 4 The Happiness of All Mankind animal control Pavel scene",
+          "intent": "Find Pavel animal-control storyline clips and discussions."
+        },
+        {
+          "query": "Chernobyl episode 5 Vichnaya Pamyat recap",
+          "intent": "Find episode 5 recap videos."
+        },
+        {
+          "query": "Chernobyl episode 5 Vichnaya Pamyat trial scene",
+          "intent": "Find courtroom trial scenes and clips."
+        },
+        {
+          "query": "Chernobyl episode 5 Vichnaya Pamyat Legasov explanation RBMK reactor",
+          "intent": "Find Legasov's reactor explanation and safety-test breakdown."
+        },
+        {
+          "query": "Chernobyl HBO miniseries recap all episodes",
+          "intent": "Find complete miniseries recap videos."
+        },
+        {
+          "query": "Chernobyl 2019 ending explained Vichnaya Pamyat",
+          "intent": "Find analyses of the finale and ending."
+        },
+        {
+          "query": "Chernobyl HBO historical accuracy explained",
+          "intent": "Find videos comparing the series to real events."
+        },
+        {
+          "query": "Chernobyl HBO fact vs fiction",
+          "intent": "Find fact-checking and accuracy videos."
+        },
+        {
+          "query": "Chernobyl HBO nuclear reactor accident explained",
+          "intent": "Find technical explanations tied to the miniseries."
+        },
+        {
+          "query": "Chernobyl HBO real people Valery Legasov Boris Shcherbina Lyudmilla Ignatenko",
+          "intent": "Find videos about the real historical figures depicted."
+        },
+        {
+          "query": "Chernobyl HBO review miniseries",
+          "intent": "Find reputable critical reviews of the series."
+        },
+        {
+          "query": "Chernobyl HBO retrospective analysis",
+          "intent": "Find longer-form retrospectives and thematic analysis."
+        },
+        {
+          "query": "Chernobyl HBO sound design score Hildur Gudnadottir",
+          "intent": "Find videos about music, sound design, and atmosphere."
+        },
+        {
+          "query": "Chernobyl HBO bloopers gag reel",
+          "intent": "Find any bloopers, gag reels, or lighter production clips."
+        }
+      ]
+    },
+    "candidateCount": 190,
+    "eligibleCandidateCount": 115,
+    "filters": {
+      "minViews": 10000,
+      "minHeight": 720,
+      "minDuration": 20,
+      "rejectedBeforeAi": {
+        "low_views": 56,
+        "low_resolution": 18,
+        "metadata_unavailable": 1
+      }
+    },
+    "review": {
+      "model": "openai-codex/gpt-5.5",
+      "notes": "Selected official HBO promos/featurettes, reputable craft interviews and BTS pieces, and a small set of strong reviews/analysis. Excluded numerous unauthorized scene uploads, fan edits, duplicate trailer reposts, low-effort captures, unrelated real-disaster-only videos, and off-topic content."
+    }
+  },
+  "videos": [
+    {
+      "record": {
+        "$type": "watch.atmo.alpha.video",
+        "videoUrl": "https://www.youtube.com/watch?v=s9APLXM9Ei8",
+        "videoTitle": "Chernobyl (2019) | Official Trailer | HBO",
+        "channelName": "HBO",
+        "channelUrl": "https://www.youtube.com/channel/UCVTQuK2CaWaTgSsoNkn5AiQ",
+        "thumbnailUrl": "https://i.ytimg.com/vi_webp/s9APLXM9Ei8/maxresdefault.webp",
+        "youtubeId": "s9APLXM9Ei8",
+        "videoType": "trailer",
+        "creativeWorkType": "tv_season",
+        "identifiers": {
+          "tmdbId": "119454",
+          "tmdbTvSeriesId": "87108",
+          "seasonNumber": 1
+        },
+        "title": "Chernobyl: Miniseries",
+        "containsSpoilers": false,
+        "createdAt": "2026-08-23T22:57:06.525Z"
+      },
+      "review": {
+        "confidence": 1,
+        "rationale": "Official HBO trailer for the 2019 miniseries; high-quality and directly relevant."
+      },
+      "youtube": {
+        "viewCount": 42763470,
+        "durationSeconds": 158,
+        "maxHeight": 1080
+      }
+    },
+    {
+      "record": {
+        "$type": "watch.atmo.alpha.video",
+        "videoUrl": "https://www.youtube.com/watch?v=PMlwjCID3Io",
+        "videoTitle": "Chernobyl (2019) Date Announcement | Teaser Trailer",
+        "channelName": "HBO",
+        "channelUrl": "https://www.youtube.com/channel/UCVTQuK2CaWaTgSsoNkn5AiQ",
+        "thumbnailUrl": "https://i.ytimg.com/vi_webp/PMlwjCID3Io/maxresdefault.webp",
+        "youtubeId": "PMlwjCID3Io",
+        "videoType": "teaser",
+        "creativeWorkType": "tv_season",
+        "identifiers": {
+          "tmdbId": "119454",
+          "tmdbTvSeriesId": "87108",
+          "seasonNumber": 1
+        },
+        "title": "Chernobyl: Miniseries",
+        "containsSpoilers": false,
+        "createdAt": "2026-08-23T22:57:06.525Z"
+      },
+      "review": {
+        "confidence": 0.98,
+        "rationale": "Official HBO date-announcement teaser for Chernobyl season 1."
+      },
+      "youtube": {
+        "viewCount": 1588761,
+        "durationSeconds": 55,
+        "maxHeight": 1080
+      }
+    },
+    {
+      "record": {
+        "$type": "watch.atmo.alpha.video",
+        "videoUrl": "https://www.youtube.com/watch?v=E6fR1e88Ii0",
+        "videoTitle": "Chernobyl (2019) | The Cost of Lies Promo | HBO",
+        "channelName": "HBO",
+        "channelUrl": "https://www.youtube.com/channel/UCVTQuK2CaWaTgSsoNkn5AiQ",
+        "thumbnailUrl": "https://i.ytimg.com/vi_webp/E6fR1e88Ii0/maxresdefault.webp",
+        "youtubeId": "E6fR1e88Ii0",
+        "videoType": "teaser",
+        "creativeWorkType": "tv_season",
+        "identifiers": {
+          "tmdbId": "119454",
+          "tmdbTvSeriesId": "87108",
+          "seasonNumber": 1
+        },
+        "title": "Chernobyl: Miniseries",
+        "containsSpoilers": false,
+        "createdAt": "2026-08-23T22:57:06.525Z"
+      },
+      "review": {
+        "confidence": 0.95,
+        "rationale": "Official HBO short promo, distinct from the main trailer and teaser."
+      },
+      "youtube": {
+        "viewCount": 123215,
+        "durationSeconds": 70,
+        "maxHeight": 1080
+      }
+    },
+    {
+      "record": {
+        "$type": "watch.atmo.alpha.video",
+        "videoUrl": "https://www.youtube.com/watch?v=qgyM21HQcBs",
+        "videoTitle": "Chernobyl: The Weeks Ahead | HBO",
+        "channelName": "HBO",
+        "channelUrl": "https://www.youtube.com/channel/UCVTQuK2CaWaTgSsoNkn5AiQ",
+        "thumbnailUrl": "https://i.ytimg.com/vi_webp/qgyM21HQcBs/maxresdefault.webp",
+        "youtubeId": "qgyM21HQcBs",
+        "videoType": "teaser",
+        "creativeWorkType": "tv_season",
+        "identifiers": {
+          "tmdbId": "119454",
+          "tmdbTvSeriesId": "87108",
+          "seasonNumber": 1
+        },
+        "title": "Chernobyl: Miniseries",
+        "containsSpoilers": false,
+        "createdAt": "2026-08-23T22:57:06.525Z"
+      },
+      "review": {
+        "confidence": 0.93,
+        "rationale": "Official HBO 'weeks ahead' preview for the miniseries, useful promotional context."
+      },
+      "youtube": {
+        "viewCount": 191313,
+        "durationSeconds": 85,
+        "maxHeight": 1080
+      }
+    },
+    {
+      "record": {
+        "$type": "watch.atmo.alpha.video",
+        "videoUrl": "https://www.youtube.com/watch?v=7safrZnIUKM",
+        "videoTitle": "Chernobyl (2019) | Behind the Curtain | HBO",
+        "channelName": "HBO",
+        "channelUrl": "https://www.youtube.com/channel/UCVTQuK2CaWaTgSsoNkn5AiQ",
+        "thumbnailUrl": "https://i.ytimg.com/vi_webp/7safrZnIUKM/maxresdefault.webp",
+        "youtubeId": "7safrZnIUKM",
+        "videoType": "behind_the_scenes",
+        "creativeWorkType": "tv_season",
+        "identifiers": {
+          "tmdbId": "119454",
+          "tmdbTvSeriesId": "87108",
+          "seasonNumber": 1
+        },
+        "title": "Chernobyl: Miniseries",
+        "containsSpoilers": false,
+        "createdAt": "2026-08-23T22:57:06.525Z"
+      },
+      "review": {
+        "confidence": 0.97,
+        "rationale": "Official HBO behind-the-scenes look at the creation of the miniseries."
+      },
+      "youtube": {
+        "viewCount": 327296,
+        "durationSeconds": 70,
+        "maxHeight": 1080
+      }
+    },
+    {
+      "record": {
+        "$type": "watch.atmo.alpha.video",
+        "videoUrl": "https://www.youtube.com/watch?v=4Wk9JRbTTqc",
+        "videoTitle": "Chernobyl: After the Aftermath Featurette | HBO",
+        "channelName": "HBO",
+        "channelUrl": "https://www.youtube.com/channel/UCVTQuK2CaWaTgSsoNkn5AiQ",
+        "thumbnailUrl": "https://i.ytimg.com/vi_webp/4Wk9JRbTTqc/maxresdefault.webp",
+        "youtubeId": "4Wk9JRbTTqc",
+        "videoType": "featurette",
+        "creativeWorkType": "tv_season",
+        "identifiers": {
+          "tmdbId": "119454",
+          "tmdbTvSeriesId": "87108",
+          "seasonNumber": 1
+        },
+        "title": "Chernobyl: Miniseries",
+        "containsSpoilers": false,
+        "createdAt": "2026-08-23T22:57:06.525Z"
+      },
+      "review": {
+        "confidence": 0.97,
+        "rationale": "Official HBO featurette on the disaster's real-world impact and production perspective."
+      },
+      "youtube": {
+        "viewCount": 350085,
+        "durationSeconds": 159,
+        "maxHeight": 1080
+      }
+    },
+    {
+      "record": {
+        "$type": "watch.atmo.alpha.video",
+        "videoUrl": "https://www.youtube.com/watch?v=NCiOYAY-HVA",
+        "videoTitle": "Chernobyl: Elements of Chernobyl: “Vichnaya Pamyat” Featurette | HBO",
+        "channelName": "HBO",
+        "channelUrl": "https://www.youtube.com/channel/UCVTQuK2CaWaTgSsoNkn5AiQ",
+        "thumbnailUrl": "https://i.ytimg.com/vi_webp/NCiOYAY-HVA/maxresdefault.webp",
+        "youtubeId": "NCiOYAY-HVA",
+        "videoType": "featurette",
+        "creativeWorkType": "tv_episode",
+        "identifiers": {
+          "tmdbId": "1747127",
+          "tmdbTvSeriesId": "87108",
+          "seasonNumber": 1,
+          "episodeNumber": 5
+        },
+        "title": "Chernobyl: S1 E5 Vichnaya Pamyat",
+        "containsSpoilers": true,
+        "createdAt": "2026-08-23T22:57:06.525Z"
+      },
+      "review": {
+        "confidence": 0.99,
+        "rationale": "Official HBO featurette explicitly about the finale, 'Vichnaya Pamyat'."
+      },
+      "youtube": {
+        "viewCount": 1473398,
+        "durationSeconds": 218,
+        "maxHeight": 1080
+      }
+    },
+    {
+      "record": {
+        "$type": "watch.atmo.alpha.video",
+        "videoUrl": "https://www.youtube.com/watch?v=PdhksxPy9f0",
+        "videoTitle": "Chernobyl: “Happiness of All Mankind” - Behind the Scenes of Season 1 Episode 4 | HBO",
+        "channelName": "HBO",
+        "channelUrl": "https://www.youtube.com/channel/UCVTQuK2CaWaTgSsoNkn5AiQ",
+        "thumbnailUrl": "https://i.ytimg.com/vi_webp/PdhksxPy9f0/maxresdefault.webp",
+        "youtubeId": "PdhksxPy9f0",
+        "videoType": "behind_the_scenes",
+        "creativeWorkType": "tv_episode",
+        "identifiers": {
+          "tmdbId": "1747126",
+          "tmdbTvSeriesId": "87108",
+          "seasonNumber": 1,
+          "episodeNumber": 4
+        },
+        "title": "Chernobyl: S1 E4 The Happiness of All Mankind",
+        "containsSpoilers": true,
+        "createdAt": "2026-08-23T22:57:06.525Z"
+      },
+      "review": {
+        "confidence": 0.99,
+        "rationale": "Official HBO behind-the-scenes video explicitly for Season 1 Episode 4."
+      },
+      "youtube": {
+        "viewCount": 304315,
+        "durationSeconds": 214,
+        "maxHeight": 1080
+      }
+    },
+    {
+      "record": {
+        "$type": "watch.atmo.alpha.video",
+        "videoUrl": "https://www.youtube.com/watch?v=o4vBRr2ItFg",
+        "videoTitle": "Chernobyl: Bridge of Death | HBO Replay",
+        "channelName": "HBO",
+        "channelUrl": "https://www.youtube.com/channel/UCVTQuK2CaWaTgSsoNkn5AiQ",
+        "thumbnailUrl": "https://i.ytimg.com/vi_webp/o4vBRr2ItFg/maxresdefault.webp",
+        "youtubeId": "o4vBRr2ItFg",
+        "videoType": "scene",
+        "creativeWorkType": "tv_episode",
+        "identifiers": {
+          "tmdbId": "1725580",
+          "tmdbTvSeriesId": "87108",
+          "seasonNumber": 1,
+          "episodeNumber": 1
+        },
+        "title": "Chernobyl: S1 E1 1:23:45",
+        "containsSpoilers": true,
+        "createdAt": "2026-08-23T22:57:06.525Z"
+      },
+      "review": {
+        "confidence": 0.95,
+        "rationale": "Official HBO Replay scene; the Bridge of Death sequence is from episode 1."
+      },
+      "youtube": {
+        "viewCount": 188533,
+        "durationSeconds": 134,
+        "maxHeight": 1080
+      }
+    },
+    {
+      "record": {
+        "$type": "watch.atmo.alpha.video",
+        "videoUrl": "https://www.youtube.com/watch?v=rUeHPCYtWYQ",
+        "videoTitle": "The Chernobyl Podcast | Part One | HBO",
+        "channelName": "HBO",
+        "channelUrl": "https://www.youtube.com/channel/UCVTQuK2CaWaTgSsoNkn5AiQ",
+        "thumbnailUrl": "https://i.ytimg.com/vi_webp/rUeHPCYtWYQ/maxresdefault.webp",
+        "youtubeId": "rUeHPCYtWYQ",
+        "videoType": "analysis",
+        "creativeWorkType": "tv_episode",
+        "identifiers": {
+          "tmdbId": "1725580",
+          "tmdbTvSeriesId": "87108",
+          "seasonNumber": 1,
+          "episodeNumber": 1
+        },
+        "title": "Chernobyl: S1 E1 1:23:45",
+        "containsSpoilers": true,
+        "createdAt": "2026-08-23T22:57:06.525Z"
+      },
+      "review": {
+        "confidence": 0.9,
+        "rationale": "Official HBO companion podcast Part One with Craig Mazin discussing the first episode's events."
+      },
+      "youtube": {
+        "viewCount": 2665131,
+        "durationSeconds": 3086,
+        "maxHeight": 1080
+      }
+    },
+    {
+      "record": {
+        "$type": "watch.atmo.alpha.video",
+        "videoUrl": "https://www.youtube.com/watch?v=wsFlWDPrxWM",
+        "videoTitle": "The Chernobyl Podcast | Part Six: Bonus Episode With Jared Harris | HBO",
+        "channelName": "HBO",
+        "channelUrl": "https://www.youtube.com/channel/UCVTQuK2CaWaTgSsoNkn5AiQ",
+        "thumbnailUrl": "https://i.ytimg.com/vi_webp/wsFlWDPrxWM/maxresdefault.webp",
+        "youtubeId": "wsFlWDPrxWM",
+        "videoType": "interview",
+        "creativeWorkType": "tv_season",
+        "identifiers": {
+          "tmdbId": "119454",
+          "tmdbTvSeriesId": "87108",
+          "seasonNumber": 1
+        },
+        "title": "Chernobyl: Miniseries",
+        "containsSpoilers": true,
+        "createdAt": "2026-08-23T22:57:06.525Z"
+      },
+      "review": {
+        "confidence": 0.95,
+        "rationale": "Official HBO bonus podcast with Craig Mazin and Jared Harris reflecting on the miniseries."
+      },
+      "youtube": {
+        "viewCount": 295613,
+        "durationSeconds": 3019,
+        "maxHeight": 720
+      }
+    },
+    {
+      "record": {
+        "$type": "watch.atmo.alpha.video",
+        "videoUrl": "https://www.youtube.com/watch?v=MbliDeRAlPA",
+        "videoTitle": "Making Chernobyl | Cast & Crew Discuss the HBO/Sky Atlantic Miniseries",
+        "channelName": "BAFTA Guru",
+        "channelUrl": "https://www.youtube.com/channel/UC-IxEJXZh_SrU8SHz41-dZQ",
+        "thumbnailUrl": "https://i.ytimg.com/vi_webp/MbliDeRAlPA/maxresdefault.webp",
+        "youtubeId": "MbliDeRAlPA",
+        "videoType": "interview",
+        "creativeWorkType": "tv_season",
+        "identifiers": {
+          "tmdbId": "119454",
+          "tmdbTvSeriesId": "87108",
+          "seasonNumber": 1
+        },
+        "title": "Chernobyl: Miniseries",
+        "containsSpoilers": false,
+        "createdAt": "2026-08-23T22:57:06.525Z"
+      },
+      "review": {
+        "confidence": 0.96,
+        "rationale": "BAFTA Guru panel with writer, director, and lead actors; reputable and substantial."
+      },
+      "youtube": {
+        "viewCount": 304604,
+        "durationSeconds": 1471,
+        "maxHeight": 1080
+      }
+    },
+    {
+      "record": {
+        "$type": "watch.atmo.alpha.video",
+        "videoUrl": "https://www.youtube.com/watch?v=yY0r1Ln6tkM",
+        "videoTitle": "Craig Mazin on Writing Chernobyl, the HBO/Sky Atlantic Miniseries | On Writing",
+        "channelName": "BAFTA Guru",
+        "channelUrl": "https://www.youtube.com/channel/UC-IxEJXZh_SrU8SHz41-dZQ",
+        "thumbnailUrl": "https://i.ytimg.com/vi_webp/yY0r1Ln6tkM/maxresdefault.webp",
+        "youtubeId": "yY0r1Ln6tkM",
+        "videoType": "interview",
+        "creativeWorkType": "tv_season",
+        "identifiers": {
+          "tmdbId": "119454",
+          "tmdbTvSeriesId": "87108",
+          "seasonNumber": 1
+        },
+        "title": "Chernobyl: Miniseries",
+        "containsSpoilers": false,
+        "createdAt": "2026-08-23T22:57:06.525Z"
+      },
+      "review": {
+        "confidence": 0.95,
+        "rationale": "BAFTA Guru interview focused on Craig Mazin's writing and research for Chernobyl."
+      },
+      "youtube": {
+        "viewCount": 47526,
+        "durationSeconds": 394,
+        "maxHeight": 1080
+      }
+    },
+    {
+      "record": {
+        "$type": "watch.atmo.alpha.video",
+        "videoUrl": "https://www.youtube.com/watch?v=9v9r1X6ALOQ",
+        "videoTitle": "Johan Renck on Directing Chernobyl, the HBO/Sky Atlantic Miniseries | On Directing",
+        "channelName": "BAFTA Guru",
+        "channelUrl": "https://www.youtube.com/channel/UC-IxEJXZh_SrU8SHz41-dZQ",
+        "thumbnailUrl": "https://i.ytimg.com/vi_webp/9v9r1X6ALOQ/maxresdefault.webp",
+        "youtubeId": "9v9r1X6ALOQ",
+        "videoType": "interview",
+        "creativeWorkType": "tv_season",
+        "identifiers": {
+          "tmdbId": "119454",
+          "tmdbTvSeriesId": "87108",
+          "seasonNumber": 1
+        },
+        "title": "Chernobyl: Miniseries",
+        "containsSpoilers": false,
+        "createdAt": "2026-08-23T22:57:06.525Z"
+      },
+      "review": {
+        "confidence": 0.95,
+        "rationale": "BAFTA Guru interview with director Johan Renck about directing the miniseries."
+      },
+      "youtube": {
+        "viewCount": 61834,
+        "durationSeconds": 558,
+        "maxHeight": 1080
+      }
+    },
+    {
+      "record": {
+        "$type": "watch.atmo.alpha.video",
+        "videoUrl": "https://www.youtube.com/watch?v=XLOZSn8yjt4",
+        "videoTitle": "Stellan Skarsgård & Jared Harris on Chernobyl, the HBO/Sky Atlantic Miniseries | On Acting",
+        "channelName": "BAFTA Guru",
+        "channelUrl": "https://www.youtube.com/channel/UC-IxEJXZh_SrU8SHz41-dZQ",
+        "thumbnailUrl": "https://i.ytimg.com/vi_webp/XLOZSn8yjt4/maxresdefault.webp",
+        "youtubeId": "XLOZSn8yjt4",
+        "videoType": "interview",
+        "creativeWorkType": "tv_season",
+        "identifiers": {
+          "tmdbId": "119454",
+          "tmdbTvSeriesId": "87108",
+          "seasonNumber": 1
+        },
+        "title": "Chernobyl: Miniseries",
+        "containsSpoilers": false,
+        "createdAt": "2026-08-23T22:57:06.525Z"
+      },
+      "review": {
+        "confidence": 0.95,
+        "rationale": "BAFTA Guru acting interview with Jared Harris and Stellan Skarsgård."
+      },
+      "youtube": {
+        "viewCount": 526379,
+        "durationSeconds": 554,
+        "maxHeight": 1080
+      }
+    },
+    {
+      "record": {
+        "$type": "watch.atmo.alpha.video",
+        "videoUrl": "https://www.youtube.com/watch?v=YyI1UkpecR0",
+        "videoTitle": "Chernobyl Cast | Deadline Studio at Tribeca 2019",
+        "channelName": "Deadline Hollywood",
+        "channelUrl": "https://www.youtube.com/channel/UC0fTbhgouDMneMzSluKaXAA",
+        "thumbnailUrl": "https://i.ytimg.com/vi_webp/YyI1UkpecR0/maxresdefault.webp",
+        "youtubeId": "YyI1UkpecR0",
+        "videoType": "interview",
+        "creativeWorkType": "tv_season",
+        "identifiers": {
+          "tmdbId": "119454",
+          "tmdbTvSeriesId": "87108",
+          "seasonNumber": 1
+        },
+        "title": "Chernobyl: Miniseries",
+        "containsSpoilers": false,
+        "createdAt": "2026-08-23T22:57:06.525Z"
+      },
+      "review": {
+        "confidence": 0.9,
+        "rationale": "Deadline Hollywood cast interview from Tribeca 2019; reputable and directly tied to the show."
+      },
+      "youtube": {
+        "viewCount": 199357,
+        "durationSeconds": 237,
+        "maxHeight": 1080
+      }
+    },
+    {
+      "record": {
+        "$type": "watch.atmo.alpha.video",
+        "videoUrl": "https://www.youtube.com/watch?v=CB7mHIqoDCM",
+        "videoTitle": "Part 1: Behind the VFX of Chernobyl – \"VFX is another character in the show\"",
+        "channelName": "DNEG",
+        "channelUrl": "https://www.youtube.com/channel/UCy_diWyAbRmfUGd5CfNmChg",
+        "thumbnailUrl": "https://i.ytimg.com/vi_webp/CB7mHIqoDCM/maxresdefault.webp",
+        "youtubeId": "CB7mHIqoDCM",
+        "videoType": "behind_the_scenes",
+        "creativeWorkType": "tv_season",
+        "identifiers": {
+          "tmdbId": "119454",
+          "tmdbTvSeriesId": "87108",
+          "seasonNumber": 1
+        },
+        "title": "Chernobyl: Miniseries",
+        "containsSpoilers": false,
+        "createdAt": "2026-08-23T22:57:06.525Z"
+      },
+      "review": {
+        "confidence": 0.94,
+        "rationale": "DNEG-produced VFX featurette from the show's visual-effects vendor."
+      },
+      "youtube": {
+        "viewCount": 39631,
+        "durationSeconds": 302,
+        "maxHeight": 1080
+      }
+    },
+    {
+      "record": {
+        "$type": "watch.atmo.alpha.video",
+        "videoUrl": "https://www.youtube.com/watch?v=CIQjJjEVCqg",
+        "videoTitle": "Chernobyl | Compositing Breakdown | DNEG",
+        "channelName": "DNEG",
+        "channelUrl": "https://www.youtube.com/channel/UCy_diWyAbRmfUGd5CfNmChg",
+        "thumbnailUrl": "https://i.ytimg.com/vi_webp/CIQjJjEVCqg/maxresdefault.webp",
+        "youtubeId": "CIQjJjEVCqg",
+        "videoType": "behind_the_scenes",
+        "creativeWorkType": "tv_season",
+        "identifiers": {
+          "tmdbId": "119454",
+          "tmdbTvSeriesId": "87108",
+          "seasonNumber": 1
+        },
+        "title": "Chernobyl: Miniseries",
+        "containsSpoilers": false,
+        "createdAt": "2026-08-23T22:57:06.525Z"
+      },
+      "review": {
+        "confidence": 0.9,
+        "rationale": "DNEG compositing breakdown showcasing the Emmy-winning series' VFX work."
+      },
+      "youtube": {
+        "viewCount": 38594,
+        "durationSeconds": 93,
+        "maxHeight": 1080
+      }
+    },
+    {
+      "record": {
+        "$type": "watch.atmo.alpha.video",
+        "videoUrl": "https://www.youtube.com/watch?v=bTw1-nw5S4A",
+        "videoTitle": "'Chernobyl' composer created entire haunting score from real power plant sounds",
+        "channelName": "Score: The Podcast",
+        "channelUrl": "https://www.youtube.com/channel/UC1WhRcwSQyIEUZ2eBy5KFuA",
+        "thumbnailUrl": "https://i.ytimg.com/vi_webp/bTw1-nw5S4A/maxresdefault.webp",
+        "youtubeId": "bTw1-nw5S4A",
+        "videoType": "interview",
+        "creativeWorkType": "tv_season",
+        "identifiers": {
+          "tmdbId": "119454",
+          "tmdbTvSeriesId": "87108",
+          "seasonNumber": 1
+        },
+        "title": "Chernobyl: Miniseries",
+        "containsSpoilers": false,
+        "createdAt": "2026-08-23T22:57:06.525Z"
+      },
+      "review": {
+        "confidence": 0.9,
+        "rationale": "Composer Hildur Guðnadóttir discusses creating the score from real power-plant sounds."
+      },
+      "youtube": {
+        "viewCount": 185667,
+        "durationSeconds": 398,
+        "maxHeight": 720
+      }
+    },
+    {
+      "record": {
+        "$type": "watch.atmo.alpha.video",
+        "videoUrl": "https://www.youtube.com/watch?v=GxSCZB3Dmpg",
+        "videoTitle": "How HBO's Chernobyl Reinvented Horror | Cinematography Breakdown with the Filmmaker",
+        "channelName": "Indy Mogul",
+        "channelUrl": "https://www.youtube.com/channel/UCGZ0LgTmAJn9Banetdr_ZFg",
+        "thumbnailUrl": "https://i.ytimg.com/vi_webp/GxSCZB3Dmpg/maxresdefault.webp",
+        "youtubeId": "GxSCZB3Dmpg",
+        "videoType": "analysis",
+        "creativeWorkType": "tv_season",
+        "identifiers": {
+          "tmdbId": "119454",
+          "tmdbTvSeriesId": "87108",
+          "seasonNumber": 1
+        },
+        "title": "Chernobyl: Miniseries",
+        "containsSpoilers": true,
+        "createdAt": "2026-08-23T22:57:06.525Z"
+      },
+      "review": {
+        "confidence": 0.9,
+        "rationale": "Indy Mogul cinematography breakdown with the show's cinematographer, offering craft insight."
+      },
+      "youtube": {
+        "viewCount": 154301,
+        "durationSeconds": 908,
+        "maxHeight": 1080
+      }
+    },
+    {
+      "record": {
+        "$type": "watch.atmo.alpha.video",
+        "videoUrl": "https://www.youtube.com/watch?v=MljytTReJ_o",
+        "videoTitle": "Chernobyl - A Masterclass in Perspective",
+        "channelName": "Thomas Flight",
+        "channelUrl": "https://www.youtube.com/channel/UCUyvQV2JsICeLZP4c_h40kA",
+        "thumbnailUrl": "https://i.ytimg.com/vi_webp/MljytTReJ_o/maxresdefault.webp",
+        "youtubeId": "MljytTReJ_o",
+        "videoType": "analysis",
+        "creativeWorkType": "tv_season",
+        "identifiers": {
+          "tmdbId": "119454",
+          "tmdbTvSeriesId": "87108",
+          "seasonNumber": 1
+        },
+        "title": "Chernobyl: Miniseries",
+        "containsSpoilers": true,
+        "createdAt": "2026-08-23T22:57:06.525Z"
+      },
+      "review": {
+        "confidence": 0.93,
+        "rationale": "Well-regarded Thomas Flight video essay analyzing the miniseries' visual perspective."
+      },
+      "youtube": {
+        "viewCount": 4346795,
+        "durationSeconds": 962,
+        "maxHeight": 2160
+      }
+    },
+    {
+      "record": {
+        "$type": "watch.atmo.alpha.video",
+        "videoUrl": "https://www.youtube.com/watch?v=P9GQtvUKtHA",
+        "videoTitle": "Chernobyl Show vs Reality - Footage Comparison",
+        "channelName": "Thomas Flight",
+        "channelUrl": "https://www.youtube.com/channel/UCUyvQV2JsICeLZP4c_h40kA",
+        "thumbnailUrl": "https://i.ytimg.com/vi_webp/P9GQtvUKtHA/maxresdefault.webp",
+        "youtubeId": "P9GQtvUKtHA",
+        "videoType": "analysis",
+        "creativeWorkType": "tv_season",
+        "identifiers": {
+          "tmdbId": "119454",
+          "tmdbTvSeriesId": "87108",
+          "seasonNumber": 1
+        },
+        "title": "Chernobyl: Miniseries",
+        "containsSpoilers": true,
+        "createdAt": "2026-08-23T22:57:06.525Z"
+      },
+      "review": {
+        "confidence": 0.94,
+        "rationale": "Thomas Flight comparison of the show with historical footage; highly relevant and polished."
+      },
+      "youtube": {
+        "viewCount": 17181403,
+        "durationSeconds": 414,
+        "maxHeight": 2160
+      }
+    },
+    {
+      "record": {
+        "$type": "watch.atmo.alpha.video",
+        "videoUrl": "https://www.youtube.com/watch?v=QVBy53F-yyk",
+        "videoTitle": "History Buffs: Chernobyl",
+        "channelName": "History Buffs",
+        "channelUrl": "https://www.youtube.com/channel/UCggHoXaj8BQHIiPmOxezeWA",
+        "thumbnailUrl": "https://i.ytimg.com/vi/QVBy53F-yyk/maxresdefault.jpg",
+        "youtubeId": "QVBy53F-yyk",
+        "videoType": "analysis",
+        "creativeWorkType": "tv_season",
+        "identifiers": {
+          "tmdbId": "119454",
+          "tmdbTvSeriesId": "87108",
+          "seasonNumber": 1
+        },
+        "title": "Chernobyl: Miniseries",
+        "containsSpoilers": true,
+        "createdAt": "2026-08-23T22:57:06.525Z"
+      },
+      "review": {
+        "confidence": 0.9,
+        "rationale": "History Buffs deep dive into the true story and the show's historical accuracy."
+      },
+      "youtube": {
+        "viewCount": 5554610,
+        "durationSeconds": 3874,
+        "maxHeight": 1080
+      }
+    },
+    {
+      "record": {
+        "$type": "watch.atmo.alpha.video",
+        "videoUrl": "https://www.youtube.com/watch?v=BllXT7hWevI",
+        "videoTitle": "Chernobyl - Series Review",
+        "channelName": "Chris Stuckmann",
+        "channelUrl": "https://www.youtube.com/channel/UCCqEeDAUf4Mg0GgEN658tkA",
+        "thumbnailUrl": "https://i.ytimg.com/vi_webp/BllXT7hWevI/maxresdefault.webp",
+        "youtubeId": "BllXT7hWevI",
+        "videoType": "review",
+        "creativeWorkType": "tv_season",
+        "identifiers": {
+          "tmdbId": "119454",
+          "tmdbTvSeriesId": "87108",
+          "seasonNumber": 1
+        },
+        "title": "Chernobyl: Miniseries",
+        "containsSpoilers": true,
+        "createdAt": "2026-08-23T22:57:06.525Z"
+      },
+      "review": {
+        "confidence": 0.9,
+        "rationale": "Chris Stuckmann review of the full HBO miniseries from a reputable film/TV critic."
+      },
+      "youtube": {
+        "viewCount": 664321,
+        "durationSeconds": 586,
+        "maxHeight": 1080
+      }
+    },
+    {
+      "record": {
+        "$type": "watch.atmo.alpha.video",
+        "videoUrl": "https://www.youtube.com/watch?v=d1AwVKENimQ",
+        "videoTitle": "Chernobyl: HBO Miniseries - Review",
+        "channelName": "Jeremy Jahns",
+        "channelUrl": "https://www.youtube.com/channel/UC7v3-2K1N84V67IF-WTRG-Q",
+        "thumbnailUrl": "https://i.ytimg.com/vi_webp/d1AwVKENimQ/maxresdefault.webp",
+        "youtubeId": "d1AwVKENimQ",
+        "videoType": "review",
+        "creativeWorkType": "tv_season",
+        "identifiers": {
+          "tmdbId": "119454",
+          "tmdbTvSeriesId": "87108",
+          "seasonNumber": 1
+        },
+        "title": "Chernobyl: Miniseries",
+        "containsSpoilers": true,
+        "createdAt": "2026-08-23T22:57:06.525Z"
+      },
+      "review": {
+        "confidence": 0.88,
+        "rationale": "Jeremy Jahns review of the completed miniseries; popular and directly relevant."
+      },
+      "youtube": {
+        "viewCount": 803687,
+        "durationSeconds": 384,
+        "maxHeight": 1080
+      }
+    },
+    {
+      "record": {
+        "$type": "watch.atmo.alpha.video",
+        "videoUrl": "https://www.youtube.com/watch?v=sukDKR1xg4o",
+        "videoTitle": "Why You Should Watch HBO's CHERNOBYL",
+        "channelName": "Ryan Hollinger",
+        "channelUrl": "https://www.youtube.com/channel/UCphlppLaedKn0BgXAszs5dQ",
+        "thumbnailUrl": "https://i.ytimg.com/vi_webp/sukDKR1xg4o/maxresdefault.webp",
+        "youtubeId": "sukDKR1xg4o",
+        "videoType": "analysis",
+        "creativeWorkType": "tv_season",
+        "identifiers": {
+          "tmdbId": "119454",
+          "tmdbTvSeriesId": "87108",
+          "seasonNumber": 1
+        },
+        "title": "Chernobyl: Miniseries",
+        "containsSpoilers": true,
+        "createdAt": "2026-08-23T22:57:06.525Z"
+      },
+      "review": {
+        "confidence": 0.88,
+        "rationale": "Ryan Hollinger retrospective/essay on why the HBO miniseries works."
+      },
+      "youtube": {
+        "viewCount": 1424290,
+        "durationSeconds": 745,
+        "maxHeight": 1080
+      }
+    },
+    {
+      "record": {
+        "$type": "watch.atmo.alpha.video",
+        "videoUrl": "https://www.youtube.com/watch?v=m0h3F25xloY",
+        "videoTitle": "How Scientifically Accurate Is The HBO Miniseries Chernobyl?",
+        "channelName": "Science ABC",
+        "channelUrl": "https://www.youtube.com/channel/UCcN3IuIAR6Fn74FWMQf6lFA",
+        "thumbnailUrl": "https://i.ytimg.com/vi/m0h3F25xloY/maxresdefault.jpg?v=655b3373",
+        "youtubeId": "m0h3F25xloY",
+        "videoType": "analysis",
+        "creativeWorkType": "tv_season",
+        "identifiers": {
+          "tmdbId": "119454",
+          "tmdbTvSeriesId": "87108",
+          "seasonNumber": 1
+        },
+        "title": "Chernobyl: Miniseries",
+        "containsSpoilers": true,
+        "createdAt": "2026-08-23T22:57:06.525Z"
+      },
+      "review": {
+        "confidence": 0.84,
+        "rationale": "Science-focused fact-check of the HBO miniseries' scientific claims."
+      },
+      "youtube": {
+        "viewCount": 29065,
+        "durationSeconds": 640,
+        "maxHeight": 1080
+      }
+    }
+  ]
+}

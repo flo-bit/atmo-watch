@@ -8,12 +8,14 @@
 		title,
 		variant = 'button',
 		fill = false,
+		iconOnly = false,
 		class: className
 	}: {
 		url: string;
 		title: string;
 		variant?: 'button' | 'feature' | 'action';
 		fill?: boolean;
+		iconOnly?: boolean;
 		class?: string;
 	} = $props();
 	let open = $state(false);
@@ -90,13 +92,19 @@
 					'group flex min-w-0 flex-col items-center gap-2 rounded-xl px-1 py-2 text-center text-white transition-colors hover:text-accent-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70 lg:gap-0 lg:p-0',
 					className
 				)}
+				aria-label={`Play the trailer for ${title}`}
+				title={iconOnly ? 'Play trailer' : undefined}
 			>
 				<span
 					class="inline-flex size-10 items-center justify-center rounded-full border border-white/10 bg-white/10 text-white shadow-lg shadow-black/10 backdrop-blur-sm transition-colors group-hover:bg-white/15 lg:size-9"
 				>
 					<Film class="size-4" strokeWidth={1.8} aria-hidden="true" />
 				</span>
-				<span class="text-xs leading-4 font-medium text-base-200 lg:sr-only">watch trailer</span>
+				<span
+					class={iconOnly ? 'sr-only' : 'text-xs leading-4 font-medium text-base-200 lg:sr-only'}
+				>
+					watch trailer
+				</span>
 			</Dialog.Trigger>
 		{:else}
 			<Dialog.Trigger

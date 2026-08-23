@@ -39,12 +39,31 @@ export type MediaFeature = {
 	ratings: ExternalRating[];
 };
 
+export type MediaVideoContext = {
+	creativeWorkType: 'movie' | 'tv_show' | 'tv_season' | 'tv_episode';
+	tmdbId: number;
+	tmdbTvSeriesId?: number;
+	seasonNumber?: number;
+	episodeNumber?: number;
+	title: string;
+	seriesTitle?: string;
+};
+
 export type MediaVideo = {
 	id: string;
 	key: string;
 	name: string;
 	type: string;
 	official: boolean;
+	byline?: string;
+	thumbnailUrl?: string;
+	containsSpoilers?: boolean;
+	context?: MediaVideoContext;
+};
+
+export type SubmittedVideoFeedPage = {
+	videos: MediaVideo[];
+	cursor: string | null;
 };
 
 export type TvEpisodeSummary = {
