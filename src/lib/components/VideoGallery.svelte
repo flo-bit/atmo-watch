@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { Dialog } from 'bits-ui';
-	import { Play, X } from '@lucide/svelte';
+	import { X } from '@lucide/svelte';
 	import type { MediaVideo } from '$lib/types';
 	import { slugify } from '$lib/utils';
 	import HorizontalScroller from './HorizontalScroller.svelte';
@@ -47,8 +47,8 @@
 
 <HorizontalScroller
 	class={layout === 'grid'
-		? 'mt-6 !grid !snap-none grid-cols-1 items-start gap-x-4 gap-y-7 !overflow-visible sm:grid-cols-2'
-		: 'mt-4 items-start gap-3 pb-3 lg:grid lg:grid-cols-2 lg:overflow-visible lg:pb-0'}
+		? 'mt-6 !grid !snap-none grid-cols-1 items-start gap-x-4 gap-y-7 !overflow-visible sm:grid-cols-2 lg:grid-cols-3'
+		: 'mt-4 items-start gap-3 pb-3 lg:grid lg:grid-cols-3 lg:overflow-visible lg:pb-0'}
 	label={`Videos for ${title}`}
 >
 	{#each videos as video, index (video.id)}
@@ -58,7 +58,7 @@
 			context?.creativeWorkType === 'tv_show' ? context.tmdbId : context?.tmdbTvSeriesId}
 		{@const showId = showTmdbId ? `${showTmdbId}-${slugify(showTitle)}` : null}
 		<article
-			class={`text-left ${layout === 'grid' ? 'w-full min-w-0' : 'w-[82vw] max-w-sm shrink-0 snap-start lg:w-auto lg:max-w-none'} ${layout === 'gallery' && !showAllVideos && index >= 2 ? 'lg:hidden' : ''}`}
+			class={`text-left ${layout === 'grid' ? 'w-full min-w-0' : 'w-[82vw] max-w-sm shrink-0 snap-start lg:w-auto lg:max-w-none'} ${layout === 'gallery' && !showAllVideos && index >= 3 ? 'lg:hidden' : ''}`}
 		>
 			<button
 				type="button"
@@ -78,16 +78,11 @@
 					/>
 					<span class="absolute inset-0 bg-gradient-to-t from-black/55 via-transparent to-black/5"
 					></span>
-					<span
-						class="absolute top-1/2 left-1/2 inline-flex size-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full bg-white/95 text-black shadow-xl transition-transform group-hover:scale-105"
-					>
-						<Play class="ml-0.5 size-5" fill="currentColor" strokeWidth={1.5} aria-hidden="true" />
-					</span>
 					{#if video.containsSpoilers}
 						<span
 							class="absolute top-2 right-2 rounded-full border border-white/10 bg-black/75 px-2 py-1 text-[0.625rem] font-semibold text-white backdrop-blur-sm"
 						>
-							contains spoilers
+							spoilers
 						</span>
 					{/if}
 					<span
@@ -153,7 +148,7 @@
 	{/each}
 </HorizontalScroller>
 
-{#if layout === 'gallery' && !showAllVideos && videos.length > 2}
+{#if layout === 'gallery' && !showAllVideos && videos.length > 3}
 	<button
 		type="button"
 		onclick={() => (showAllVideos = true)}
