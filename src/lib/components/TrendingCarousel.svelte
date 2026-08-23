@@ -164,11 +164,12 @@
 				</a>
 				<div class="mt-3 flex justify-center text-white">
 					<ExternalRatings
-						popfeedScore={null}
-						popfeedRatingCount={0}
+						popfeedScore={current.popfeedScore}
+						popfeedRatingCount={current.popfeedRatingCount}
 						imdbId={current.imdbId}
-						imdbVotes={null}
+						imdbVotes={current.imdbVotes}
 						ratings={current.ratings}
+						showCounts={false}
 					/>
 				</div>
 			</div>

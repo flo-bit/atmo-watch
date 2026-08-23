@@ -32,6 +32,8 @@ export type MediaLogo = {
 export type MediaFeature = {
 	item: MediaDetails;
 	logo: MediaLogo | null;
+	popfeedScore: number | null;
+	popfeedRatingCount: number;
 	imdbId: string | null;
 	imdbVotes: string | null;
 	ratings: ExternalRating[];

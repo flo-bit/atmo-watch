@@ -7,18 +7,21 @@
 		popfeedRatingCount,
 		imdbId,
 		imdbVotes,
-		ratings
+		ratings,
+		showCounts = true
 	}: {
 		popfeedScore: number | null;
 		popfeedRatingCount: number;
 		imdbId: string | null;
 		imdbVotes: string | null;
 		ratings: ExternalRating[];
+		showCounts?: boolean;
 	} = $props();
 
 	let imdbRating = $derived(ratings.find((rating) => rating.source === 'Internet Movie Database'));
 	let imdbScore = $derived(imdbRating?.value.replace(/\/10$/, ''));
 	let compactImdbVotes = $derived(formatCount(imdbVotes));
+	let showImdbRating = $derived(Boolean(imdbId && (imdbScore || (showCounts && compactImdbVotes))));
 	let compactPopfeedRatings = $derived(formatCount(String(popfeedRatingCount)));
 	let rottenTomatoesRating = $derived(
 		ratings.find((rating) => rating.source === 'Rotten Tomatoes')
@@ -39,7 +42,7 @@
 	}
 </script>
 
-{#if popfeedScore !== null || (imdbId && (imdbScore || compactImdbVotes)) || rottenTomatoesRating}
+{#if popfeedScore !== null || showImdbRating || rottenTomatoesRating}
 	<div class="flex flex-wrap items-center gap-x-3 gap-y-2" aria-label="Ratings">
 		{#if popfeedScore !== null}
 			<div
@@ -53,7 +56,7 @@
 					<img src={popfeedIcon} alt="" class="size-3.5" />
 				</span>
 				<span class="text-xs font-semibold tabular-nums">{popfeedScore.toFixed(1)}</span>
-				{#if compactPopfeedRatings}
+				{#if showCounts && compactPopfeedRatings}
 					<span class="text-[0.625rem] text-base-400 tabular-nums">
 						({compactPopfeedRatings})
 					</span>
@@ -61,7 +64,7 @@
 			</div>
 		{/if}
 
-		{#if imdbId && (imdbScore || compactImdbVotes)}
+		{#if showImdbRating && imdbId}
 			<a
 				href={`https://www.imdb.com/title/${imdbId}/`}
 				target="_blank"
@@ -77,7 +80,7 @@
 				{#if imdbScore}
 					<span class="text-xs font-semibold tabular-nums">{imdbScore}</span>
 				{/if}
-				{#if compactImdbVotes}
+				{#if showCounts && compactImdbVotes}
 					<span class="text-[0.625rem] text-base-400 tabular-nums">
 						({compactImdbVotes})
 					</span>

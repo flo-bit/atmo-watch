@@ -251,6 +251,41 @@ export async function getRecentReviewsPage({
 	return { reviews, cursor: response.data.cursor ?? null };
 }
 
+export async function getMediaRatingSummary(
+	tmdbId: number,
+	creativeWorkType: SupportedCreativeWorkType
+): Promise<{ score: number | null; count: number }> {
+	let cursor: string | undefined;
+	let total = 0;
+	let count = 0;
+
+	do {
+		const response = await contrail.get('watch.atmo.review.listRecords', {
+			params: {
+				creativeWorkType,
+				identifiersTmdbId: String(tmdbId),
+				cursor,
+				limit: 200
+			}
+		});
+		if (!response.ok) {
+			throw new Error(`Could not load media rating summary from Contrail (${response.status})`);
+		}
+
+		for (const record of response.data.records) {
+			const review = toReview(record);
+			if (review?.media.tmdbId !== tmdbId || review.media.creativeWorkType !== creativeWorkType) {
+				continue;
+			}
+			total += review.rating;
+			count += 1;
+		}
+		cursor = response.data.cursor;
+	} while (cursor);
+
+	return { score: count > 0 ? total / count : null, count };
+}
+
 export async function getMediaReviews(
 	tmdbId: number,
 	creativeWorkType: SupportedCreativeWorkType,

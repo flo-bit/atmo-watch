@@ -5,6 +5,7 @@ import {
 	readPublicDataCache,
 	writePublicDataCache
 } from '$lib/cache.server';
+import { getMediaRatingSummary } from '$lib/reviews.server';
 import {
 	TMDB,
 	TMDBError,
@@ -576,12 +577,23 @@ async function loadHomePage() {
 					if (!item.backdrop) return null;
 
 					const imdbId = details.external_ids.imdb_id ?? null;
-					const omdb = imdbId
-						? await getRatings(imdbId, omdbCache, omdbFailureCache, omdbQuotaCache)
-						: EMPTY_OMDB_DATA;
+					const [omdb, popfeed] = await Promise.all([
+						imdbId
+							? getRatings(imdbId, omdbCache, omdbFailureCache, omdbQuotaCache)
+							: Promise.resolve(EMPTY_OMDB_DATA),
+						getMediaRatingSummary(tmdbId, creativeWorkType).catch((cause) => {
+							console.error(
+								`Could not load Popfeed rating for ${creativeWorkType} ${tmdbId}`,
+								cause
+							);
+							return { score: null, count: 0 };
+						})
+					]);
 					return {
 						item,
 						logo: getTitleLogo(details),
+						popfeedScore: popfeed.score,
+						popfeedRatingCount: popfeed.count,
 						imdbId,
 						imdbVotes: omdb.imdbVotes,
 						ratings: omdb.ratings
@@ -599,7 +611,7 @@ async function loadHomePage() {
 
 export function getHomePage() {
 	const cache = getPublicDataCache(DISCOVERY_TTL);
-	return cachePublicData(cache, 'tmdb:home:v5', loadHomePage, (data) =>
+	return cachePublicData(cache, 'tmdb:home:v6', loadHomePage, (data) =>
 		Boolean(
 			data.trending.length ||
 			data.currentlyInTheaters.length ||
