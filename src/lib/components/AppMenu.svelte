@@ -39,7 +39,7 @@
 </aside>
 
 <nav
-	class="fixed inset-x-0 bottom-0 z-50 grid w-full grid-cols-3 gap-1 border-t border-white/10 bg-base-950/90 px-1 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] shadow-2xl shadow-black/40 backdrop-blur-xl md:hidden"
+	class="fixed inset-x-0 bottom-0 z-50 grid w-full grid-cols-3 gap-1 border-t border-white/10 bg-base-950/90 px-1 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] shadow-2xl shadow-black/40 backdrop-blur-xl md:hidden"
 	aria-label="Main navigation"
 >
 	<MenuItem href="/" label="Home" active={page.url.pathname === '/'} variant="bottom">
