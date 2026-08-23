@@ -3,6 +3,7 @@ import type { ResourceUri } from '@atcute/lexicons';
 import { isRecordKey } from '@atcute/lexicons/syntax';
 import { contrail } from '$lib/contrail-client.server';
 import { getReviewInteractions, toReview } from '$lib/reviews.server';
+import { getMediaHeader } from '$lib/tmdb.server';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async ({ locals, params, parent }) => {
@@ -24,15 +25,21 @@ export const load: PageServerLoad = async ({ locals, params, parent }) => {
 	const review = toReview(reviewResponse.data, profile.handle);
 	if (!review) error(404, 'Review not found');
 
-	const interactions = await getReviewInteractions(reviewUri, locals.did).catch((cause) => {
-		console.error('Could not load review interactions from Contrail', cause);
-		return {
-			likeCount: 0,
-			commentCount: 0,
-			viewerLikeUri: null,
-			comments: []
-		};
-	});
+	const [interactions, mediaHeader] = await Promise.all([
+		getReviewInteractions(reviewUri, locals.did).catch((cause) => {
+			console.error('Could not load review interactions from Contrail', cause);
+			return {
+				likeCount: 0,
+				commentCount: 0,
+				viewerLikeUri: null,
+				comments: []
+			};
+		}),
+		getMediaHeader(review.media.tmdbId, review.media.creativeWorkType).catch((cause) => {
+			console.error('Could not load media header from TMDB', cause);
+			return null;
+		})
+	]);
 
 	return {
 		review: {
@@ -44,6 +51,7 @@ export const load: PageServerLoad = async ({ locals, params, parent }) => {
 			},
 			createdAt: reviewResponse.data.value.createdAt
 		},
+		mediaHeader,
 		...interactions
 	};
 };

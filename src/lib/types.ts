@@ -55,6 +55,7 @@ export type TvSeasonSummary = {
 
 export type MediaCredit = MediaSummary & {
 	order: number;
+	popularity: number;
 };
 
 export type ActorSummary = {

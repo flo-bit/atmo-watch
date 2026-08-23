@@ -29,8 +29,12 @@
 			'group relative flex transition-colors',
 			variant === 'bottom'
 				? 'h-10 w-full items-center justify-center rounded-xl'
-				: 'h-10 w-full items-center gap-3 rounded-lg p-2.5 text-sm font-semibold md:size-10',
-			active ? 'text-accent-300' : 'text-base-300 hover:bg-white/10 hover:text-white',
+				: 'h-10 w-full items-center gap-3 rounded-lg bg-base-950/60 p-2.5 text-sm font-semibold shadow-lg shadow-black/20 backdrop-blur-md md:size-10',
+			active
+				? 'text-accent-300'
+				: variant === 'sidebar'
+					? 'text-base-200 hover:bg-base-950/80 hover:text-white'
+					: 'text-base-300 hover:bg-white/10 hover:text-white',
 			className
 		)
 	);

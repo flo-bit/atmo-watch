@@ -43,7 +43,8 @@
 		<Avatar
 			src={profileUrl(data.personDetails.profile_path, 'h632')}
 			alt={data.personDetails.name}
-			class="size-44 shrink-0"
+			shape="rounded"
+			class="aspect-4/5 w-36 shrink-0 sm:w-44"
 		/>
 
 		<div class="flex flex-col gap-2">

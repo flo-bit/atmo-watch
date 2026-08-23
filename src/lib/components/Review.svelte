@@ -15,6 +15,7 @@
 		viewerDid = null,
 		showItem = true,
 		compact = false,
+		revealSpoilers = false,
 		onOpen,
 		class: className
 	}: {
@@ -22,6 +23,7 @@
 		viewerDid?: string | null;
 		showItem?: boolean;
 		compact?: boolean;
+		revealSpoilers?: boolean;
 		onOpen?: () => void;
 		class?: string;
 	} = $props();
@@ -46,7 +48,7 @@
 	let text = $derived(review.text.trim());
 	let hasSpoilerText = $derived(review.containsSpoilers && Boolean(text));
 	let spoilerRevealed = $state(false);
-	let spoilerHidden = $derived(hasSpoilerText && !spoilerRevealed);
+	let spoilerHidden = $derived(hasSpoilerText && !revealSpoilers && !spoilerRevealed);
 	let liking = $state(false);
 	let interactionError = $state('');
 	// These are local snapshots so likes can update optimistically.
@@ -70,6 +72,14 @@
 		}
 		event.preventDefault();
 		onOpen();
+	}
+
+	function handleSpoilerClick() {
+		if (onOpen) {
+			onOpen();
+			return;
+		}
+		spoilerRevealed = true;
 	}
 
 	async function toggleLike() {
@@ -211,12 +221,14 @@
 				{#if spoilerHidden}
 					<button
 						type="button"
-						onclick={() => (spoilerRevealed = true)}
+						onclick={handleSpoilerClick}
 						class="absolute inset-0 flex size-full flex-col items-center justify-center gap-1 rounded-lg bg-base-950/65 px-4 text-center backdrop-blur-[2px] transition-colors hover:bg-base-950/55 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-400"
 					>
 						<EyeOff class="size-4 text-base-300" strokeWidth={1.5} aria-hidden="true" />
 						<span class="text-xs font-semibold text-white">This review may contain spoilers</span>
-						<span class="text-xs text-base-400">Click to show review</span>
+						<span class="text-xs text-base-400">
+							{onOpen ? 'Click to open review' : 'Click to show review'}
+						</span>
 					</button>
 				{/if}
 			</div>

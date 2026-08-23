@@ -4,15 +4,17 @@
 	type Props = {
 		src?: string;
 		alt?: string;
+		shape?: 'circle' | 'rounded';
 		class?: string;
 	};
 
-	let { src, alt = '', class: className = 'size-11' }: Props = $props();
+	let { src, alt = '', shape = 'circle', class: className = 'size-11' }: Props = $props();
 </script>
 
 <div
 	class={cn(
-		'overflow-hidden rounded-full border border-base-400/50 bg-base-100 dark:border-base-700 dark:bg-base-800',
+		'overflow-hidden border border-base-400/50 bg-base-100 dark:border-base-700 dark:bg-base-800',
+		shape === 'rounded' ? 'rounded-xl' : 'rounded-full',
 		className
 	)}
 >
@@ -23,6 +25,7 @@
 			class="size-full text-base-300 dark:text-base-600"
 			fill="currentColor"
 			viewBox="0 0 24 24"
+			preserveAspectRatio={shape === 'rounded' ? 'xMidYMax meet' : 'xMidYMid meet'}
 			aria-hidden="true"
 		>
 			<path

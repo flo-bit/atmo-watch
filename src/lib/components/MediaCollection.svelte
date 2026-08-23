@@ -16,7 +16,7 @@
 	} = $props();
 
 	let expanded = $state(false);
-	let desktopItems = $derived(expanded ? items : items.slice(0, 10));
+	let desktopItems = $derived(expanded ? items : items.slice(0, 5));
 </script>
 
 <section class={cn('w-full', className)}>
@@ -33,7 +33,7 @@
 		<ItemsGrid items={desktopItems} class="mt-4" />
 	</div>
 
-	{#if !expanded && items.length > 10}
+	{#if !expanded && items.length > 5}
 		<button
 			type="button"
 			onclick={() => (expanded = true)}

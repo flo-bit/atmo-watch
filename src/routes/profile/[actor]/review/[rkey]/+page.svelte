@@ -4,12 +4,12 @@
 	import { oauthLogin } from '$lib/atproto/oauth.remote';
 	import Avatar from '$lib/components/Avatar.svelte';
 	import Container from '$lib/components/Container.svelte';
+	import MediaHero from '$lib/components/MediaHero.svelte';
 	import Rating from '$lib/components/Rating.svelte';
-	import { posterUrl } from '$lib/images';
 	import { likeReview, unlikeReview } from '$lib/review-interactions.remote';
 	import { slugify, toMediaRouteKind } from '$lib/utils';
 	import { AtprotoLoginModal } from '@foxui/social';
-	import { Heart, Image as ImageIcon, MessageCircle } from '@lucide/svelte';
+	import { Heart, MessageCircle } from '@lucide/svelte';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -26,7 +26,19 @@
 	let likeCount = $state(data.likeCount);
 	let spoilerRevealed = $state(false);
 
-	let imageUrl = $derived(posterUrl(data.review.media.poster, 'w342'));
+	let releaseYear = $derived(data.mediaHeader?.item.releaseDate?.slice(0, 4) || null);
+	let seasonLabel = $derived(
+		data.mediaHeader?.item.numberOfSeasons
+			? `${data.mediaHeader.item.numberOfSeasons} ${data.mediaHeader.item.numberOfSeasons === 1 ? 'season' : 'seasons'}`
+			: null
+	);
+	let mediaFacts = $derived(
+		[
+			releaseYear,
+			formatRuntime(data.mediaHeader?.item.runtime ?? null),
+			data.review.media.creativeWorkType === 'tv_show' ? seasonLabel : null
+		].filter((fact): fact is string => fact !== null)
+	);
 	let reviewText = $derived(data.review.text.trim());
 	let spoilerHidden = $derived(
 		data.review.containsSpoilers && Boolean(reviewText) && !spoilerRevealed
@@ -48,6 +60,15 @@
 	function formatDate(value: string) {
 		const date = new Date(value);
 		return Number.isNaN(date.getTime()) ? '' : dateFormatter.format(date);
+	}
+
+	function formatRuntime(runtime: number | null) {
+		if (!runtime) return null;
+
+		const hours = Math.floor(runtime / 60);
+		const minutes = runtime % 60;
+		if (!hours) return `${minutes}m`;
+		return minutes ? `${hours}h ${minutes}m` : `${hours}h`;
 	}
 
 	async function login(handle: string) {
@@ -102,41 +123,35 @@
 </svelte:head>
 
 <main class="min-h-dvh bg-base-950 pb-16 text-base-50">
-	<Container class="px-4 pt-8 sm:pt-12">
-		<article
-			class="grid grid-cols-[5.5rem_minmax(0,1fr)] items-start gap-x-5 gap-y-6 sm:grid-cols-[7rem_minmax(0,1fr)] sm:gap-x-6"
-		>
-			<a
-				href={itemUrl}
-				class="aspect-2/3 overflow-hidden rounded-lg bg-base-900 shadow-2xl shadow-black/40 transition-opacity hover:opacity-80 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent-400"
+	<section class="relative isolate overflow-hidden">
+		<MediaHero
+			title={data.review.media.title}
+			backdrop={data.mediaHeader?.item.backdrop}
+			fallbackPoster={data.review.media.poster}
+			logo={data.mediaHeader?.logo}
+			href={itemUrl}
+		/>
+
+		{#if mediaFacts.length > 0}
+			<div
+				class="mt-4 flex flex-wrap items-center justify-center gap-x-2 gap-y-1.5 px-4 text-xs font-medium text-base-200 lg:text-sm"
 			>
-				{#if imageUrl}
-					<img
-						src={imageUrl}
-						alt={`Poster for ${data.review.media.title}`}
-						class="size-full object-cover"
-					/>
-				{:else}
-					<span class="flex size-full items-center justify-center text-base-600">
-						<ImageIcon class="size-10" strokeWidth={1.5} aria-hidden="true" />
-					</span>
-				{/if}
-			</a>
+				{#each mediaFacts as fact, index (fact)}
+					{#if index > 0}
+						<span class="text-base-500" aria-hidden="true">•</span>
+					{/if}
+					<span>{fact}</span>
+				{/each}
+			</div>
+		{/if}
+	</section>
 
+	<Container class="px-4 pt-5 sm:pt-6">
+		<article class="mx-auto max-w-2xl">
 			<div class="min-w-0">
-				<h1 class="text-xl leading-tight font-semibold text-white sm:text-2xl">
-					<a href={itemUrl} class="transition-colors hover:text-accent-300">
-						{data.review.media.title}
-					</a>
-				</h1>
-
-				<div class="mt-3">
-					<Rating rating={data.review.rating} size="size-4.5" />
-				</div>
-
 				<a
 					href={profileUrl}
-					class="mt-6 flex w-fit items-center gap-3 rounded-md focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent-400"
+					class="flex w-fit items-center gap-3 rounded-md focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent-400"
 				>
 					<Avatar
 						src={data.review.author.avatarUrl}
@@ -156,9 +171,13 @@
 				<time datetime={data.review.createdAt} class="mt-3 block text-xs text-base-500">
 					{formatDate(data.review.createdAt)}
 				</time>
+
+				<div class="mt-3">
+					<Rating rating={data.review.rating} size="size-6" />
+				</div>
 			</div>
 
-			<div class="col-span-2 sm:col-start-2 sm:col-end-3">
+			<div class="mt-6">
 				{#if reviewText}
 					<div
 						class={`relative ${spoilerHidden ? 'min-h-40 overflow-hidden rounded-xl bg-base-900/60' : ''}`}
@@ -223,7 +242,7 @@
 			</div>
 		</article>
 
-		<section class="mt-10 sm:ml-[8.5rem]" aria-labelledby="comments-heading">
+		<section class="mx-auto mt-10 max-w-2xl" aria-labelledby="comments-heading">
 			<h2 id="comments-heading" class="text-lg font-semibold text-white">comments</h2>
 
 			{#if data.comments.length > 0}

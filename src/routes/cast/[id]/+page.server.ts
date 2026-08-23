@@ -21,7 +21,7 @@ export const load: PageServerLoad = async ({ params }) => {
 				seen.add(key);
 				return true;
 			})
-			.sort((a, b) => b.order - a.order);
+			.sort((a, b) => b.popularity - a.popularity);
 
 		return { combinedCredits, personDetails };
 	} catch (cause) {

@@ -2,6 +2,7 @@
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import Container from '$lib/components/Container.svelte';
+	import MediaHero from '$lib/components/MediaHero.svelte';
 	import TrailerDialog from '$lib/components/TrailerDialog.svelte';
 	import { calendarDayDifference, formatCalendarDate, relativeCalendarDate } from '$lib/dates';
 	import { backdropUrl, posterUrl, stillUrl } from '$lib/images';
@@ -13,6 +14,8 @@
 	let showId = $derived(`${data.show.tmdbId}-${slugify(data.show.title)}`);
 	let showUrl = $derived(resolve('/[kind]/[id]', { kind: 'tv', id: showId }));
 	let seasonPoster = $derived(data.season.poster ?? data.show.poster);
+	let episodeBackdrop = $derived(data.episodes.find((episode) => episode.still)?.still ?? null);
+	let seasonBackdrop = $derived(episodeBackdrop ?? data.show.backdrop);
 	let canonicalUrl = $derived(`${page.url.origin}${page.url.pathname}`);
 	let seasonStatus = $derived(getSeasonStatus());
 	let seasonDateRange = $derived(getSeasonDateRange());
@@ -81,55 +84,46 @@
 <main class="relative isolate min-h-dvh overflow-hidden bg-base-950 pb-16 text-white">
 	{#if data.show.backdrop}
 		<img
-			src={backdropUrl(data.show.backdrop, 'w780')}
+			src={backdropUrl(data.show.backdrop, 'w300')}
 			alt=""
-			class="pointer-events-none fixed inset-0 size-full object-cover object-center opacity-15"
+			class="pointer-events-none fixed inset-0 z-0 hidden size-full scale-110 object-cover object-center blur-3xl lg:block"
+		/>
+	{:else if seasonPoster}
+		<img
+			src={posterUrl(seasonPoster, 'w342')}
+			alt=""
+			class="pointer-events-none fixed inset-0 z-0 hidden size-full scale-110 object-cover object-center blur-3xl lg:block"
 		/>
 	{/if}
-	<div class="pointer-events-none fixed inset-0 bg-black/60"></div>
+	<div class="pointer-events-none fixed inset-0 z-0 hidden bg-black/60 lg:block"></div>
 
-	<Container class="relative z-10 px-4 pt-8 sm:pt-12">
-		<nav
-			class="flex min-w-0 items-center gap-2 text-xs text-base-400 sm:text-sm"
-			aria-label="Breadcrumb"
-		>
-			<a
-				href={showUrl}
-				class="truncate transition-colors hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70"
-			>
-				{data.show.title}
-			</a>
-			<span class="text-base-600" aria-hidden="true">/</span>
-			<span class="truncate text-base-200">{data.season.name}</span>
-		</nav>
+	{#if seasonPoster}
+		<img
+			src={posterUrl(seasonPoster, 'w342')}
+			alt=""
+			class="pointer-events-none fixed inset-0 z-0 size-full scale-110 object-cover object-center blur-3xl lg:hidden"
+		/>
+		<div class="pointer-events-none fixed inset-0 z-0 bg-black/60 lg:hidden"></div>
+	{/if}
 
-		{#if seasonPoster || data.trailer_url}
+	<section class="relative isolate z-10 overflow-hidden">
+		<MediaHero
+			title={data.show.title}
+			backdrop={seasonBackdrop}
+			backdropVariant={episodeBackdrop ? 'still' : 'backdrop'}
+			fallbackPoster={seasonPoster}
+			logo={data.logo}
+			href={showUrl}
+			titleIsHeading={false}
+		/>
+
+		<header class="mx-auto max-w-3xl px-4 text-center sm:px-8">
+			<h1 class="mt-4 text-2xl leading-tight font-semibold tracking-tight sm:text-3xl">
+				{data.season.name}
+			</h1>
 			<div
-				class={`mt-6 gap-2 sm:gap-4 ${seasonPoster && data.trailer_url ? 'grid grid-cols-[minmax(0,1fr)_minmax(0,3fr)]' : ''}`}
+				class="mt-2 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-xs text-base-300 sm:text-sm"
 			>
-				{#if seasonPoster}
-					<img
-						src={posterUrl(seasonPoster, 'w500')}
-						alt="Poster for {data.season.name} of {data.show.title}"
-						class={`aspect-2/3 rounded-xl border border-white/10 object-cover shadow-2xl shadow-black/30 ${data.trailer_url ? 'w-full' : 'w-36 sm:w-56'}`}
-					/>
-				{/if}
-
-				{#if data.trailer_url}
-					<div class={seasonPoster ? 'relative min-h-0 overflow-hidden' : 'aspect-video'}>
-						<TrailerDialog
-							url={data.trailer_url}
-							title={`${data.show.title} ${data.season.name}`}
-							variant="feature"
-							fill={Boolean(seasonPoster)}
-						/>
-					</div>
-				{/if}
-			</div>
-		{/if}
-
-		<header class="mt-6 sm:mt-8">
-			<div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-base-300 sm:text-sm">
 				{#if seasonStatus}<span>{seasonStatus}</span>{/if}
 				{#if seasonStatus && seasonDateRange}
 					<span class="text-base-600" aria-hidden="true">•</span>
@@ -145,14 +139,18 @@
 					<span>{data.network}</span>
 				{/if}
 			</div>
-			<h1 class="mt-1 text-3xl leading-tight font-semibold tracking-tight sm:text-5xl">
-				{data.season.name}
-			</h1>
-			<p class="mt-1 text-sm font-medium text-base-300 sm:text-base">{data.show.title}</p>
-		</header>
 
+			{#if data.trailer_url}
+				<div class="mt-5 flex justify-center">
+					<TrailerDialog url={data.trailer_url} title={`${data.show.title} ${data.season.name}`} />
+				</div>
+			{/if}
+		</header>
+	</section>
+
+	<Container class="relative z-10 px-4 pt-8">
 		{#if data.season.overview}
-			<section class="mt-8 border-t border-white/10 pt-6">
+			<section class="border-t border-white/10 pt-6">
 				<h2 class="text-lg font-semibold tracking-tight">Overview</h2>
 				<p class="mt-4 max-w-3xl text-sm leading-6 text-base-200 sm:text-base sm:leading-7">
 					{data.season.overview}
@@ -160,7 +158,7 @@
 			</section>
 		{/if}
 
-		<section class="mt-10 border-t border-white/10 pt-6">
+		<section class={`${data.season.overview ? 'mt-10 ' : ''}border-t border-white/10 pt-6`}>
 			<h2 class="text-lg font-semibold tracking-tight">Episodes</h2>
 
 			{#if data.episodes.length > 0}

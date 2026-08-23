@@ -196,7 +196,8 @@ function toMediaDetails(
 function toMediaCredit(source: PersonCombinedCastCredit): MediaCredit {
 	return {
 		...toMediaSummary(source, fromTmdbMediaType(source.media_type)),
-		order: 'order' in source ? source.order : 0
+		order: 'order' in source ? source.order : 0,
+		popularity: source.popularity
 	};
 }
 
@@ -577,9 +578,19 @@ export async function getDetails(
 	return toMediaDetails(details, creativeWorkType);
 }
 
+export async function getMediaHeader(tmdbId: number, creativeWorkType: SupportedCreativeWorkType) {
+	const cache = getPublicDataCache(MEDIA_DATA_TTL);
+	const details = await getMediaSource(tmdbId, creativeWorkType, cache);
+	return {
+		item: toMediaDetails(details, creativeWorkType),
+		logo: getTitleLogo(details)
+	};
+}
+
 export async function getTvSeasonPage(tmdbId: number, seasonNumber: number) {
 	const cache = getPublicDataCache(TV_SCHEDULE_TTL);
-	const [show, seasonSource] = await Promise.all([
+	const mediaCache = getPublicDataCache(MEDIA_DATA_TTL);
+	const [show, seasonSource, mediaDetails] = await Promise.all([
 		getTvScheduleSource(tmdbId, cache),
 		cachePublicData(cache, `tmdb:tv-season:v2:${tmdbId}:${seasonNumber}`, () =>
 			getClient().tv_seasons.details({
@@ -587,7 +598,8 @@ export async function getTvSeasonPage(tmdbId: number, seasonNumber: number) {
 				season_number: seasonNumber,
 				append_to_response: TV_SEASON_APPENDS
 			})
-		)
+		),
+		getMediaSource(tmdbId, 'tv_show', mediaCache)
 	]);
 	const seasons = (show.seasons ?? []).map(toTvSeason);
 	const navigableSeasons = seasons
@@ -608,6 +620,7 @@ export async function getTvSeasonPage(tmdbId: number, seasonNumber: number) {
 
 	return {
 		show: toMediaDetails(show, 'tv_show'),
+		logo: getTitleLogo(mediaDetails),
 		season,
 		episodes: seasonSource.episodes.flatMap((source) => {
 			const episode = toTvEpisode(source);

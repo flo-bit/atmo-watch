@@ -11,13 +11,14 @@
 	import HorizontalScroller from './HorizontalScroller.svelte';
 	import ItemCard from './ItemCard.svelte';
 	import ItemsGrid from './ItemsGrid.svelte';
+	import MediaHero from './MediaHero.svelte';
 	import Review from './Review.svelte';
 	import TrailerDialog from './TrailerDialog.svelte';
 	import TvScheduleCard from './TvScheduleCard.svelte';
 	import TvSeasons from './TvSeasons.svelte';
 	import VideoGallery from './VideoGallery.svelte';
 	import WatchedButton from './WatchedButton.svelte';
-	import { backdropUrl, logoUrl, posterUrl, profileUrl } from '$lib/images';
+	import { backdropUrl, posterUrl, profileUrl } from '$lib/images';
 	import { loginDialog } from '$lib/login.svelte';
 	import { reviewDialog } from '$lib/review.svelte';
 	import { slugify } from '$lib/utils';
@@ -64,9 +65,6 @@
 			data.item.creativeWorkType === 'tv_show' ? seasonLabel : null
 		].filter((fact): fact is string => fact !== null)
 	);
-	let titleLogoUrl = $derived(logoUrl(data.logo?.path, 'w500'));
-	let titleLogoOriginalUrl = $derived(logoUrl(data.logo?.path, 'original'));
-	let hasHeroImage = $derived(Boolean(data.item.backdrop || data.item.poster));
 	let averageReviewRating = $derived(
 		data.reviews.length > 0
 			? data.reviews.reduce((total, review) => total + review.rating, 0) / data.reviews.length
@@ -80,7 +78,7 @@
 	let writtenReviews = $derived(data.reviews.filter((review) => review.text.trim()));
 	let displayedReviews = $derived(showAllReviews ? writtenReviews : writtenReviews.slice(0, 3));
 	let desktopRecommendations = $derived(
-		showAllRecommendations ? data.recommendations : data.recommendations.slice(0, 10)
+		showAllRecommendations ? data.recommendations : data.recommendations.slice(0, 5)
 	);
 	function showFullReview(review: ReviewCardModel) {
 		selectedReview = review;
@@ -116,32 +114,6 @@
 		</svg>
 		Rate &amp; review
 	</button>
-{/snippet}
-
-{#snippet mediaTitle()}
-	<h1
-		class={titleLogoUrl
-			? 'sr-only'
-			: 'text-[2.5rem] leading-[1.05] font-bold tracking-tight text-white drop-shadow-xl sm:text-5xl'}
-	>
-		{data.item.title}
-	</h1>
-	{#if titleLogoUrl && titleLogoOriginalUrl}
-		<picture class="contents">
-			<source
-				media="(max-width: 1023px)"
-				srcset={`${titleLogoUrl} 1x, ${titleLogoOriginalUrl} 2x`}
-			/>
-			<img
-				src={titleLogoUrl}
-				alt=""
-				width={data.logo?.width}
-				height={data.logo?.height}
-				fetchpriority="high"
-				class="mx-auto max-h-36 w-full max-w-[20rem] object-contain drop-shadow-[0_4px_16px_rgba(0,0,0,0.8)] sm:max-w-sm"
-			/>
-		</picture>
-	{/if}
 {/snippet}
 
 <svelte:head>
@@ -187,90 +159,58 @@
 		<div class="pointer-events-none fixed inset-0 z-0 bg-black/60 lg:hidden"></div>
 	{/if}
 
-	<section class="relative isolate z-10 overflow-hidden lg:pt-12">
-		<div class={`relative isolate lg:hidden ${hasHeroImage ? 'pt-[35svh]' : 'pt-14'}`}>
-			{#if data.item.backdrop}
-				<img
-					src={backdropUrl(data.item.backdrop, 'w1280')}
-					alt=""
-					class="absolute inset-0 -z-30 size-full object-cover object-center"
-					style="-webkit-mask-image: linear-gradient(to bottom, black 0%, black 40%, transparent 100%); mask-image: linear-gradient(to bottom, black 0%, black 40%, transparent 100%);"
-				/>
-			{:else if data.item.poster}
-				<img
-					src={posterUrl(data.item.poster, 'w780')}
-					alt=""
-					class="absolute inset-0 -z-30 size-full object-cover object-center"
-					style="-webkit-mask-image: linear-gradient(to bottom, black 0%, black 40%, transparent 100%); mask-image: linear-gradient(to bottom, black 0%, black 40%, transparent 100%);"
-				/>
-			{/if}
-			<div class="mx-auto max-w-3xl px-4 text-center sm:px-8">
-				{@render mediaTitle()}
-			</div>
-		</div>
+	<section class="relative isolate z-10 overflow-hidden">
+		<MediaHero
+			title={data.item.title}
+			backdrop={data.item.backdrop}
+			fallbackPoster={data.item.poster}
+			logo={data.logo}
+		/>
 
 		<div class="mx-auto w-full max-w-4xl px-4 sm:px-8 md:pl-24 lg:px-8">
-			<div
-				class={`lg:grid lg:items-start lg:gap-10 ${data.item.poster ? 'lg:grid-cols-[14rem_minmax(0,1fr)] xl:grid-cols-[15rem_minmax(0,1fr)]' : 'lg:grid-cols-1'}`}
-			>
-				{#if data.item.poster}
-					<img
-						src={posterUrl(data.item.poster, 'w780')}
-						alt="Poster for {data.item.title}"
-						class="hidden aspect-2/3 w-full rounded-2xl border border-white/10 object-cover shadow-2xl shadow-black/50 lg:block"
-					/>
-				{/if}
-
-				<div class="mx-auto max-w-3xl min-w-0 text-center lg:mx-0 lg:text-left">
-					<h1 class="hidden text-4xl leading-tight font-bold tracking-tight text-white lg:block">
-						{data.item.title}
-					</h1>
-
-					<div
-						class="mt-4 flex flex-wrap items-center justify-center gap-x-2 gap-y-1.5 text-xs font-medium text-base-200 lg:mt-3 lg:justify-start lg:text-sm"
-					>
-						{#each mediaFacts as fact, index (fact)}
-							{#if index > 0}
-								<span class="text-base-500" aria-hidden="true">•</span>
-							{/if}
-							<span>{fact}</span>
-						{/each}
-					</div>
-
-					<div class="mt-4 flex justify-center lg:mt-3 lg:justify-start">
-						<ExternalRatings
-							popfeedScore={data.reviews.length > 0 ? averageReviewRating : null}
-							popfeedRatingCount={data.reviews.length}
-							imdbId={data.imdb_id}
-							imdbVotes={data.imdb_votes}
-							ratings={data.ratings}
-						/>
-					</div>
-
-					<div
-						class="mt-8 flex flex-col items-center lg:mt-5 lg:flex-row lg:items-center lg:justify-start lg:gap-3"
-					>
-						<div class="flex w-full justify-center lg:w-auto lg:justify-start">
-							{@render reviewButton()}
-						</div>
-
-						<div
-							class={`mt-2 grid w-full max-w-md ${data.trailer_url ? 'grid-cols-3' : 'grid-cols-2'} gap-1 lg:mt-0 lg:flex lg:w-auto lg:gap-2`}
-						>
-							<AddToListMenu item={data.item} did={data.did} variant="action" />
-							{#if data.trailer_url}
-								<TrailerDialog url={data.trailer_url} title={data.item.title} variant="action" />
-							{/if}
-							<WatchedButton item={data.item} did={data.did} />
-						</div>
-					</div>
-
-					{#if data.item.overview}
-						<div class="mt-7 hidden max-w-3xl lg:mt-5 lg:block">
-							<p class="text-sm leading-6 text-base-100">{data.item.overview}</p>
-						</div>
-					{/if}
+			<div class="mx-auto max-w-3xl min-w-0 text-center">
+				<div
+					class="mt-4 flex flex-wrap items-center justify-center gap-x-2 gap-y-1.5 text-xs font-medium text-base-200 lg:text-sm"
+				>
+					{#each mediaFacts as fact, index (fact)}
+						{#if index > 0}
+							<span class="text-base-500" aria-hidden="true">•</span>
+						{/if}
+						<span>{fact}</span>
+					{/each}
 				</div>
+
+				<div class="mt-4 flex justify-center lg:mt-3">
+					<ExternalRatings
+						popfeedScore={data.reviews.length > 0 ? averageReviewRating : null}
+						popfeedRatingCount={data.reviews.length}
+						imdbId={data.imdb_id}
+						imdbVotes={data.imdb_votes}
+						ratings={data.ratings}
+					/>
+				</div>
+
+				<div class="mt-8 flex flex-col items-center lg:mt-5 lg:flex-row lg:justify-center lg:gap-3">
+					<div class="flex w-full justify-center lg:w-auto">
+						{@render reviewButton()}
+					</div>
+
+					<div
+						class={`mt-2 grid w-full max-w-md ${data.trailer_url ? 'grid-cols-3' : 'grid-cols-2'} gap-1 lg:mt-0 lg:flex lg:w-auto lg:gap-2`}
+					>
+						<AddToListMenu item={data.item} did={data.did} variant="action" />
+						{#if data.trailer_url}
+							<TrailerDialog url={data.trailer_url} title={data.item.title} variant="action" />
+						{/if}
+						<WatchedButton item={data.item} did={data.did} />
+					</div>
+				</div>
+
+				{#if data.item.overview}
+					<div class="mt-7 hidden max-w-3xl text-left lg:mt-5 lg:block">
+						<p class="text-sm leading-6 text-base-100">{data.item.overview}</p>
+					</div>
+				{/if}
 			</div>
 		</div>
 	</section>
@@ -314,9 +254,16 @@
 							/>
 						{/each}
 					</HorizontalScroller>
-					<div class="mt-4 hidden max-w-2xl flex-col gap-4 lg:flex">
+					<div class="mt-4 hidden grid-cols-3 items-stretch gap-3 lg:grid">
 						{#each displayedReviews as review (review.uri)}
-							<Review {review} viewerDid={data.did} showItem={false} />
+							<Review
+								{review}
+								viewerDid={data.did}
+								showItem={false}
+								compact={true}
+								onOpen={() => showFullReview(review)}
+								class="rounded-xl border border-white/10 bg-black/25 backdrop-blur-xl"
+							/>
 						{/each}
 					</div>
 
@@ -367,7 +314,7 @@
 						<ItemsGrid items={desktopRecommendations} class="mt-4" />
 					</div>
 
-					{#if !showAllRecommendations && data.recommendations.length > 10}
+					{#if !showAllRecommendations && data.recommendations.length > 5}
 						<button
 							type="button"
 							onclick={() => (showAllRecommendations = true)}
@@ -405,12 +352,13 @@
 								href={resolve('/cast/[id]', {
 									id: `${castMember.id}-${slugify(castMember.name)}`
 								})}
-								class={`flex w-24 min-w-0 shrink-0 snap-start flex-col items-center gap-1.5 transition-opacity hover:opacity-75 sm:w-28 lg:w-auto ${showAllCast || index < 10 ? 'lg:flex' : 'lg:hidden'}`}
+								class={`flex w-24 min-w-0 shrink-0 snap-start flex-col items-center gap-1.5 transition-opacity hover:opacity-75 sm:w-28 lg:w-auto ${showAllCast || index < 5 ? 'lg:flex' : 'lg:hidden'}`}
 							>
 								<Avatar
 									src={profileUrl(castMember.profile_path, 'h632')}
 									alt={castMember.name}
-									class="aspect-square w-full"
+									shape="rounded"
+									class="aspect-4/5 w-full"
 								/>
 								<span class="line-clamp-2 text-center text-xs font-medium">{castMember.name}</span>
 								<span class="line-clamp-2 text-center text-xs text-base-400"
@@ -420,7 +368,7 @@
 						{/each}
 					</HorizontalScroller>
 
-					{#if !showAllCast && data.cast.length > 10}
+					{#if !showAllCast && data.cast.length > 5}
 						<button
 							type="button"
 							onclick={() => (showAllCast = true)}
@@ -478,7 +426,13 @@
 				</Dialog.Close>
 
 				<div class="pr-7">
-					<Review review={selectedReview} viewerDid={data.did} showItem={false} class="py-0" />
+					<Review
+						review={selectedReview}
+						viewerDid={data.did}
+						showItem={false}
+						revealSpoilers={true}
+						class="py-0"
+					/>
 				</div>
 			</Dialog.Content>
 		</Dialog.Portal>
