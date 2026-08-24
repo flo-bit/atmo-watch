@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
-	import { ImagePlus } from '@lucide/svelte';
+	import { Clapperboard, ImagePlus } from '@lucide/svelte';
 	import Container from '$lib/components/Container.svelte';
 	import MediaHero from '$lib/components/MediaHero.svelte';
 	import TrailerDialog from '$lib/components/TrailerDialog.svelte';
@@ -17,6 +17,9 @@
 
 	let showId = $derived(`${data.show.tmdbId}-${slugify(data.show.title)}`);
 	let showUrl = $derived(resolve('/[kind]/[id]', { kind: 'tv', id: showId }));
+	let videosUrl = $derived(
+		`${resolve('/[kind]/[id]/videos', { kind: 'tv', id: showId })}?season=${data.season.seasonNumber}`
+	);
 	let seasonPoster = $derived(data.season.poster ?? data.show.poster);
 	let episodeBackdrop = $derived(data.episodes.find((episode) => episode.still)?.still ?? null);
 	let seasonBackdrop = $derived(episodeBackdrop ?? data.show.backdrop);
@@ -179,6 +182,18 @@
 						iconOnly={true}
 					/>
 				{/if}
+				<a
+					href={videosUrl}
+					aria-label={`See videos for ${data.season.name}`}
+					title="See videos"
+					class="group flex min-w-0 flex-col items-center gap-2 rounded-xl px-1 py-2 text-center text-white transition-colors hover:text-accent-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70 lg:gap-0 lg:p-0"
+				>
+					<span
+						class="inline-flex size-10 items-center justify-center rounded-full border border-white/10 bg-white/10 text-white shadow-lg shadow-black/10 backdrop-blur-sm transition-colors group-hover:bg-white/15 lg:size-9"
+					>
+						<Clapperboard class="size-4" strokeWidth={1.8} aria-hidden="true" />
+					</span>
+				</a>
 				<button
 					type="button"
 					onclick={submitSeasonVideo}
@@ -210,9 +225,17 @@
 			<section class={`${data.season.overview ? 'mt-10 ' : ''}border-t border-white/10 pt-6`}>
 				<h2 class="text-lg font-semibold tracking-tight">Submitted videos</h2>
 				<VideoGallery
-					videos={data.submittedVideos}
+					videos={data.submittedVideos.slice(0, 3)}
 					title={`${data.show.title} ${data.season.name}`}
 				/>
+				{#if data.submittedVideos.length > 3}
+					<a
+						href={videosUrl}
+						class="mt-5 inline-flex h-8 items-center rounded-full border border-white/15 bg-white/[0.07] px-3 text-xs font-semibold text-white transition-colors hover:bg-white/[0.12] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70"
+					>
+						see more
+					</a>
+				{/if}
 			</section>
 		{/if}
 

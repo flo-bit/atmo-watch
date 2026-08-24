@@ -21,7 +21,7 @@
 	import { backdropUrl, posterUrl, profileUrl } from '$lib/images';
 	import { loginDialog } from '$lib/login.svelte';
 	import { reviewDialog } from '$lib/review.svelte';
-	import { slugify } from '$lib/utils';
+	import { slugify, toMediaRouteKind } from '$lib/utils';
 	import { videoDialog } from '$lib/video.svelte';
 	import type { getMediaPage } from '$lib/tmdb.server';
 	import type { ReviewCardModel } from '$lib/types';
@@ -62,6 +62,12 @@
 	let { data }: { data: ItemPageData } = $props();
 	let canonicalUrl = $derived(`${page.url.origin}${page.url.pathname}`);
 	let ogImageUrl = $derived(`${canonicalUrl.replace(/\/$/, '')}/og.png`);
+	let videosPageUrl = $derived(
+		resolve('/[kind]/[id]/videos', {
+			kind: toMediaRouteKind(data.item.creativeWorkType),
+			id: `${data.item.tmdbId}-${slugify(data.item.title)}`
+		})
+	);
 	let releaseYear = $derived(data.item.releaseDate?.slice(0, 4) || null);
 	let seasonLabel = $derived(
 		data.item.numberOfSeasons
@@ -316,7 +322,15 @@
 					</button>
 				</div>
 				{#if data.videos.length > 0}
-					<VideoGallery videos={data.videos} title={data.item.title} />
+					<VideoGallery videos={data.videos.slice(0, 3)} title={data.item.title} />
+					{#if data.videos.length > 3}
+						<a
+							href={videosPageUrl}
+							class="mt-5 inline-flex h-8 items-center rounded-full border border-white/15 bg-white/[0.07] px-3 text-xs font-semibold text-white transition-colors hover:bg-white/[0.12] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70"
+						>
+							see more
+						</a>
+					{/if}
 				{:else}
 					<p class="mt-4 text-sm text-base-400">No videos have been added yet.</p>
 				{/if}

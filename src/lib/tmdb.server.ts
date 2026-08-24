@@ -495,6 +495,30 @@ export async function getMediaPage(
 	};
 }
 
+export async function getMediaVideosPage(
+	tmdbId: number,
+	creativeWorkType: SupportedCreativeWorkType
+) {
+	const cache = getPublicDataCache(MEDIA_DATA_TTL);
+	const [details, currentTvDetails] = await Promise.all([
+		getMediaSource(tmdbId, creativeWorkType, cache),
+		creativeWorkType === 'tv_show'
+			? getTvScheduleSource(tmdbId).catch((cause) => {
+					console.error('Could not refresh TV schedule data from TMDB', cause);
+					return null;
+				})
+			: Promise.resolve(null)
+	]);
+	const tvDetails =
+		currentTvDetails ?? ('first_air_date' in details ? (details as TVSeriesDetails) : null);
+
+	return {
+		item: toMediaDetails(tvDetails ?? details, creativeWorkType),
+		seasons: (tvDetails?.seasons ?? []).map(toTvSeason),
+		videos: toMediaVideos(details.videos.results)
+	};
+}
+
 async function loadHomePage() {
 	const empty = {
 		trending: [] as MediaFeature[],

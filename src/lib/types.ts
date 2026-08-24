@@ -59,8 +59,9 @@ export type MediaVideo = {
 	thumbnailUrl?: string;
 	containsSpoilers?: boolean;
 	context?: MediaVideoContext;
+	recordAuthor?: string;
+	recordKey?: string;
 };
-
 
 export type TvEpisodeSummary = {
 	id: number;

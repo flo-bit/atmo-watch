@@ -1,3 +1,4 @@
+import type { ResourceUri } from '@atcute/lexicons';
 import { contrail } from '$lib/contrail-client.server';
 import type * as VideoListRecords from '$lib/contrail/types/types/watch/atmo/video/listRecords';
 import type { MediaVideo } from '$lib/types';
@@ -73,8 +74,10 @@ function videoContext(value: VideoListRecords.Record['value']) {
 	};
 }
 
+type SubmittedVideoRecord = Pick<VideoListRecords.Record, 'uri' | 'did' | 'rkey' | 'value'>;
+
 function toSubmittedVideos(
-	records: VideoListRecords.Record[],
+	records: SubmittedVideoRecord[],
 	profiles: VideoListRecords.ProfileEntry[]
 ): MediaVideo[] {
 	return records.map((record) => {
@@ -102,7 +105,9 @@ function toSubmittedVideos(
 			...(byline ? { byline } : {}),
 			...(value.thumbnailUrl ? { thumbnailUrl: value.thumbnailUrl } : {}),
 			containsSpoilers: value.containsSpoilers ?? false,
-			...(context ? { context } : {})
+			...(context ? { context } : {}),
+			recordAuthor: record.did,
+			recordKey: record.rkey
 		};
 	});
 }
@@ -148,6 +153,15 @@ export async function getMediaSubmittedVideos(
 		seen.add(video.id);
 		return true;
 	});
+}
+
+export async function getSubmittedVideo(uri: ResourceUri): Promise<MediaVideo | null> {
+	const response = await contrail.get('watch.atmo.video.getRecord', { params: { uri } });
+	if (!response.ok) {
+		if (response.status === 400 || response.status === 404) return null;
+		throw new Error(`Could not load video (${response.status})`);
+	}
+	return toSubmittedVideos([response.data], [])[0] ?? null;
 }
 
 export async function getRandomSubmittedVideos(limit = 24): Promise<MediaVideo[]> {
