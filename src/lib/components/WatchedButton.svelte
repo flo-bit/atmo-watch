@@ -2,6 +2,7 @@
 	import { invalidateAll } from '$app/navigation';
 	import { CircleCheck, LoaderCircle } from '@lucide/svelte';
 	import { untrack } from 'svelte';
+	import ActionTooltip from './ActionTooltip.svelte';
 	import { posterUrl } from '$lib/images';
 	import { loadWatchedStatus, setWatchedStatus } from '$lib/list-write.remote';
 	import { loginDialog } from '$lib/login.svelte';
@@ -83,8 +84,7 @@
 	onclick={toggleWatched}
 	disabled={Boolean(did) && (loading || saving)}
 	aria-pressed={watched}
-	title={statusError || (watched ? 'Mark as unwatched' : 'Mark as watched')}
-	class="group flex min-w-0 flex-col items-center gap-2 rounded-xl px-1 py-2 text-center text-white transition-colors hover:text-accent-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70 disabled:cursor-wait disabled:opacity-70 lg:gap-0 lg:p-0"
+	class="group relative flex min-w-0 flex-col items-center gap-2 rounded-xl px-1 py-2 text-center text-white transition-colors hover:text-accent-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70 disabled:cursor-wait disabled:opacity-70 lg:gap-0 lg:p-0"
 >
 	<span
 		class={`inline-flex size-10 items-center justify-center rounded-full border shadow-lg shadow-black/10 backdrop-blur-sm transition-colors group-hover:bg-white/15 lg:size-9 ${watched ? 'border-accent-400/50 bg-accent-500 text-white' : 'border-white/10 bg-white/10 text-white'}`}
@@ -100,4 +100,5 @@
 	>
 		{statusError ? 'try again' : watched ? 'mark unwatched' : 'mark as watched'}
 	</span>
+	<ActionTooltip label={statusError || (watched ? 'mark as unwatched' : 'mark as watched')} />
 </button>

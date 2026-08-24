@@ -1,5 +1,6 @@
 <script lang="ts">
 	import popfeedIcon from '$lib/icons/popfeed.svg';
+	import tmdbIcon from '$lib/icons/tmdb.svg';
 	import type { ExternalRating } from '$lib/types';
 
 	let {
@@ -8,7 +9,10 @@
 		imdbId,
 		imdbVotes,
 		ratings,
-		showCounts = true
+		showCounts = true,
+		tmdbScore = null,
+		tmdbRatingCount = null,
+		tmdbUrl = null
 	}: {
 		popfeedScore: number | null;
 		popfeedRatingCount: number;
@@ -16,6 +20,9 @@
 		imdbVotes: string | null;
 		ratings: ExternalRating[];
 		showCounts?: boolean;
+		tmdbScore?: number | null;
+		tmdbRatingCount?: number | null;
+		tmdbUrl?: string | null;
 	} = $props();
 
 	let imdbRating = $derived(ratings.find((rating) => rating.source === 'Internet Movie Database'));
@@ -23,6 +30,8 @@
 	let compactImdbVotes = $derived(formatCount(imdbVotes));
 	let showImdbRating = $derived(Boolean(imdbId && (imdbScore || (showCounts && compactImdbVotes))));
 	let compactPopfeedRatings = $derived(formatCount(String(popfeedRatingCount)));
+	let compactTmdbRatings = $derived(formatCount(tmdbRatingCount?.toString() ?? null));
+	let showTmdbRating = $derived(tmdbScore !== null && Boolean(tmdbUrl));
 	let rottenTomatoesRating = $derived(
 		ratings.find((rating) => rating.source === 'Rotten Tomatoes')
 	);
@@ -42,7 +51,7 @@
 	}
 </script>
 
-{#if popfeedScore !== null || showImdbRating || rottenTomatoesRating}
+{#if popfeedScore !== null || showImdbRating || rottenTomatoesRating || showTmdbRating}
 	<div class="flex flex-wrap items-center gap-x-3 gap-y-2" aria-label="Ratings">
 		{#if popfeedScore !== null}
 			<div
@@ -113,6 +122,24 @@
 					{rottenTomatoesRating.value}
 				</span>
 			</div>
+		{/if}
+
+		{#if showTmdbRating && tmdbScore !== null && tmdbUrl}
+			<a
+				href={tmdbUrl}
+				target="_blank"
+				rel="noopener noreferrer"
+				class="inline-flex items-center gap-1.5 text-base-200 transition-colors hover:text-white"
+				aria-label={`View on TMDB. Rating: ${tmdbScore.toFixed(1)} out of 10${tmdbRatingCount !== null ? `. ${tmdbRatingCount.toLocaleString('en-US')} votes` : ''}`}
+			>
+				<img src={tmdbIcon} alt="" class="h-3.5 w-auto shrink-0" aria-hidden="true" />
+				<span class="text-xs font-semibold tabular-nums">{tmdbScore.toFixed(1)}</span>
+				{#if showCounts && compactTmdbRatings}
+					<span class="text-[0.625rem] text-base-400 tabular-nums">
+						({compactTmdbRatings})
+					</span>
+				{/if}
+			</a>
 		{/if}
 	</div>
 {/if}

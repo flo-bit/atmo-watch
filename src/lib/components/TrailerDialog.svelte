@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { Dialog } from 'bits-ui';
 	import { Film } from '@lucide/svelte';
+	import ActionTooltip from './ActionTooltip.svelte';
 	import { cn } from '$lib/utils';
 
 	let {
@@ -89,11 +90,10 @@
 		{:else if variant === 'action'}
 			<Dialog.Trigger
 				class={cn(
-					'group flex min-w-0 flex-col items-center gap-2 rounded-xl px-1 py-2 text-center text-white transition-colors hover:text-accent-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70 lg:gap-0 lg:p-0',
+					'group relative flex min-w-0 flex-col items-center gap-2 rounded-xl px-1 py-2 text-center text-white transition-colors hover:text-accent-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70 lg:gap-0 lg:p-0',
 					className
 				)}
 				aria-label={`Play the trailer for ${title}`}
-				title={iconOnly ? 'Play trailer' : undefined}
 			>
 				<span
 					class="inline-flex size-10 items-center justify-center rounded-full border border-white/10 bg-white/10 text-white shadow-lg shadow-black/10 backdrop-blur-sm transition-colors group-hover:bg-white/15 lg:size-9"
@@ -105,6 +105,7 @@
 				>
 					watch trailer
 				</span>
+				<ActionTooltip label="watch trailer" />
 			</Dialog.Trigger>
 		{:else}
 			<Dialog.Trigger

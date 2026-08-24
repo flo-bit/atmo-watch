@@ -21,6 +21,8 @@ export type MediaDetails = MediaSummary & {
 	numberOfSeasons: number | null;
 	numberOfEpisodes: number | null;
 	status: string | null;
+	tmdbScore: number | null;
+	tmdbRatingCount: number;
 };
 
 export type MediaLogo = {

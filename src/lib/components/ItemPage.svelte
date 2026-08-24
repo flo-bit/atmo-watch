@@ -61,7 +61,10 @@
 
 	let { data }: { data: ItemPageData } = $props();
 	let canonicalUrl = $derived(`${page.url.origin}${page.url.pathname}`);
-	let ogImageUrl = $derived(`${canonicalUrl.replace(/\/$/, '')}/og.png`);
+	let ogImageUrl = $derived(`${canonicalUrl.replace(/\/$/, '')}/og.png?v=4`);
+	let tmdbUrl = $derived(
+		`https://www.themoviedb.org/${data.item.creativeWorkType === 'tv_show' ? 'tv' : 'movie'}/${data.item.tmdbId}`
+	);
 	let videosPageUrl = $derived(
 		resolve('/[kind]/[id]/videos', {
 			kind: toMediaRouteKind(data.item.creativeWorkType),
@@ -203,6 +206,9 @@
 						imdbId={data.imdb_id}
 						imdbVotes={data.imdb_votes}
 						ratings={data.ratings}
+						tmdbScore={data.item.tmdbScore}
+						tmdbRatingCount={data.item.tmdbRatingCount}
+						{tmdbUrl}
 					/>
 				</div>
 

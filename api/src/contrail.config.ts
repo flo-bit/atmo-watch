@@ -55,7 +55,9 @@ export const config: ContrailConfig = {
 						.prepare(
 							`SELECT uri, did, rkey, cid, record, time_us
 							 FROM ${recordsTableName('video')}
-							 WHERE cid IS NOT NULL AND record IS NOT NULL
+							 WHERE cid IS NOT NULL
+							   AND record IS NOT NULL
+							   AND json_extract(record, '$.videoType') = 'scene'
 							 ORDER BY RANDOM()
 							 LIMIT ?`
 						)

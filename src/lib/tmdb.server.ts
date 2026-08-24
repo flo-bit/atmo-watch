@@ -192,6 +192,8 @@ function toMediaDetails(
 		backdrop: toTmdbImage(source.backdrop_path),
 		overview: source.overview ?? '',
 		genres: source.genres.map((genre) => genre.name),
+		tmdbScore: source.vote_count > 0 ? source.vote_average : null,
+		tmdbRatingCount: source.vote_count,
 		...metadata
 	};
 }
@@ -695,6 +697,29 @@ export async function getMediaHeader(tmdbId: number, creativeWorkType: Supported
 	return {
 		item: toMediaDetails(details, creativeWorkType),
 		logo: getTitleLogo(details)
+	};
+}
+
+export async function getMediaOpenGraph(
+	tmdbId: number,
+	creativeWorkType: SupportedCreativeWorkType
+) {
+	const cache = getPublicDataCache(MEDIA_DATA_TTL);
+	const details = await getMediaSource(tmdbId, creativeWorkType, cache);
+	const imdbId = details.external_ids.imdb_id ?? null;
+	const [omdb, popfeed] = await Promise.all([
+		imdbId ? getRatings(imdbId) : Promise.resolve(EMPTY_OMDB_DATA),
+		getMediaRatingSummary(tmdbId, creativeWorkType).catch((cause) => {
+			console.error(`Could not load Open Graph rating for ${creativeWorkType} ${tmdbId}`, cause);
+			return { score: null, count: 0 };
+		})
+	]);
+
+	return {
+		item: toMediaDetails(details, creativeWorkType),
+		logo: getTitleLogo(details),
+		popfeedScore: popfeed.score,
+		ratings: omdb.ratings
 	};
 }
 

@@ -3,6 +3,7 @@
 	import { DropdownMenu } from 'bits-ui';
 	import { BookmarkPlus } from '@lucide/svelte';
 	import { untrack } from 'svelte';
+	import ActionTooltip from './ActionTooltip.svelte';
 	import { posterUrl } from '$lib/images';
 	import { createListDialog } from '$lib/list.svelte';
 	import { loadListOptions, toggleListMembership } from '$lib/list-write.remote';
@@ -112,9 +113,9 @@
 
 <DropdownMenu.Root bind:open onOpenChange={handleOpenChange}>
 	<DropdownMenu.Trigger
-		title="Add to list"
+		title={variant === 'action' ? undefined : 'Add to list'}
 		class={variant === 'action'
-			? 'group flex min-w-0 flex-col items-center gap-2 rounded-xl px-1 py-2 text-center text-white transition-colors hover:text-accent-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70 lg:gap-0 lg:p-0'
+			? 'group relative flex min-w-0 flex-col items-center gap-2 rounded-xl px-1 py-2 text-center text-white transition-colors hover:text-accent-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70 lg:gap-0 lg:p-0'
 			: 'inline-flex size-9 items-center justify-center rounded-full border border-white/15 bg-white/[0.07] text-white backdrop-blur-sm transition-colors hover:bg-white/[0.12] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70 data-[state=open]:bg-white/[0.12]'}
 	>
 		<span
@@ -130,6 +131,7 @@
 		</span>
 		{#if variant === 'action'}
 			<span class="text-xs leading-4 font-medium text-base-200 lg:sr-only">add to list</span>
+			<ActionTooltip label="add to list" />
 		{:else}
 			<span class="sr-only">Add to list</span>
 		{/if}

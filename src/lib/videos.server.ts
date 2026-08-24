@@ -164,7 +164,7 @@ export async function getSubmittedVideo(uri: ResourceUri): Promise<MediaVideo | 
 	return toSubmittedVideos([response.data], [])[0] ?? null;
 }
 
-export async function getRandomSubmittedVideos(limit = 24): Promise<MediaVideo[]> {
+export async function getRandomSubmittedScenes(limit = 24): Promise<MediaVideo[]> {
 	const response = await contrail.get('watch.atmo.video.listRandomRecords', {
 		params: { limit }
 	});
