@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
-import { mkdir, rename, writeFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
+import { mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises';
 import { parseArgs } from 'node:util';
 import path from 'node:path';
 import {
@@ -37,6 +38,9 @@ const VIDEO_TYPES = [
 ] as const;
 const THINKING_LEVELS = ['off', 'minimal', 'low', 'medium', 'high', 'xhigh', 'max'] as const;
 const DEFAULT_OUTPUT_DIR = 'data/video-submissions';
+const DEFAULT_AI_MODEL = 'openai-codex/gpt-5.6-luna';
+const DISCOVERY_CHECKPOINT_VERSION = 1;
+const DISCOVERY_PIPELINE_VERSION = 1;
 
 type MediaKind = 'movie' | 'show';
 type VideoType = (typeof VIDEO_TYPES)[number];
@@ -153,6 +157,13 @@ type SearchPlanQuery = {
 	intent: string;
 };
 
+type SearchPlanResult = {
+	queries: SearchPlanQuery[];
+	notes: string;
+	model: string | null;
+	thinking: ThinkingLevel;
+};
+
 type SearchCandidate = {
 	youtubeId: string;
 	searchTitle: string;
@@ -161,6 +172,14 @@ type SearchCandidate = {
 	approximateViews: number;
 	queries: Set<string>;
 	tmdbVideo: TmdbVideo | null;
+};
+
+type SerializedSearchCandidate = Omit<SearchCandidate, 'queries'> & { queries: string[] };
+
+type SearchProgress = {
+	candidates: SerializedSearchCandidate[];
+	orderedByQuery: Record<string, string[]>;
+	completedQueries: string[];
 };
 
 type DetailedCandidate = {
@@ -200,6 +219,7 @@ const AI_REJECTION_REASONS = [
 	'insufficient_target_evidence',
 	'full_length_piracy',
 	'limit_reached',
+	'unclassified',
 	'other'
 ] as const;
 
@@ -207,6 +227,29 @@ type AiRejection = {
 	youtubeId: string;
 	reason: (typeof AI_REJECTION_REASONS)[number];
 	rationale: string;
+};
+
+type AiReviewResult = {
+	selections: AiSelection[];
+	rejections: AiRejection[];
+	notes: string;
+	model: string | null;
+	thinking: ThinkingLevel;
+};
+
+type CheckpointDetail =
+	{ status: 'ok'; value: DetailedCandidate } | { status: 'error'; message: string };
+
+type DiscoveryCheckpoint = {
+	version: typeof DISCOVERY_CHECKPOINT_VERSION;
+	pipelineVersion: typeof DISCOVERY_PIPELINE_VERSION;
+	configHash: string;
+	updatedAt: string;
+	searchPlan?: SearchPlanResult;
+	searchProgress?: SearchProgress;
+	searchCandidates?: SerializedSearchCandidate[];
+	details?: Record<string, CheckpointDetail>;
+	review?: AiReviewResult;
 };
 
 type VideoRecord = {
@@ -246,8 +289,9 @@ const { values } = parseArgs({
 		seasons: { type: 'string' },
 		output: { type: 'string', default: DEFAULT_OUTPUT_DIR },
 		model: { type: 'string' },
-		thinking: { type: 'string', default: 'medium' },
+		thinking: { type: 'string', default: 'high' },
 		verbose: { type: 'boolean', default: false },
+		fresh: { type: 'boolean', default: false },
 		help: { type: 'boolean', short: 'h', default: false }
 	},
 	allowPositionals: false
@@ -268,10 +312,9 @@ const limit = integerOption('--limit', values.limit, 1, 200);
 const queryLimit = integerOption('--query-limit', values['query-limit'], 1, 200);
 const candidateLimit = integerOption(
 	'--candidate-limit',
-	values['candidate-limit'] ??
-		String(Math.min(500, Math.max(100, limit * 4, queryLimit * 4))),
+	values['candidate-limit'] ?? String(Math.min(500, Math.max(100, limit * 4, queryLimit * 4))),
 	limit,
-	1000
+	500
 );
 const minViews = integerOption('--min-views', values['min-views'], 0, 10_000_000_000);
 const minHeight = integerOption('--min-height', values['min-height'], 0, 4320);
@@ -284,11 +327,13 @@ const verbose = values.verbose;
 const tmdbAuth = getTmdbAuth();
 const youtube = await Innertube.create({ lang: 'en', location: 'US' });
 const modelRuntime = await ModelRuntime.create();
-const modelSelection = values.model
-	? resolveCliModel({ cliModel: values.model, cliThinking: thinking, modelRuntime })
-	: null;
-if (modelSelection?.warning) console.warn(`Model warning: ${modelSelection.warning}`);
-if (modelSelection?.error) fail(modelSelection.error);
+const modelSelection = resolveCliModel({
+	cliModel: values.model ?? DEFAULT_AI_MODEL,
+	cliThinking: thinking,
+	modelRuntime
+});
+if (modelSelection.warning) console.warn(`Model warning: ${modelSelection.warning}`);
+if (modelSelection.error) fail(modelSelection.error);
 
 await mkdir(outputDir, { recursive: true });
 
@@ -301,27 +346,117 @@ for (const [targetIndex, target] of targets.entries()) {
 		`Resolved to ${media.title}${media.year ? ` (${media.year})` : ''} — TMDB ${media.tmdbId}`
 	);
 
-	console.log(`Asking pi to design ${queryLimit} title-specific YouTube searches…`);
-	const searchPlan = await planSearchesWithPi({
-		media,
-		limit: queryLimit,
-		modelRuntime,
-		model: modelSelection?.model,
-		thinking: modelSelection?.thinkingLevel ?? thinking,
-		verbose
+	const checkpointPath = path.join(
+		outputDir,
+		'.work',
+		`${media.kind}-${media.tmdbId}-${slugify(media.title)}.json`
+	);
+	const configHash = discoveryConfigHash({
+		pipelineVersion: DISCOVERY_PIPELINE_VERSION,
+		media: {
+			kind: media.kind,
+			tmdbId: media.tmdbId,
+			seasons: media.seasons.map((season) => season.seasonNumber)
+		},
+		limit,
+		queryLimit,
+		candidateLimit,
+		minViews,
+		minHeight,
+		minDuration,
+		model: modelSelection.model
+			? `${modelSelection.model.provider}/${modelSelection.model.id}`
+			: null,
+		thinking: modelSelection.thinkingLevel ?? thinking
 	});
-	console.log(`AI search plan (${searchPlan.model ?? 'default model'}):`);
+	const checkpoint = await loadDiscoveryCheckpoint(checkpointPath, configHash, values.fresh);
+	const saveCheckpoint = () => saveDiscoveryCheckpoint(checkpointPath, checkpoint);
+
+	let searchPlan = checkpoint.searchPlan;
+	if (searchPlan) {
+		console.log(
+			`Resuming saved AI search plan from ${path.relative(process.cwd(), checkpointPath)}.`
+		);
+	} else {
+		console.log(`Asking pi to design ${queryLimit} title-specific YouTube searches…`);
+		searchPlan = await planSearchesWithPi({
+			media,
+			limit: queryLimit,
+			modelRuntime,
+			model: modelSelection.model,
+			thinking: modelSelection.thinkingLevel ?? thinking,
+			verbose
+		});
+		checkpoint.searchPlan = searchPlan;
+		await saveCheckpoint();
+	}
+	console.log(`AI search plan (${searchPlan.model ?? 'default model'}:${searchPlan.thinking}):`);
 	for (const [index, item] of searchPlan.queries.entries()) {
 		console.log(`  ${index + 1}. ${item.query} — ${item.intent}`);
 	}
 	const queries = searchPlan.queries.map((item) => item.query);
-	console.log(`Searching YouTube with ${queries.length} planned queries…`);
-	const searchCandidates = await searchYouTube(youtube, media, queries, candidateLimit);
+
+	let searchCandidates: SearchCandidate[];
+	if (checkpoint.searchCandidates) {
+		searchCandidates = checkpoint.searchCandidates.map(deserializeSearchCandidate);
+		console.log(`Resuming ${searchCandidates.length} saved YouTube candidates.`);
+	} else {
+		const completedSearches = checkpoint.searchProgress?.completedQueries.length ?? 0;
+		console.log(
+			completedSearches > 0
+				? `Resuming YouTube search at ${completedSearches}/${queries.length} completed queries…`
+				: `Searching YouTube with ${queries.length} planned queries…`
+		);
+		const searchResult = await searchYouTube(
+			youtube,
+			media,
+			queries,
+			candidateLimit,
+			checkpoint.searchProgress,
+			async (progress) => {
+				checkpoint.searchProgress = progress;
+				await saveCheckpoint();
+			}
+		);
+		searchCandidates = searchResult.candidates;
+		checkpoint.searchProgress = searchResult.progress;
+		checkpoint.searchCandidates = searchCandidates.map(serializeSearchCandidate);
+		await saveCheckpoint();
+	}
 	console.log(`Inspecting ${searchCandidates.length} unique candidates…`);
 
-	const details = await mapConcurrent(searchCandidates, 4, async (candidate) =>
-		inspectCandidate(youtube, candidate)
+	checkpoint.details ??= {};
+	const savedDetailCount = searchCandidates.filter(
+		(candidate) => checkpoint.details?.[candidate.youtubeId]
+	).length;
+	if (savedDetailCount > 0) {
+		console.log(`Resuming ${savedDetailCount}/${searchCandidates.length} saved metadata checks.`);
+	}
+	const missingDetails = searchCandidates.filter(
+		(candidate) => !checkpoint.details?.[candidate.youtubeId]
 	);
+	for (let offset = 0; offset < missingDetails.length; offset += 12) {
+		const chunk = missingDetails.slice(offset, offset + 12);
+		const results = await mapConcurrent(chunk, 4, (candidate) =>
+			inspectCandidate(youtube, candidate)
+		);
+		for (const [index, result] of results.entries()) {
+			const candidate = chunk[index];
+			checkpoint.details[candidate.youtubeId] =
+				result instanceof Error
+					? { status: 'error', message: result.message }
+					: { status: 'ok', value: result };
+		}
+		await saveCheckpoint();
+		console.log(
+			`  metadata ${Math.min(savedDetailCount + offset + chunk.length, searchCandidates.length)}/${searchCandidates.length}`
+		);
+	}
+	const details = searchCandidates.map((candidate) => {
+		const saved = checkpoint.details?.[candidate.youtubeId];
+		if (!saved) return new Error(`${candidate.youtubeId}: metadata was not checked`);
+		return saved.status === 'ok' ? saved.value : new Error(saved.message);
+	});
 	const rejectedBeforeAi: Record<string, number> = {};
 	const rejectedBeforeReview: Array<Record<string, unknown>> = [];
 	const eligible = details.flatMap((candidate, index) => {
@@ -351,19 +486,26 @@ for (const [targetIndex, target] of targets.entries()) {
 		return [candidate];
 	});
 
-	console.log(
-		`${eligible.length} candidates passed view, duration, availability, and ${minHeight}p filters; asking pi to curate up to ${limit}…`
-	);
-	const review = await reviewWithPi({
-		media,
-		candidates: eligible,
-		limit,
-		modelRuntime,
-		model: modelSelection?.model,
-		thinking: modelSelection?.thinkingLevel ?? thinking,
-		youtube,
-		verbose
-	});
+	let review = checkpoint.review;
+	if (review) {
+		console.log(`Resuming saved AI review with ${review.selections.length} selections.`);
+	} else {
+		console.log(
+			`${eligible.length} candidates passed view, duration, availability, and ${minHeight}p filters; asking pi to curate up to ${limit}…`
+		);
+		review = await reviewWithPi({
+			media,
+			candidates: eligible,
+			limit,
+			modelRuntime,
+			model: modelSelection.model,
+			thinking: modelSelection.thinkingLevel ?? thinking,
+			youtube,
+			verbose
+		});
+		checkpoint.review = review;
+		await saveCheckpoint();
+	}
 	const generatedAt = new Date().toISOString();
 	const accepted = buildAcceptedVideos(media, eligible, review.selections, generatedAt, limit);
 	const eligibleById = new Map(eligible.map((candidate) => [candidate.youtubeId, candidate]));
@@ -397,6 +539,7 @@ for (const [targetIndex, target] of targets.entries()) {
 			queries,
 			searchPlan: {
 				model: searchPlan.model,
+				thinking: searchPlan.thinking,
 				notes: searchPlan.notes,
 				queries: searchPlan.queries
 			},
@@ -411,6 +554,7 @@ for (const [targetIndex, target] of targets.entries()) {
 			},
 			review: {
 				model: review.model,
+				thinking: review.thinking,
 				notes: review.notes,
 				selectedCount: accepted.length,
 				rejectedCount: reviewRejections.length,
@@ -427,6 +571,72 @@ for (const [targetIndex, target] of targets.entries()) {
 	);
 }
 
+function discoveryConfigHash(value: unknown) {
+	return createHash('sha256').update(JSON.stringify(value)).digest('hex');
+}
+
+function createDiscoveryCheckpoint(configHash: string): DiscoveryCheckpoint {
+	return {
+		version: DISCOVERY_CHECKPOINT_VERSION,
+		pipelineVersion: DISCOVERY_PIPELINE_VERSION,
+		configHash,
+		updatedAt: new Date().toISOString()
+	};
+}
+
+async function loadDiscoveryCheckpoint(
+	filename: string,
+	configHash: string,
+	fresh: boolean
+): Promise<DiscoveryCheckpoint> {
+	if (fresh) {
+		await rm(filename, { force: true });
+		console.log(
+			`Starting fresh; ignored any checkpoint at ${path.relative(process.cwd(), filename)}.`
+		);
+		return createDiscoveryCheckpoint(configHash);
+	}
+	try {
+		const value: unknown = JSON.parse(await readFile(filename, 'utf8'));
+		if (
+			!isObject(value) ||
+			value.version !== DISCOVERY_CHECKPOINT_VERSION ||
+			value.pipelineVersion !== DISCOVERY_PIPELINE_VERSION ||
+			typeof value.configHash !== 'string'
+		) {
+			console.warn(`Ignoring an incompatible discovery checkpoint at ${filename}.`);
+			return createDiscoveryCheckpoint(configHash);
+		}
+		if (value.configHash !== configHash) {
+			console.warn(
+				`Discovery options changed; starting fresh instead of resuming ${path.relative(process.cwd(), filename)}.`
+			);
+			return createDiscoveryCheckpoint(configHash);
+		}
+		return value as DiscoveryCheckpoint;
+	} catch (cause) {
+		if (isNodeError(cause) && cause.code === 'ENOENT') {
+			return createDiscoveryCheckpoint(configHash);
+		}
+		throw new Error(`Could not load discovery checkpoint ${filename}: ${errorMessage(cause)}`, {
+			cause
+		});
+	}
+}
+
+async function saveDiscoveryCheckpoint(filename: string, checkpoint: DiscoveryCheckpoint) {
+	checkpoint.updatedAt = new Date().toISOString();
+	await writeJsonAtomic(filename, checkpoint);
+}
+
+function serializeSearchCandidate(candidate: SearchCandidate): SerializedSearchCandidate {
+	return { ...candidate, queries: [...candidate.queries] };
+}
+
+function deserializeSearchCandidate(candidate: SerializedSearchCandidate): SearchCandidate {
+	return { ...candidate, queries: new Set(candidate.queries) };
+}
+
 function printHelp() {
 	console.log(`Find and AI-review YouTube videos for movies and TV shows.
 
@@ -441,16 +651,17 @@ Options:
   --movie <id|title>       Movie to process (repeatable)
   --show <id|title>        TV show to process (repeatable)
   --limit <n>              Maximum accepted videos per target (default: 25)
-  --candidate-limit <n>    Maximum candidates inspected/reviewed (dynamic default; max: 1000)
+  --candidate-limit <n>    Maximum candidates inspected/reviewed (dynamic default; max: 500)
   --query-limit <n>        AI-planned YouTube searches (default: 50; max: 200)
   --min-views <n>          Hard minimum view count (default: 2500)
   --min-height <n>         Hard minimum available resolution (default: 720)
   --min-duration <sec>     Hard minimum duration (default: 20)
   --seasons <list>         TV seasons to search, e.g. 1,3-5 (specials are excluded by default)
   --output <dir>           Output directory (default: ${DEFAULT_OUTPUT_DIR})
-  --model <model>          Pi model, e.g. anthropic/claude-sonnet-4-6:high
-  --thinking <level>       off|minimal|low|medium|high|xhigh|max (default: medium)
+  --model <model>          Pi model (default: ${DEFAULT_AI_MODEL})
+  --thinking <level>       off|minimal|low|medium|high|xhigh|max (default: high)
   --verbose                Stream the planning and review agents' text
+  --fresh                  Ignore saved discovery work and start this target again
   -h, --help               Show this help
 
 Environment:
@@ -789,7 +1000,8 @@ Individual scenes must not be crowded out by interviews, recaps, or analysis. Ev
 		return {
 			queries,
 			notes: finalPlan.notes,
-			model: session.model ? `${session.model.provider}/${session.model.id}` : null
+			model: session.model ? `${session.model.provider}/${session.model.id}` : null,
+			thinking: session.thinkingLevel
 		};
 	} finally {
 		session.dispose();
@@ -829,14 +1041,29 @@ async function searchYouTube(
 	youtube: Innertube,
 	media: MediaContext,
 	queries: string[],
-	maximum: number
+	maximum: number,
+	resume: SearchProgress | undefined,
+	onProgress: (progress: SearchProgress) => Promise<void>
 ) {
-	const candidates = new Map<string, SearchCandidate>();
-	const orderedByQuery: string[][] = [];
+	const candidates = new Map<string, SearchCandidate>(
+		(resume?.candidates ?? []).map((candidate) => [
+			candidate.youtubeId,
+			deserializeSearchCandidate(candidate)
+		])
+	);
+	const orderedByQuery = { ...(resume?.orderedByQuery ?? {}) };
+	const completedQueries = new Set(resume?.completedQueries ?? []);
 	const tmdbVideos = [...media.videos, ...media.seasons.flatMap((season) => season.videos)].filter(
 		(video) => video.site === 'YouTube' && /^[A-Za-z0-9_-]{11}$/.test(video.key)
 	);
 	for (const video of tmdbVideos) {
+		const current = candidates.get(video.key);
+		if (current) {
+			current.queries.add(`TMDB ${video.type || 'video'}`);
+			current.tmdbVideo = video;
+			if (!current.searchTitle) current.searchTitle = video.name || '';
+			continue;
+		}
 		candidates.set(video.key, {
 			youtubeId: video.key,
 			searchTitle: video.name || '',
@@ -848,11 +1075,18 @@ async function searchYouTube(
 		});
 	}
 
+	const progress = (): SearchProgress => ({
+		candidates: [...candidates.values()].map(serializeSearchCandidate),
+		orderedByQuery,
+		completedQueries: [...completedQueries]
+	});
+	let unsavedSearches = 0;
 	for (const [index, query] of queries.entries()) {
+		if (completedQueries.has(query)) continue;
 		if (verbose) console.log(`  search ${index + 1}/${queries.length}: ${query}`);
+		const ids: string[] = [];
 		try {
 			const search = await youtube.search(query, { type: 'video' });
-			const ids: string[] = [];
 			for (const node of search.results) {
 				if (!node.is(YTNodes.Video) || node.is_live || node.is_upcoming) continue;
 				ids.push(node.video_id);
@@ -877,11 +1111,18 @@ async function searchYouTube(
 					});
 				}
 			}
-			orderedByQuery.push(ids);
 		} catch (cause) {
 			console.warn(`  YouTube search failed for ${JSON.stringify(query)}: ${errorMessage(cause)}`);
 		}
+		orderedByQuery[query] = ids;
+		completedQueries.add(query);
+		unsavedSearches++;
+		if (unsavedSearches >= 5) {
+			await onProgress(progress());
+			unsavedSearches = 0;
+		}
 	}
+	await onProgress(progress());
 
 	const selected: SearchCandidate[] = [];
 	const selectedIds = new Set<string>();
@@ -892,9 +1133,10 @@ async function searchYouTube(
 			selectedIds.add(video.key);
 		}
 	}
+	const orderedResults = queries.map((query) => orderedByQuery[query] ?? []);
 	for (let rank = 0; selected.length < maximum; rank++) {
 		let foundAtRank = false;
-		for (const ids of orderedByQuery) {
+		for (const ids of orderedResults) {
 			const id = ids[rank];
 			if (!id) continue;
 			foundAtRank = true;
@@ -907,7 +1149,7 @@ async function searchYouTube(
 		}
 		if (!foundAtRank) break;
 	}
-	return selected.slice(0, maximum);
+	return { candidates: selected.slice(0, maximum), progress: progress() };
 }
 
 async function inspectCandidate(
@@ -1152,7 +1394,9 @@ Choose the best matching videoType. Mark containsSpoilers true for plot-revealin
 		settingsManager
 	});
 	try {
-		console.log(`Review model: ${session.model?.provider}/${session.model?.id}`);
+		console.log(
+			`Review model: ${session.model?.provider}/${session.model?.id}:${session.thinkingLevel}`
+		);
 		session.subscribe((event) => {
 			if (event.type === 'tool_execution_start' && event.toolName.startsWith('research_')) {
 				console.log(`  agent is using ${event.toolName}…`);
@@ -1173,42 +1417,58 @@ Choose the best matching videoType. Mark containsSpoilers true for plot-revealin
 			);
 		}
 		const reviewedIds = new Set<string>();
+		const selections: AiSelection[] = [];
+		const rejections: AiRejection[] = [];
+		let ignoredClassifications = 0;
 		for (const selection of finalReview.selections) {
-			if (!knownIds.has(selection.youtubeId)) {
-				throw new Error(`The pi reviewer selected unknown video ${selection.youtubeId}.`);
-			}
-			if (reviewedIds.has(selection.youtubeId)) {
-				throw new Error(`The pi reviewer classified ${selection.youtubeId} more than once.`);
+			if (!knownIds.has(selection.youtubeId) || reviewedIds.has(selection.youtubeId)) {
+				ignoredClassifications++;
+				continue;
 			}
 			if (!resolveSelectionTarget(options.media, selection)) {
-				throw new Error(`The pi reviewer gave ${selection.youtubeId} an invalid media target.`);
+				reviewedIds.add(selection.youtubeId);
+				rejections.push({
+					youtubeId: selection.youtubeId,
+					reason: 'insufficient_target_evidence',
+					rationale: 'The AI reviewer supplied an invalid season or episode association.'
+				});
+				continue;
 			}
 			reviewedIds.add(selection.youtubeId);
+			selections.push(selection);
 		}
 		for (const rejection of finalReview.rejections) {
-			if (!knownIds.has(rejection.youtubeId)) {
-				throw new Error(`The pi reviewer rejected unknown video ${rejection.youtubeId}.`);
-			}
-			if (reviewedIds.has(rejection.youtubeId)) {
-				throw new Error(`The pi reviewer classified ${rejection.youtubeId} more than once.`);
+			if (!knownIds.has(rejection.youtubeId) || reviewedIds.has(rejection.youtubeId)) {
+				ignoredClassifications++;
+				continue;
 			}
 			reviewedIds.add(rejection.youtubeId);
+			rejections.push(rejection);
+		}
+		if (ignoredClassifications > 0) {
+			console.warn(
+				`  Ignored ${ignoredClassifications} duplicate or unknown AI classification(s).`
+			);
 		}
 		const missingIds = [...knownIds].filter((youtubeId) => !reviewedIds.has(youtubeId));
 		if (missingIds.length > 0) {
-			throw new Error(
-				`The pi reviewer did not classify ${missingIds.length} candidate(s): ${missingIds.slice(0, 10).join(', ')}`
+			console.warn(
+				`  Reviewer omitted ${missingIds.length} candidate(s); recording them as unclassified.`
 			);
-		}
-		if (
-			finalReview.selections.length < options.limit &&
-			finalReview.rejections.some((rejection) => rejection.reason === 'limit_reached')
-		) {
-			throw new Error('The pi reviewer used limit_reached before filling the selection limit.');
+			for (const youtubeId of missingIds) {
+				rejections.push({
+					youtubeId,
+					reason: 'unclassified',
+					rationale: 'The AI reviewer omitted this candidate from its final classification.'
+				});
+			}
 		}
 		return {
-			...finalReview,
-			model: session.model ? `${session.model.provider}/${session.model.id}` : null
+			selections,
+			rejections,
+			notes: finalReview.notes,
+			model: session.model ? `${session.model.provider}/${session.model.id}` : null,
+			thinking: session.thinkingLevel
 		};
 	} finally {
 		session.dispose();
@@ -1263,7 +1523,7 @@ function buildReviewPrompt(media: MediaContext, candidates: DetailedCandidate[],
 				}
 			: null
 	}));
-	return `Curate up to ${limit} excellent videos for this title. Fewer is better than accepting weak or uncertain candidates.
+	return `Select every worthwhile video for this title up to the limit of ${limit}; do not produce a deliberately short best-of list. Be especially inclusive of distinct individual scenes and clips, including high-quality unofficial uploads. Classify every candidate exactly once in either selections or rejections, and reserve limit_reached for otherwise-good candidates after ${limit} selections are filled.
 
 MEDIA_CONTEXT
 ${JSON.stringify(mediaPayload)}
@@ -1488,9 +1748,18 @@ function slugify(value: string) {
 }
 
 async function writeJsonAtomic(filename: string, value: unknown) {
+	await mkdir(path.dirname(filename), { recursive: true });
 	const temporary = `${filename}.${process.pid}.tmp`;
 	await writeFile(temporary, `${JSON.stringify(value, null, 2)}\n`, 'utf8');
 	await rename(temporary, filename);
+}
+
+function isObject(value: unknown): value is Record<string, unknown> {
+	return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function isNodeError(value: unknown): value is NodeJS.ErrnoException {
+	return value instanceof Error && 'code' in value;
 }
 
 function errorMessage(cause: unknown) {

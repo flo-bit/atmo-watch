@@ -21,6 +21,7 @@ export const contrailApi = {
     "watch.atmo.review.listRecords",
     "watch.atmo.review.listWrittenRecords",
     "watch.atmo.video.getRecord",
+    "watch.atmo.video.listRandomRecords",
     "watch.atmo.video.listRecords",
   ],
   protectedMethods: [
@@ -63,6 +64,7 @@ export const contrailTarget = {
     "watch.atmo.review.listRecords",
     "watch.atmo.review.listWrittenRecords",
     "watch.atmo.video.getRecord",
+    "watch.atmo.video.listRandomRecords",
     "watch.atmo.video.listRecords",
   ],
   collections: [

@@ -1,4 +1,13 @@
-import { getDialect, type ContrailConfig } from '@atmo-dev/contrail';
+import { getDialect, recordsTableName, type ContrailConfig } from '@atmo-dev/contrail';
+
+type RandomVideoRow = {
+	uri: string;
+	did: string;
+	rkey: string;
+	cid: string;
+	record: string;
+	time_us: number;
+};
 
 export const config: ContrailConfig = {
 	namespace: 'watch.atmo',
@@ -30,6 +39,48 @@ export const config: ContrailConfig = {
 				'identifiers.seasonNumber': {},
 				'identifiers.episodeNumber': {},
 				createdAt: { type: 'range' }
+			},
+			queries: {
+				listRandomRecords: async (db, params) => {
+					const rawLimit = params.get('limit');
+					const limit = rawLimit === null ? 24 : Number(rawLimit);
+					if (!Number.isInteger(limit) || limit < 1 || limit > 200) {
+						return Response.json(
+							{ error: 'InvalidRequest', message: 'limit must be an integer from 1 to 200' },
+							{ status: 400 }
+						);
+					}
+
+					const result = await db
+						.prepare(
+							`SELECT uri, did, rkey, cid, record, time_us
+							 FROM ${recordsTableName('video')}
+							 WHERE cid IS NOT NULL AND record IS NOT NULL
+							 ORDER BY RANDOM()
+							 LIMIT ?`
+						)
+						.bind(limit)
+						.all<RandomVideoRow>();
+					const records = result.results.flatMap((row) => {
+						try {
+							return [
+								{
+									uri: row.uri,
+									cid: row.cid,
+									value: JSON.parse(row.record),
+									did: row.did,
+									collection: 'watch.atmo.alpha.video',
+									rkey: row.rkey,
+									time_us: row.time_us
+								}
+							];
+						} catch {
+							return [];
+						}
+					});
+
+					return Response.json({ records });
+				}
 			}
 		},
 		review: {

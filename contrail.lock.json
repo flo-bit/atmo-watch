@@ -3,7 +3,7 @@
   "version": 2,
   "endpoint": "https://api.atmo.watch",
   "namespace": "watch.atmo",
-  "lexiconDigest": "sha256:500c81b7c35eb01da551312cfa1bb0d88719ded0f54bda3704cf2296ad44f0b0",
+  "lexiconDigest": "sha256:ed316859606152b16b285c0fe6eb3b744ae126ed4d662411f38ccc6425bac4c9",
   "methods": [
     "watch.atmo.comment.getRecord",
     "watch.atmo.comment.listRecords",
@@ -19,6 +19,7 @@
     "watch.atmo.review.listRecords",
     "watch.atmo.review.listWrittenRecords",
     "watch.atmo.video.getRecord",
+    "watch.atmo.video.listRandomRecords",
     "watch.atmo.video.listRecords"
   ],
   "collections": [

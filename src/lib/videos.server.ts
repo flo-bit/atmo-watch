@@ -1,6 +1,6 @@
 import { contrail } from '$lib/contrail-client.server';
 import type * as VideoListRecords from '$lib/contrail/types/types/watch/atmo/video/listRecords';
-import type { MediaVideo, SubmittedVideoFeedPage } from '$lib/types';
+import type { MediaVideo } from '$lib/types';
 import { VIDEO_TYPE_LABELS, VIDEO_TYPES, type VideoType } from '$lib/videos';
 
 export type SubmittedVideoQuery =
@@ -150,20 +150,10 @@ export async function getMediaSubmittedVideos(
 	});
 }
 
-export async function getRecentSubmittedVideosPage({
-	cursor,
-	limit = 24
-}: {
-	cursor?: string;
-	limit?: number;
-} = {}): Promise<SubmittedVideoFeedPage> {
-	const response = await contrail.get('watch.atmo.video.listRecords', {
-		params: { cursor, limit, order: 'desc', profiles: true }
+export async function getRandomSubmittedVideos(limit = 24): Promise<MediaVideo[]> {
+	const response = await contrail.get('watch.atmo.video.listRandomRecords', {
+		params: { limit }
 	});
-	if (!response.ok) throw new Error(`Could not load recent videos (${response.status})`);
-
-	return {
-		videos: toSubmittedVideos(response.data.records, response.data.profiles ?? []),
-		cursor: response.data.cursor ?? null
-	};
+	if (!response.ok) throw new Error(`Could not load random videos (${response.status})`);
+	return toSubmittedVideos(response.data.records, []);
 }

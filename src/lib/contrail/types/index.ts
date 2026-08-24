@@ -24,4 +24,5 @@ export * as WatchAtmoReviewGetRecord from "./types/watch/atmo/review/getRecord.j
 export * as WatchAtmoReviewListRecords from "./types/watch/atmo/review/listRecords.js";
 export * as WatchAtmoReviewListWrittenRecords from "./types/watch/atmo/review/listWrittenRecords.js";
 export * as WatchAtmoVideoGetRecord from "./types/watch/atmo/video/getRecord.js";
+export * as WatchAtmoVideoListRandomRecords from "./types/watch/atmo/video/listRandomRecords.js";
 export * as WatchAtmoVideoListRecords from "./types/watch/atmo/video/listRecords.js";

@@ -1,0 +1,39 @@
+{
+  "defs": {
+    "main": {
+      "description": "Return a random sample of indexed watch.atmo.alpha.video records.",
+      "output": {
+        "encoding": "application/json",
+        "schema": {
+          "properties": {
+            "records": {
+              "items": {
+                "ref": "watch.atmo.video.listRecords#record",
+                "type": "ref"
+              },
+              "type": "array"
+            }
+          },
+          "required": [
+            "records"
+          ],
+          "type": "object"
+        }
+      },
+      "parameters": {
+        "properties": {
+          "limit": {
+            "default": 24,
+            "maximum": 200,
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "type": "params"
+      },
+      "type": "query"
+    }
+  },
+  "id": "watch.atmo.video.listRandomRecords",
+  "lexicon": 1
+}

@@ -61,10 +61,6 @@ export type MediaVideo = {
 	context?: MediaVideoContext;
 };
 
-export type SubmittedVideoFeedPage = {
-	videos: MediaVideo[];
-	cursor: string | null;
-};
 
 export type TvEpisodeSummary = {
 	id: number;

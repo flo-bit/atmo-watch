@@ -29,7 +29,8 @@ export default defineLexiconConfig({
           "social.popfeed.feed.review",
           "social.popfeed.richtext.facet",
           "watch.atmo.alpha.video",
-          "watch.atmo.review.listRecords"
+          "watch.atmo.review.listRecords",
+          "watch.atmo.video.listRecords"
         ],
       },
     ],
