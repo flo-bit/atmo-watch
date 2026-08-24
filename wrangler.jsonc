@@ -28,10 +28,6 @@
 		{
 			"binding": "OAUTH_STATES",
 			"id": "7221735865774a349e4d73f89b9c51af"
-		},
-		{
-			"binding": "MEDIA_CACHE",
-			"id": "658896e538fd40f498ef85e49ed560d2"
 		}
 	]
 }

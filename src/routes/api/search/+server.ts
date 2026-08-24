@@ -5,7 +5,7 @@ export const GET: RequestHandler = async ({ url, setHeaders }) => {
 	const query = url.searchParams.get('q')?.trim() ?? '';
 
 	setHeaders({
-		'Cache-Control': 'private, no-store'
+		'Cache-Control': 'public, max-age=300, stale-while-revalidate=3600'
 	});
 
 	if (query.length < 2) {

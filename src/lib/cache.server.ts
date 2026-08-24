@@ -1,5 +1,3 @@
-import { cloudflareKV } from '@svelte-atproto/oauth/server/stores/cloudflare';
-
 type Awaitable<T> = T | PromiseLike<T>;
 
 type PublicDataCache = {
@@ -7,20 +5,100 @@ type PublicDataCache = {
 	set(key: string, value: unknown): Awaitable<void>;
 };
 
-const CACHE_BINDING = 'MEDIA_CACHE';
-const CACHE_VERSION = 'v1';
+type MemoryEntry = {
+	expiresAt: number;
+	value: unknown;
+};
 
-/** Capture the request-scoped KV binding before the first await. */
-export function getPublicDataCache(ttl: number): PublicDataCache | undefined {
+type CloudflareCacheStorage = CacheStorage & {
+	default?: Cache;
+};
+
+const CACHE_VERSION = 'v2';
+const CACHE_URL_BASE = 'https://atmo.watch/__data-cache/';
+const MAX_MEMORY_ENTRIES = 500;
+const memoryCache = new Map<string, MemoryEntry>();
+const pendingLoads = new Map<string, Promise<unknown>>();
+
+function versionedKey(key: string) {
+	return `${CACHE_VERSION}:${key}`;
+}
+
+function cacheRequest(key: string) {
+	return new Request(`${CACHE_URL_BASE}${encodeURIComponent(key)}`);
+}
+
+function getCloudflareCache() {
 	try {
-		return cloudflareKV<string, unknown>(CACHE_BINDING, { ttl })();
+		return (globalThis.caches as CloudflareCacheStorage | undefined)?.default;
 	} catch {
 		return undefined;
 	}
 }
 
-function versionedKey(key: string) {
-	return `${CACHE_VERSION}:${key}`;
+function readMemoryCache(key: string) {
+	const entry = memoryCache.get(key);
+	if (!entry) return undefined;
+	if (entry.expiresAt <= Date.now()) {
+		memoryCache.delete(key);
+		return undefined;
+	}
+
+	// Refresh insertion order so the map behaves like a small LRU cache.
+	memoryCache.delete(key);
+	memoryCache.set(key, entry);
+	return entry.value;
+}
+
+function writeMemoryCache(key: string, value: unknown, ttl: number) {
+	memoryCache.delete(key);
+	memoryCache.set(key, { expiresAt: Date.now() + ttl * 1000, value });
+
+	while (memoryCache.size > MAX_MEMORY_ENTRIES) {
+		const oldestKey = memoryCache.keys().next().value;
+		if (oldestKey === undefined) break;
+		memoryCache.delete(oldestKey);
+	}
+}
+
+/**
+ * Public TMDB/OMDb data is cached in the Cloudflare Cache API, not Workers KV.
+ * Cache API entries are local to a Cloudflare data center, with a small per-isolate
+ * LRU in front to avoid repeated reads and duplicate upstream requests.
+ */
+export function getPublicDataCache(ttl: number): PublicDataCache {
+	return {
+		async get(key) {
+			const memoryValue = readMemoryCache(key);
+			if (memoryValue !== undefined) return memoryValue;
+
+			const cloudflareCache = getCloudflareCache();
+			if (!cloudflareCache) return undefined;
+
+			const response = await cloudflareCache.match(cacheRequest(key));
+			if (!response) return undefined;
+
+			const value = (await response.json()) as unknown;
+			writeMemoryCache(key, value, ttl);
+			return value;
+		},
+		async set(key, value) {
+			writeMemoryCache(key, value, ttl);
+
+			const cloudflareCache = getCloudflareCache();
+			if (!cloudflareCache) return;
+
+			await cloudflareCache.put(
+				cacheRequest(key),
+				new Response(JSON.stringify(value), {
+					headers: {
+						'Cache-Control': `public, max-age=${ttl}`,
+						'Content-Type': 'application/json; charset=utf-8'
+					}
+				})
+			);
+		}
+	};
 }
 
 export async function readPublicDataCache<T>(
@@ -32,7 +110,7 @@ export async function readPublicDataCache<T>(
 	try {
 		return (await cache.get(versionedKey(key))) as T | undefined;
 	} catch {
-		// Treat KV errors as cache misses.
+		// Treat cache errors as misses.
 		return undefined;
 	}
 }
@@ -60,7 +138,18 @@ export async function cachePublicData<T>(
 	const cached = await readPublicDataCache<T>(cache, key);
 	if (cached !== undefined) return cached;
 
-	const value = await load();
-	if (shouldCache(value)) await writePublicDataCache(cache, key, value);
-	return value;
+	const pendingKey = versionedKey(key);
+	const existing = pendingLoads.get(pendingKey);
+	if (existing) return existing as Promise<T>;
+
+	const pending = load()
+		.then(async (value) => {
+			if (shouldCache(value)) await writePublicDataCache(cache, key, value);
+			return value;
+		})
+		.finally(() => {
+			pendingLoads.delete(pendingKey);
+		});
+	pendingLoads.set(pendingKey, pending);
+	return pending;
 }
