@@ -33,8 +33,9 @@ The web app uses `@sveltejs/adapter-cloudflare` and the Worker configuration in
 
 - `OAUTH_SESSIONS`
 - `OAUTH_STATES`
+- `MEDIA_CACHE`
 
-These namespaces store AT Protocol OAuth state and sessions. Public TMDB and OMDb data uses Cloudflare's Cache API with a small per-isolate memory cache, avoiding Workers KV writes for media caching.
+The first two namespaces store AT Protocol OAuth state and sessions. `MEDIA_CACHE` stores only the small, slow-changing OMDb ratings dataset. General TMDB data uses Cloudflare's Cache API with a small per-isolate memory cache, avoiding high-volume KV writes for media and search caching.
 
 Before the first deployment, configure the private runtime values without adding them to `wrangler.jsonc`:
 

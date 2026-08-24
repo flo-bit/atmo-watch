@@ -1,6 +1,7 @@
 import { env } from '$env/dynamic/private';
 import {
 	cachePublicData,
+	getPersistentPublicDataCache,
 	getPublicDataCache,
 	readPublicDataCache,
 	writePublicDataCache
@@ -360,7 +361,7 @@ async function getOmdbKeyFingerprint(apiKey: string) {
 
 async function loadRatings(
 	imdbId: string,
-	cache: ReturnType<typeof getPublicDataCache>,
+	cache: ReturnType<typeof getPersistentPublicDataCache>,
 	failureCache: ReturnType<typeof getPublicDataCache>,
 	quotaCache: ReturnType<typeof getPublicDataCache>
 ): Promise<OmdbData> {
@@ -435,7 +436,7 @@ async function loadRatings(
 
 export function getRatings(
 	imdbId: string,
-	cache = getPublicDataCache(OMDB_DATA_TTL),
+	cache = getPersistentPublicDataCache(OMDB_DATA_TTL),
 	failureCache = getPublicDataCache(OMDB_TRANSIENT_FAILURE_TTL),
 	quotaCache = getPublicDataCache(getOmdbQuotaFailureTtl())
 ): Promise<OmdbData> {
@@ -456,7 +457,7 @@ export async function getMediaPage(
 	region: string | null
 ) {
 	const cache = getPublicDataCache(MEDIA_DATA_TTL);
-	const omdbCache = getPublicDataCache(OMDB_DATA_TTL);
+	const omdbCache = getPersistentPublicDataCache(OMDB_DATA_TTL);
 	const omdbFailureCache = getPublicDataCache(OMDB_TRANSIENT_FAILURE_TTL);
 	const omdbQuotaCache = getPublicDataCache(getOmdbQuotaFailureTtl());
 	const [details, currentTvDetails] = await Promise.all([
@@ -519,7 +520,12 @@ export async function getMediaVideosPage(
 	};
 }
 
-async function loadHomePage() {
+async function loadHomePage(
+	mediaCache: ReturnType<typeof getPublicDataCache>,
+	omdbCache: ReturnType<typeof getPersistentPublicDataCache>,
+	omdbFailureCache: ReturnType<typeof getPublicDataCache>,
+	omdbQuotaCache: ReturnType<typeof getPublicDataCache>
+) {
 	const empty = {
 		trending: [] as MediaFeature[],
 		currentlyInTheaters: [] as MediaSummary[],
@@ -588,10 +594,6 @@ async function loadHomePage() {
 		}
 	}
 
-	const mediaCache = getPublicDataCache(MEDIA_DATA_TTL);
-	const omdbCache = getPublicDataCache(OMDB_DATA_TTL);
-	const omdbFailureCache = getPublicDataCache(OMDB_TRANSIENT_FAILURE_TTL);
-	const omdbQuotaCache = getPublicDataCache(getOmdbQuotaFailureTtl());
 	const trending = (
 		await Promise.all(
 			trendingCandidates.map(async ({ tmdbId, creativeWorkType }) => {
@@ -635,13 +637,21 @@ async function loadHomePage() {
 
 export function getHomePage() {
 	const cache = getPublicDataCache(DISCOVERY_TTL);
-	return cachePublicData(cache, 'tmdb:home:v6', loadHomePage, (data) =>
-		Boolean(
-			data.trending.length ||
-			data.currentlyInTheaters.length ||
-			data.popularMovies.length ||
-			data.popularShows.length
-		)
+	const mediaCache = getPublicDataCache(MEDIA_DATA_TTL);
+	const omdbCache = getPersistentPublicDataCache(OMDB_DATA_TTL);
+	const omdbFailureCache = getPublicDataCache(OMDB_TRANSIENT_FAILURE_TTL);
+	const omdbQuotaCache = getPublicDataCache(getOmdbQuotaFailureTtl());
+	return cachePublicData(
+		cache,
+		'tmdb:home:v6',
+		() => loadHomePage(mediaCache, omdbCache, omdbFailureCache, omdbQuotaCache),
+		(data) =>
+			Boolean(
+				data.trending.length ||
+				data.currentlyInTheaters.length ||
+				data.popularMovies.length ||
+				data.popularShows.length
+			)
 	);
 }
 

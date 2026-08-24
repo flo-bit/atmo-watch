@@ -1,3 +1,5 @@
+import { cloudflareKV } from '@svelte-atproto/oauth/server/stores/cloudflare';
+
 type Awaitable<T> = T | PromiseLike<T>;
 
 type PublicDataCache = {
@@ -14,7 +16,8 @@ type CloudflareCacheStorage = CacheStorage & {
 	default?: Cache;
 };
 
-const CACHE_VERSION = 'v2';
+const KV_CACHE_BINDING = 'MEDIA_CACHE';
+const CACHE_VERSION = 'v1';
 const CACHE_URL_BASE = 'https://atmo.watch/__data-cache/';
 const MAX_MEMORY_ENTRIES = 500;
 const memoryCache = new Map<string, MemoryEntry>();
@@ -62,9 +65,8 @@ function writeMemoryCache(key: string, value: unknown, ttl: number) {
 }
 
 /**
- * Public TMDB/OMDb data is cached in the Cloudflare Cache API, not Workers KV.
- * Cache API entries are local to a Cloudflare data center, with a small per-isolate
- * LRU in front to avoid repeated reads and duplicate upstream requests.
+ * General public data uses the Cloudflare Cache API. Entries are local to a
+ * Cloudflare data center, with a small per-isolate LRU in front.
  */
 export function getPublicDataCache(ttl: number): PublicDataCache {
 	return {
@@ -99,6 +101,15 @@ export function getPublicDataCache(ttl: number): PublicDataCache {
 			);
 		}
 	};
+}
+
+/** Use KV only for the small, slow-changing OMDb ratings dataset. */
+export function getPersistentPublicDataCache(ttl: number): PublicDataCache | undefined {
+	try {
+		return cloudflareKV<string, unknown>(KV_CACHE_BINDING, { ttl })();
+	} catch {
+		return undefined;
+	}
 }
 
 export async function readPublicDataCache<T>(

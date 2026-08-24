@@ -29,3 +29,5 @@ test-results
 /data/video-submissions/.upload-state.json
 
 .contrail/
+
+data/
