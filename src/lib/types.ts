@@ -89,7 +89,9 @@ export type TvSeasonSummary = {
 
 export type MediaCredit = MediaSummary & {
 	order: number;
+	episodeCount: number | null;
 	popularity: number;
+	voteCount: number;
 };
 
 export type ActorSummary = {

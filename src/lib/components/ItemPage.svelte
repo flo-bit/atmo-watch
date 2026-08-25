@@ -3,6 +3,7 @@
 	import { page } from '$app/state';
 	import { Dialog } from 'bits-ui';
 	import { Plus, X } from '@lucide/svelte';
+	import { untrack } from 'svelte';
 	import AddToListMenu from './AddToListMenu.svelte';
 	import Avatar from './Avatar.svelte';
 	import BackdropGallery from './BackdropGallery.svelte';
@@ -19,16 +20,19 @@
 	import VideoGallery from './VideoGallery.svelte';
 	import WatchedButton from './WatchedButton.svelte';
 	import { backdropUrl, posterUrl, profileUrl } from '$lib/images';
+	import { loadMediaListState, type MediaListState } from '$lib/list-write.remote';
 	import { loginDialog } from '$lib/login.svelte';
 	import { reviewDialog } from '$lib/review.svelte';
 	import { slugify, toMediaRouteKind } from '$lib/utils';
 	import { videoDialog } from '$lib/video.svelte';
 	import type { getMediaPage } from '$lib/tmdb.server';
-	import type { ReviewCardModel } from '$lib/types';
+	import type { ReviewCardModel, ReviewFeedPage } from '$lib/types';
 
 	type ItemPageData = Awaited<ReturnType<typeof getMediaPage>> & {
 		did: string | null;
 		reviews: ReviewCardModel[];
+		reviewCursor: string | null;
+		ratingSummary: { score: number | null; count: number };
 		today: string;
 	};
 
@@ -84,21 +88,92 @@
 			data.item.creativeWorkType === 'tv_show' ? seasonLabel : null
 		].filter((fact): fact is string => fact !== null)
 	);
-	let averageReviewRating = $derived(
-		data.reviews.length > 0
-			? data.reviews.reduce((total, review) => total + review.rating, 0) / data.reviews.length
-			: 0
-	);
+	// These are local snapshots because subsequent review pages are appended in the browser.
+	// svelte-ignore state_referenced_locally
+	let reviews = $state([...data.reviews]);
+	// svelte-ignore state_referenced_locally
+	let reviewCursor = $state<string | null>(data.reviewCursor);
+	let reviewsLoading = $state(false);
+	let reviewsError = $state('');
+	let loadedReviewPages = $state(false);
+	let listState = $state<MediaListState | null>(null);
+	let listStateLoading = $state(false);
+	let listStateError = $state('');
+	let listStateRequest = 0;
+	// svelte-ignore state_referenced_locally
+	let activeMediaKey = $state(`${data.item.creativeWorkType}:${data.item.tmdbId}`);
 	let showAllReviews = $state(false);
 	let selectedReview = $state<ReviewCardModel | null>(null);
 	let reviewPopupOpen = $state(false);
 	let showAllRecommendations = $state(false);
 	let showAllCast = $state(false);
-	let writtenReviews = $derived(data.reviews.filter((review) => review.text.trim()));
+	let writtenReviews = $derived(reviews.filter((review) => review.text.trim()));
 	let displayedReviews = $derived(showAllReviews ? writtenReviews : writtenReviews.slice(0, 3));
 	let desktopRecommendations = $derived(
 		showAllRecommendations ? data.recommendations : data.recommendations.slice(0, 5)
 	);
+	async function refreshListState() {
+		if (!data.did) {
+			listState = null;
+			listStateLoading = false;
+			listStateError = '';
+			return;
+		}
+
+		const requestId = ++listStateRequest;
+		listStateLoading = true;
+		listStateError = '';
+		try {
+			const state = await loadMediaListState({
+				creativeWorkType: data.item.creativeWorkType,
+				tmdbId: data.item.tmdbId
+			});
+			if (requestId === listStateRequest) listState = state;
+		} catch (cause) {
+			if (requestId === listStateRequest) {
+				listStateError = cause instanceof Error ? cause.message : 'Could not load your lists.';
+			}
+		} finally {
+			if (requestId === listStateRequest) listStateLoading = false;
+		}
+	}
+
+	async function loadMoreReviews() {
+		if (!reviewCursor || reviewsLoading) return;
+
+		const requestedCursor = reviewCursor;
+		reviewsLoading = true;
+		reviewsError = '';
+		try {
+			const query = new URLSearchParams({
+				tmdbId: String(data.item.tmdbId),
+				type: data.item.creativeWorkType,
+				cursor: requestedCursor
+			});
+			const response = await fetch(`${resolve('/api/reviews/media')}?${query}`);
+			if (!response.ok) throw new Error('Could not load more reviews.');
+
+			const page = (await response.json()) as ReviewFeedPage;
+			const loadedUris = new Set(reviews.map((review) => review.uri));
+			reviews = [...reviews, ...page.reviews.filter((review) => !loadedUris.has(review.uri))];
+			reviewCursor = page.cursor === requestedCursor ? null : page.cursor;
+			loadedReviewPages = true;
+			showAllReviews = true;
+		} catch (cause) {
+			reviewsError = cause instanceof Error ? cause.message : 'Could not load more reviews.';
+		} finally {
+			reviewsLoading = false;
+		}
+	}
+
+	async function revealOrLoadReviews() {
+		if (!showAllReviews) {
+			showAllReviews = true;
+			if (writtenReviews.length > 3) return;
+		}
+		await loadMoreReviews();
+	}
+
 	function showFullReview(review: ReviewCardModel) {
 		selectedReview = review;
 		reviewPopupOpen = true;
@@ -110,13 +185,38 @@
 	}
 
 	$effect(() => {
-		if (data.item.tmdbId > 0 && data.item.creativeWorkType) {
+		const nextMediaKey = `${data.item.creativeWorkType}:${data.item.tmdbId}`;
+		const did = data.did;
+		const serverReviews = data.reviews;
+		const serverCursor = data.reviewCursor;
+		if (nextMediaKey !== activeMediaKey) {
+			activeMediaKey = nextMediaKey;
+			reviews = [...serverReviews];
+			reviewCursor = serverCursor;
+			loadedReviewPages = false;
+			reviewsError = '';
 			showAllReviews = false;
 			reviewPopupOpen = false;
 			selectedReview = null;
 			showAllRecommendations = false;
 			showAllCast = false;
+		} else {
+			const currentReviews = untrack(() => reviews);
+			const refreshedUris = new Set(serverReviews.map((review) => review.uri));
+			reviews = [
+				...serverReviews,
+				...currentReviews.filter((review) => !refreshedUris.has(review.uri))
+			];
+			if (!untrack(() => loadedReviewPages)) reviewCursor = serverCursor;
 		}
+
+		if (!did) {
+			listState = null;
+			listStateLoading = false;
+			listStateError = '';
+			return;
+		}
+		void untrack(refreshListState);
 	});
 </script>
 
@@ -201,8 +301,8 @@
 
 				<div class="mt-4 flex justify-center lg:mt-3">
 					<ExternalRatings
-						popfeedScore={data.reviews.length > 0 ? averageReviewRating : null}
-						popfeedRatingCount={data.reviews.length}
+						popfeedScore={data.ratingSummary.score}
+						popfeedRatingCount={data.ratingSummary.count}
 						imdbId={data.imdb_id}
 						imdbVotes={data.imdb_votes}
 						ratings={data.ratings}
@@ -220,11 +320,27 @@
 					<div
 						class={`mt-2 grid w-full max-w-md ${data.trailer_url ? 'grid-cols-3' : 'grid-cols-2'} gap-1 lg:mt-0 lg:flex lg:w-auto lg:gap-2`}
 					>
-						<AddToListMenu item={data.item} did={data.did} variant="action" />
+						<AddToListMenu
+							item={data.item}
+							did={data.did}
+							variant="action"
+							state={listState}
+							loading={listStateLoading}
+							stateError={listStateError}
+							onStateChange={(nextState) => (listState = nextState)}
+							onRefresh={refreshListState}
+						/>
 						{#if data.trailer_url}
 							<TrailerDialog url={data.trailer_url} title={data.item.title} variant="action" />
 						{/if}
-						<WatchedButton item={data.item} did={data.did} />
+						<WatchedButton
+							item={data.item}
+							did={data.did}
+							state={listState}
+							loading={listStateLoading}
+							stateError={listStateError}
+							onStateChange={(nextState) => (listState = nextState)}
+						/>
 					</div>
 				</div>
 
@@ -261,21 +377,23 @@
 				/>
 			{/if}
 
-			{#if writtenReviews.length > 0}
+			{#if writtenReviews.length > 0 || reviewCursor}
 				<section class="mt-10 border-t border-white/10 pt-6 text-sm text-white">
 					<h2 class="text-lg font-semibold tracking-tight">Reviews</h2>
-					<HorizontalScroller class="mt-4 items-stretch gap-3 pb-3 lg:hidden" label="Reviews">
-						{#each writtenReviews as review (review.uri)}
-							<Review
-								{review}
-								viewerDid={data.did}
-								showItem={false}
-								compact={true}
-								onOpen={() => showFullReview(review)}
-								class="w-[82vw] max-w-sm shrink-0 snap-start rounded-xl border border-white/10 bg-black/25 backdrop-blur-xl"
-							/>
-						{/each}
-					</HorizontalScroller>
+					{#if writtenReviews.length > 0}
+						<HorizontalScroller class="mt-4 items-stretch gap-3 pb-3 lg:hidden" label="Reviews">
+							{#each writtenReviews as review (review.uri)}
+								<Review
+									{review}
+									viewerDid={data.did}
+									showItem={false}
+									compact={true}
+									onOpen={() => showFullReview(review)}
+									class="w-[82vw] max-w-sm shrink-0 snap-start rounded-xl border border-white/10 bg-black/25 backdrop-blur-xl"
+								/>
+							{/each}
+						</HorizontalScroller>
+					{/if}
 					<div class="mt-4 hidden grid-cols-3 items-stretch gap-3 lg:grid">
 						{#each displayedReviews as review (review.uri)}
 							<Review
@@ -289,13 +407,29 @@
 						{/each}
 					</div>
 
-					{#if !showAllReviews && writtenReviews.length > 3}
+					{#if reviewCursor}
 						<button
 							type="button"
-							onclick={() => (showAllReviews = true)}
-							class="mt-5 hidden h-8 items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.07] px-3 text-xs font-semibold text-white transition-colors hover:bg-white/[0.12] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70 lg:inline-flex"
+							onclick={loadMoreReviews}
+							disabled={reviewsLoading}
+							class="mt-4 inline-flex h-8 items-center rounded-full border border-white/15 bg-white/[0.07] px-3 text-xs font-semibold text-white transition-colors hover:bg-white/[0.12] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70 disabled:cursor-wait disabled:opacity-60 lg:hidden"
 						>
-							see more reviews
+							{reviewsLoading ? 'loading…' : 'load more reviews'}
+						</button>
+					{/if}
+
+					{#if (!showAllReviews && writtenReviews.length > 3) || reviewCursor}
+						<button
+							type="button"
+							onclick={revealOrLoadReviews}
+							disabled={reviewsLoading}
+							class="mt-5 hidden h-8 items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.07] px-3 text-xs font-semibold text-white transition-colors hover:bg-white/[0.12] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70 disabled:cursor-wait disabled:opacity-60 lg:inline-flex"
+						>
+							{reviewsLoading
+								? 'loading…'
+								: !showAllReviews && writtenReviews.length > 3
+									? 'see more reviews'
+									: 'load more reviews'}
 							<svg
 								class="size-3.5"
 								viewBox="0 0 24 24"
@@ -311,6 +445,10 @@
 								/>
 							</svg>
 						</button>
+					{/if}
+
+					{#if reviewsError}
+						<p class="mt-3 text-xs text-red-300" role="status">{reviewsError}</p>
 					{/if}
 				</section>
 			{/if}

@@ -4,7 +4,7 @@
   "defs": {
     "main": {
       "type": "query",
-      "description": "Return a random sample of indexed watch.atmo.alpha.video records.",
+      "description": "Return a random sample of indexed scene videos.",
       "parameters": {
         "type": "params",
         "properties": {

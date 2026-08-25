@@ -5,8 +5,11 @@ import type * as ListItemRecords from '$lib/contrail/types/types/watch/atmo/list
 import type { ActorSummary, MediaImage, MediaListModel, MediaSummary } from '$lib/types';
 import type { ActorIdentifier, ResourceUri } from '@atcute/lexicons';
 
-type ListRecord = Pick<ListRecords.Record, 'uri' | 'did' | 'rkey' | 'value'>;
-type ListItemRecord = ListItemRecords.Record;
+type ListItemRecord = Pick<ListItemRecords.Record, 'uri' | 'did' | 'value'>;
+type ListRecord = Pick<ListRecords.Record, 'uri' | 'did' | 'rkey' | 'value'> & {
+	items?: ListItemRecord[];
+	itemsCount?: number;
+};
 
 function getPoster(record: ListItemRecord): MediaImage | null {
 	if (record.value.poster) {
@@ -60,7 +63,8 @@ function orderListItems(records: ListItemRecord[], itemOrder: string[] | undefin
 function buildList(
 	record: ListRecord,
 	records: ListItemRecord[],
-	author: ActorSummary
+	author: ActorSummary,
+	itemCount = records.length
 ): { list: MediaListModel; items: MediaSummary[] } {
 	const items = orderListItems(records, record.value.itemOrder).flatMap((item) => {
 		const media = toMediaSummary(item);
@@ -77,7 +81,7 @@ function buildList(
 			listType: record.value.listType,
 			ordered: record.value.ordered ?? false,
 			createdAt: record.value.createdAt,
-			itemCount: items.length,
+			itemCount: Math.max(itemCount, items.length),
 			previewItems: items.slice(0, 10)
 		},
 		items
@@ -90,27 +94,16 @@ async function getActorLists(actor: string) {
 
 	do {
 		const response = await contrail.get('watch.atmo.list.listRecords', {
-			params: { actor: actor as ActorIdentifier, cursor, limit: 200 }
+			params: {
+				actor: actor as ActorIdentifier,
+				cursor,
+				limit: 200,
+				order: 'desc',
+				itemsCountMin: 1,
+				hydrateItems: 10
+			}
 		});
 		if (!response.ok) throw new Error(`Could not load lists from Contrail (${response.status})`);
-		records.push(...response.data.records);
-		cursor = response.data.cursor;
-	} while (cursor);
-
-	return records;
-}
-
-async function getActorListItems(actor: string) {
-	const records: ListItemRecord[] = [];
-	let cursor: string | undefined;
-
-	do {
-		const response = await contrail.get('watch.atmo.listItem.listRecords', {
-			params: { actor: actor as ActorIdentifier, cursor, limit: 200 }
-		});
-		if (!response.ok) {
-			throw new Error(`Could not load list items from Contrail (${response.status})`);
-		}
 		records.push(...response.data.records);
 		cursor = response.data.cursor;
 	} while (cursor);
@@ -137,20 +130,10 @@ async function getListItems(listUri: ResourceUri) {
 }
 
 export async function getProfileMediaLists(author: ActorSummary): Promise<MediaListModel[]> {
-	const [lists, items] = await Promise.all([
-		getActorLists(author.did),
-		getActorListItems(author.did)
-	]);
-	const itemsByList = new Map<string, ListItemRecord[]>();
-	for (const item of items) {
-		const listItems = itemsByList.get(item.value.listUri) ?? [];
-		listItems.push(item);
-		itemsByList.set(item.value.listUri, listItems);
-	}
-
-	return lists
-		.map((record) => buildList(record, itemsByList.get(record.uri) ?? [], author).list)
-		.filter((list) => list.itemCount > 0);
+	const lists = await getActorLists(author.did);
+	return lists.map(
+		(record) => buildList(record, record.items ?? [], author, record.itemsCount ?? 0).list
+	);
 }
 
 export async function getMediaListPage({

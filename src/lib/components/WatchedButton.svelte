@@ -1,49 +1,34 @@
 <script lang="ts">
-	import { invalidateAll } from '$app/navigation';
 	import { CircleCheck, LoaderCircle } from '@lucide/svelte';
-	import { untrack } from 'svelte';
 	import ActionTooltip from './ActionTooltip.svelte';
 	import { posterUrl } from '$lib/images';
-	import { loadWatchedStatus, setWatchedStatus } from '$lib/list-write.remote';
+	import { setWatchedStatus, type MediaListState } from '$lib/list-write.remote';
 	import { loginDialog } from '$lib/login.svelte';
 	import type { MediaSummary } from '$lib/types';
 
-	let { item, did }: { item: MediaSummary; did: string | null } = $props();
-	let watched = $state(false);
-	let loading = $state(false);
+	let {
+		item,
+		did,
+		state: mediaState = null,
+		loading = false,
+		stateError = '',
+		onStateChange = () => {}
+	}: {
+		item: MediaSummary;
+		did: string | null;
+		state?: MediaListState | null;
+		loading?: boolean;
+		stateError?: string;
+		onStateChange?: (state: MediaListState) => void;
+	} = $props();
+	let watched = $derived(mediaState?.watched ?? false);
 	let saving = $state(false);
 	let statusError = $state('');
+	let errorMessage = $derived(statusError || stateError);
 
-	$effect(() => {
-		const creativeWorkType = item.creativeWorkType;
-		const tmdbId = item.tmdbId;
-		if (!did) {
-			watched = false;
-			loading = false;
-			return;
-		}
-
-		loading = true;
-		statusError = '';
-		let cancelled = false;
-		const request = untrack(() => loadWatchedStatus({ creativeWorkType, tmdbId }));
-
-		void request
-			.then((result) => {
-				if (!cancelled) watched = result.watched;
-			})
-			.catch((cause) => {
-				if (cancelled) return;
-				statusError = cause instanceof Error ? cause.message : 'Could not load watched status.';
-			})
-			.finally(() => {
-				if (!cancelled) loading = false;
-			});
-
-		return () => {
-			cancelled = true;
-		};
-	});
+	function setWatched(watched: boolean) {
+		if (mediaState) onStateChange({ ...mediaState, watched });
+	}
 
 	async function toggleWatched() {
 		if (!did) {
@@ -53,7 +38,7 @@
 		if (loading || saving) return;
 
 		const previous = watched;
-		watched = !watched;
+		setWatched(!watched);
 		saving = true;
 		statusError = '';
 
@@ -68,10 +53,9 @@
 				},
 				watched
 			});
-			watched = result.watched;
-			void invalidateAll();
+			setWatched(result.watched);
 		} catch (cause) {
-			watched = previous;
+			setWatched(previous);
 			statusError = cause instanceof Error ? cause.message : 'Could not update watched status.';
 		} finally {
 			saving = false;
@@ -96,9 +80,9 @@
 		{/if}
 	</span>
 	<span
-		class={`text-xs leading-4 font-medium lg:sr-only ${statusError ? 'text-red-300' : 'text-base-200'}`}
+		class={`text-xs leading-4 font-medium lg:sr-only ${errorMessage ? 'text-red-300' : 'text-base-200'}`}
 	>
-		{statusError ? 'try again' : watched ? 'mark unwatched' : 'mark as watched'}
+		{errorMessage ? 'try again' : watched ? 'mark unwatched' : 'mark as watched'}
 	</span>
-	<ActionTooltip label={statusError || (watched ? 'mark as unwatched' : 'mark as watched')} />
+	<ActionTooltip label={errorMessage || (watched ? 'mark as unwatched' : 'mark as watched')} />
 </button>

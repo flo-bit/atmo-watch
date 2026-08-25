@@ -17,6 +17,19 @@
           "cursor": {
             "type": "string"
           },
+          "actor": {
+            "type": "string",
+            "format": "at-identifier",
+            "description": "Filter by an indexed DID or cached handle"
+          },
+          "creativeWorkType": {
+            "type": "string",
+            "description": "Filter by creativeWorkType"
+          },
+          "identifiersTmdbId": {
+            "type": "string",
+            "description": "Filter by identifiers.tmdbId"
+          },
           "profiles": {
             "type": "boolean",
             "description": "Include indexed profile and identity information"

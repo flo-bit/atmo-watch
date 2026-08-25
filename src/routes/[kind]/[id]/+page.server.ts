@@ -1,6 +1,6 @@
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
-import { getMediaReviews } from '$lib/reviews.server';
+import { getMediaRatingSummary, getMediaReviewsPage } from '$lib/reviews.server';
 import { getMediaPage, TMDBError } from '$lib/tmdb.server';
 import { parseMediaRouteKind, parseTmdbId } from '$lib/utils';
 import { getMediaSubmittedVideos } from '$lib/videos.server';
@@ -33,6 +33,8 @@ function getStreamingRegion(url: URL, request: Request) {
 	return null;
 }
 
+const REVIEW_PAGE_SIZE = 12;
+
 export const load: PageServerLoad = async ({ locals, params, request, url }) => {
 	const tmdbId = parseTmdbId(params.id);
 	const creativeWorkType = parseMediaRouteKind(params.kind);
@@ -42,11 +44,20 @@ export const load: PageServerLoad = async ({ locals, params, request, url }) => 
 	}
 
 	try {
-		const [mediaPage, reviews, submittedVideos] = await Promise.all([
+		const [mediaPage, reviewPage, ratingSummary, submittedVideos] = await Promise.all([
 			getMediaPage(tmdbId, creativeWorkType, getStreamingRegion(url, request)),
-			getMediaReviews(tmdbId, creativeWorkType, locals.did).catch((cause) => {
+			getMediaReviewsPage({
+				tmdbId,
+				creativeWorkType,
+				limit: REVIEW_PAGE_SIZE,
+				viewerDid: locals.did
+			}).catch((cause) => {
 				console.error('Could not load reviews from Contrail', cause);
-				return [];
+				return { reviews: [], cursor: null };
+			}),
+			getMediaRatingSummary(tmdbId, creativeWorkType).catch((cause) => {
+				console.error('Could not load rating summary from Contrail', cause);
+				return { score: null, count: 0 };
 			}),
 			getMediaSubmittedVideos(tmdbId, creativeWorkType).catch((cause) => {
 				console.error('Could not load submitted videos from Contrail', cause);
@@ -57,7 +68,9 @@ export const load: PageServerLoad = async ({ locals, params, request, url }) => 
 		return {
 			...mediaPage,
 			videos: [...mediaPage.videos, ...submittedVideos],
-			reviews,
+			reviews: reviewPage.reviews,
+			reviewCursor: reviewPage.cursor,
+			ratingSummary,
 			today: new Date().toISOString().slice(0, 10)
 		};
 	} catch (cause) {

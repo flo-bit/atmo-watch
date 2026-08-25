@@ -32,6 +32,15 @@
       },
       "parameters": {
         "properties": {
+          "actor": {
+            "description": "Filter by an indexed DID or cached handle",
+            "format": "at-identifier",
+            "type": "string"
+          },
+          "creativeWorkType": {
+            "description": "Filter by creativeWorkType",
+            "type": "string"
+          },
           "cursor": {
             "type": "string"
           },
@@ -40,6 +49,10 @@
             "maximum": 50,
             "minimum": 1,
             "type": "integer"
+          },
+          "identifiersTmdbId": {
+            "description": "Filter by identifiers.tmdbId",
+            "type": "string"
           },
           "limit": {
             "default": 50,

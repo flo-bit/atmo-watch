@@ -1,12 +1,10 @@
 <script lang="ts">
-	import { invalidateAll } from '$app/navigation';
 	import { DropdownMenu } from 'bits-ui';
 	import { BookmarkPlus } from '@lucide/svelte';
-	import { untrack } from 'svelte';
 	import ActionTooltip from './ActionTooltip.svelte';
 	import { posterUrl } from '$lib/images';
 	import { createListDialog } from '$lib/list.svelte';
-	import { loadListOptions, toggleListMembership } from '$lib/list-write.remote';
+	import { toggleListMembership, type MediaListState } from '$lib/list-write.remote';
 	import { loginDialog } from '$lib/login.svelte';
 	import type { MediaSummary } from '$lib/types';
 
@@ -19,17 +17,27 @@
 	let {
 		item,
 		did,
-		variant = 'icon'
+		variant = 'icon',
+		state: mediaState = null,
+		loading = false,
+		stateError = '',
+		onStateChange = () => {},
+		onRefresh = async () => {}
 	}: {
 		item: MediaSummary;
 		did: string | null;
 		variant?: 'icon' | 'action';
+		state?: MediaListState | null;
+		loading?: boolean;
+		stateError?: string;
+		onStateChange?: (state: MediaListState) => void;
+		onRefresh?: () => Promise<void>;
 	} = $props();
 	let open = $state(false);
-	let lists = $state<ListOption[]>([]);
-	let loading = $state(false);
+	let lists = $derived<ListOption[]>(mediaState?.lists ?? []);
 	let pendingUris = $state<string[]>([]);
 	let listError = $state('');
+	let errorMessage = $derived(listError || stateError);
 
 	function mediaInput() {
 		const imageUrl = posterUrl(item.poster, 'w500');
@@ -49,41 +57,18 @@
 		}
 
 		open = nextOpen;
+		if (nextOpen) {
+			listError = '';
+			void onRefresh();
+		}
 	}
 
-	$effect(() => {
-		if (!open || !did) return;
-
-		lists = [];
-		loading = true;
-		listError = '';
-		let cancelled = false;
-		const request = untrack(() =>
-			loadListOptions({
-				creativeWorkType: item.creativeWorkType,
-				tmdbId: item.tmdbId
-			})
-		);
-
-		void request
-			.then((result) => {
-				if (!cancelled) lists = result.lists;
-			})
-			.catch((cause) => {
-				if (cancelled) return;
-				listError = cause instanceof Error ? cause.message : 'Could not load your lists.';
-			})
-			.finally(() => {
-				if (!cancelled) loading = false;
-			});
-
-		return () => {
-			cancelled = true;
-		};
-	});
-
 	function setSelected(uri: string, selected: boolean) {
-		lists = lists.map((list) => (list.uri === uri ? { ...list, selected } : list));
+		if (!mediaState) return;
+		onStateChange({
+			...mediaState,
+			lists: mediaState.lists.map((list) => (list.uri === uri ? { ...list, selected } : list))
+		});
 	}
 
 	async function toggleList(list: ListOption, selected: boolean) {
@@ -96,7 +81,6 @@
 
 		try {
 			await toggleListMembership({ media: mediaInput(), listUri: list.uri, selected });
-			void invalidateAll();
 		} catch (cause) {
 			setSelected(list.uri, previous);
 			listError = cause instanceof Error ? cause.message : 'Could not update the list.';
@@ -207,13 +191,13 @@
 							</DropdownMenu.CheckboxItem>
 						{/each}
 					</div>
-				{:else if !listError}
+				{:else if !errorMessage}
 					<div class="px-2.5 py-3 text-sm text-base-400">No lists yet.</div>
 				{/if}
 			</DropdownMenu.Group>
 
-			{#if listError}
-				<p class="px-2.5 py-2 text-xs text-red-300" role="alert">{listError}</p>
+			{#if errorMessage}
+				<p class="px-2.5 py-2 text-xs text-red-300" role="alert">{errorMessage}</p>
 			{/if}
 
 			<DropdownMenu.Separator class="my-1 h-px bg-white/10" />

@@ -53,15 +53,18 @@
 	}
 
 	function getTypeOptions() {
-		const present = new Set(data.videos.map((video) => videoTypeKey(video.type)));
-		const ordered = VIDEO_TYPES.filter((type) => present.delete(type)).map((type) => ({
+		const present = data.videos
+			.map((video) => videoTypeKey(video.type))
+			.filter((type, index, types) => types.indexOf(type) === index);
+		const ordered = VIDEO_TYPES.filter((type) => present.includes(type)).map((type) => ({
 			value: type as string,
 			label: VIDEO_TYPE_LABELS[type]
 		}));
-		return [
-			...ordered,
-			...[...present].sort().map((type) => ({ value: type, label: videoTypeLabel(type) }))
-		];
+		const custom = present
+			.filter((type) => !(VIDEO_TYPES as readonly string[]).includes(type))
+			.sort()
+			.map((type) => ({ value: type, label: videoTypeLabel(type) }));
+		return [...ordered, ...custom];
 	}
 
 	function toggleType(type: string) {

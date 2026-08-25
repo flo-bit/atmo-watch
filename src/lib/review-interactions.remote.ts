@@ -30,20 +30,11 @@ function responseMessage(data: unknown, fallback: string) {
 }
 
 async function findLike(reviewUri: CanonicalResourceUri, did: Did) {
-	let cursor: string | undefined;
-
-	do {
-		const response = await contrail.get('watch.atmo.like.listRecords', {
-			params: { actor: did, cursor, limit: 200 }
-		});
-		if (!response.ok) return null;
-
-		const like = response.data.records.find((record) => record.value.subjectUri === reviewUri);
-		if (like) return like.uri;
-		cursor = response.data.cursor;
-	} while (cursor);
-
-	return null;
+	const response = await contrail.get('watch.atmo.like.listRecords', {
+		params: { actor: did, subjectUri: reviewUri, limit: 1 }
+	});
+	if (!response.ok) return null;
+	return response.data.records[0]?.uri ?? null;
 }
 
 export const likeReview = command(v.object({ reviewUri: uriSchema }), async ({ reviewUri }) => {

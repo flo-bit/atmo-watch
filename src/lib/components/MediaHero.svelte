@@ -1,4 +1,5 @@
 <script lang="ts">
+	import type { ResolvedPathname } from '$app/types';
 	import type { MediaImage, MediaLogo } from '$lib/types';
 	import { backdropUrl, logoUrl, posterUrl, stillUrl } from '$lib/images';
 
@@ -16,7 +17,7 @@
 		backdropVariant?: 'backdrop' | 'still';
 		fallbackPoster?: MediaImage | null;
 		logo?: MediaLogo | null;
-		href?: string;
+		href?: ResolvedPathname;
 		titleIsHeading?: boolean;
 	} = $props();
 

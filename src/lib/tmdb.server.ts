@@ -201,8 +201,10 @@ function toMediaDetails(
 function toMediaCredit(source: PersonCombinedCastCredit): MediaCredit {
 	return {
 		...toMediaSummary(source, fromTmdbMediaType(source.media_type)),
-		order: 'order' in source ? source.order : 0,
-		popularity: source.popularity
+		order: source.media_type === 'movie' ? source.order : 0,
+		episodeCount: source.media_type === 'tv' ? source.episode_count : null,
+		popularity: source.popularity,
+		voteCount: source.vote_count
 	};
 }
 
@@ -393,7 +395,7 @@ async function loadRatings(
 	url.searchParams.set('apikey', apiKey);
 
 	let response: Response;
-	let data: OmdbResponse | null = null;
+	let data: OmdbResponse;
 
 	try {
 		response = await fetch(url);
@@ -817,7 +819,7 @@ export async function getReviewRecordMetadata(
 
 export function getPersonPage(personId: number) {
 	const cache = getPublicDataCache(MEDIA_DATA_TTL);
-	return cachePublicData(cache, `tmdb:person:${personId}`, async () => {
+	return cachePublicData(cache, `tmdb:person:v3:${personId}`, async () => {
 		const person = await getClient().people.details({
 			person_id: personId,
 			append_to_response: PERSON_APPENDS

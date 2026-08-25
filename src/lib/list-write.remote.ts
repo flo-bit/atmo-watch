@@ -101,6 +101,11 @@ type StoredListItem = {
 	value: StoredListItemValue;
 };
 
+export type MediaListState = {
+	lists: Array<{ uri: string; name: string; selected: boolean }>;
+	watched: boolean;
+};
+
 type PreparedListItem = {
 	metadata: Awaited<ReturnType<typeof getReviewRecordMetadata>>;
 	poster?: Awaited<ReturnType<typeof uploadPoster>>;
@@ -191,16 +196,61 @@ function toStoredListItems(records: RepoRecord[], did: Did) {
 	});
 }
 
-async function loadListData(client: Client, did: Did) {
-	const [listRecords, itemRecords] = await Promise.all([
+async function loadMediaListItems(did: Did, media: v.InferOutput<typeof mediaIdentitySchema>) {
+	const records: RepoRecord[] = [];
+	let cursor: string | undefined;
+
+	do {
+		const response = await contrail.get('watch.atmo.listItem.listRecords', {
+			params: {
+				actor: did,
+				creativeWorkType: media.creativeWorkType,
+				identifiersTmdbId: String(media.tmdbId),
+				cursor,
+				limit: 200
+			}
+		});
+		if (!response.ok) {
+			error(response.status, 'Could not load your list memberships');
+		}
+
+		records.push(...response.data.records);
+		cursor = response.data.cursor;
+	} while (cursor);
+
+	return toStoredListItems(records, did).filter((item) => isMediaItem(item, media));
+}
+
+async function loadMediaListData(
+	client: Client,
+	did: Did,
+	media: v.InferOutput<typeof mediaIdentitySchema>
+) {
+	const [listRecords, items] = await Promise.all([
 		loadRepoRecords(client, did, LIST_COLLECTION),
-		loadRepoRecords(client, did, LIST_ITEM_COLLECTION)
+		loadMediaListItems(did, media)
 	]);
 
+	return { lists: toStoredLists(listRecords, did), items };
+}
+
+async function getOwnedList(client: Client, did: Did, uri: string) {
+	if (!isOwnedRecordUri(uri, did, LIST_COLLECTION)) error(403, 'You can only use your own lists');
+	const parsed = parseCanonicalResourceUri(uri);
+	const response = await client.get('com.atproto.repo.getRecord', {
+		params: { repo: did, collection: LIST_COLLECTION, rkey: parsed.rkey }
+	});
+	if (!response.ok) error(response.status, responseMessage(response.data, 'List not found'));
+
+	const value = response.data.value as StoredListValue;
+	if (value.$type !== LIST_COLLECTION || typeof value.name !== 'string') {
+		error(404, 'List not found');
+	}
 	return {
-		lists: toStoredLists(listRecords, did),
-		items: toStoredListItems(itemRecords, did)
-	};
+		uri,
+		name: value.name.trim() || 'Untitled list',
+		...(typeof value.listType === 'string' && value.listType ? { listType: value.listType } : {})
+	} satisfies StoredList;
 }
 
 function isMediaItem(item: StoredListItem, media: v.InferOutput<typeof mediaIdentitySchema>) {
@@ -360,11 +410,14 @@ async function deleteListItems(client: Client, did: Did, items: StoredListItem[]
 	}
 }
 
-export const loadListOptions = command(mediaIdentitySchema, async (media) => {
-	const { client, did } = requireSession();
-	const { lists, items } = await loadListData(client, did);
-	const selectedUris = new Set(
-		items.filter((item) => isMediaItem(item, media)).map((item) => item.value.listUri)
+function toMediaListState(
+	lists: StoredList[],
+	items: StoredListItem[],
+	creativeWorkType: v.InferOutput<typeof mediaIdentitySchema>['creativeWorkType']
+): MediaListState {
+	const selectedUris = new Set(items.map((item) => item.value.listUri));
+	const watchedListUris = new Set(
+		lists.filter((list) => isWatchedList(list, creativeWorkType)).map((list) => list.uri)
 	);
 
 	return {
@@ -372,18 +425,25 @@ export const loadListOptions = command(mediaIdentitySchema, async (media) => {
 			uri: list.uri,
 			name: list.name,
 			selected: selectedUris.has(list.uri)
-		}))
+		})),
+		watched: items.some((item) => watchedListUris.has(item.value.listUri as CanonicalResourceUri))
 	};
+}
+
+export const loadMediaListState = command(mediaIdentitySchema, async (media) => {
+	const { client, did } = requireSession();
+	const { lists, items } = await loadMediaListData(client, did, media);
+	return toMediaListState(lists, items, media.creativeWorkType);
 });
 
 export const toggleListMembership = command(
 	toggleListMembershipSchema,
 	async ({ media, listUri, selected }) => {
 		const { client, did } = requireSession();
-		const { lists, items } = await loadListData(client, did);
-		const list = lists.find((candidate) => candidate.uri === listUri);
-		if (!list) error(404, 'List not found');
-
+		const [list, items] = await Promise.all([
+			getOwnedList(client, did, listUri),
+			loadMediaListItems(did, media)
+		]);
 		const matchingItems = items.filter(
 			(item) => item.value.listUri === list.uri && isMediaItem(item, media)
 		);
@@ -423,24 +483,9 @@ function isWatchedList(
 	return list.listType === 'watched' || list.name === defaultWatchedListName(creativeWorkType);
 }
 
-export const loadWatchedStatus = command(mediaIdentitySchema, async (media) => {
-	const { client, did } = requireSession();
-	const { lists, items } = await loadListData(client, did);
-	const watchedListUris = new Set(
-		lists.filter((list) => isWatchedList(list, media.creativeWorkType)).map((list) => list.uri)
-	);
-
-	return {
-		watched: items.some(
-			(item) =>
-				watchedListUris.has(item.value.listUri as CanonicalResourceUri) && isMediaItem(item, media)
-		)
-	};
-});
-
 export const setWatchedStatus = command(setWatchedSchema, async ({ media, watched }) => {
 	const { client, did } = requireSession();
-	const { lists, items } = await loadListData(client, did);
+	const { lists, items } = await loadMediaListData(client, did, media);
 	const watchedLists = lists.filter((list) => isWatchedList(list, media.creativeWorkType));
 	const watchedListUris = new Set(watchedLists.map((list) => list.uri));
 	const matchingItems = items.filter(

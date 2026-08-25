@@ -9,6 +9,11 @@ type RandomVideoRow = {
 	time_us: number;
 };
 
+type RatingSummaryRow = {
+	rating_count: number;
+	score: number | null;
+};
+
 export const config: ContrailConfig = {
 	namespace: 'watch.atmo',
 	profiles: [
@@ -97,6 +102,45 @@ export const config: ContrailConfig = {
 					const whitespace =
 						'CHAR(9, 10, 11, 12, 13, 32, 133, 160, 5760, 8192, 8193, 8194, 8195, 8196, 8197, 8198, 8199, 8200, 8201, 8202, 8232, 8233, 8239, 8287, 12288, 65279)';
 					return { conditions: [`TRIM(COALESCE(${text}, ''), ${whitespace}) <> ''`] };
+				}
+			},
+			queries: {
+				getRatingSummary: async (db, params) => {
+					const creativeWorkType = params.get('creativeWorkType');
+					const tmdbId = Number(params.get('tmdbId'));
+					if (
+						(creativeWorkType !== 'movie' && creativeWorkType !== 'tv_show') ||
+						!Number.isSafeInteger(tmdbId) ||
+						tmdbId < 1
+					) {
+						return Response.json(
+							{ error: 'InvalidRequest', message: 'Invalid media identity' },
+							{ status: 400 }
+						);
+					}
+
+					const dialect = getDialect(db);
+					const workType = dialect.jsonExtract('r.record', 'creativeWorkType');
+					const recordTmdbId = dialect.jsonExtract('r.record', 'identifiers.tmdbId');
+					const rating = dialect.jsonExtract('r.record', 'rating');
+					const result = await db
+						.prepare(
+							`SELECT COUNT(*) AS rating_count, AVG(CAST(${rating} AS REAL)) AS score
+							 FROM ${recordsTableName('review')} r
+							 WHERE r.cid IS NOT NULL
+							   AND r.record IS NOT NULL
+							   AND ${workType} = ?
+							   AND ${recordTmdbId} = ?
+							   AND CAST(${rating} AS REAL) BETWEEN 0 AND 10`
+						)
+						.bind(creativeWorkType, String(tmdbId))
+						.all<RatingSummaryRow>();
+					const row = result.results[0];
+
+					return Response.json({
+						count: row?.rating_count ?? 0,
+						...(row?.score !== null && row?.score !== undefined ? { score: String(row.score) } : {})
+					});
 				}
 			},
 			relations: {

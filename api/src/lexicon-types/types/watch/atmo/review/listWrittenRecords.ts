@@ -8,6 +8,14 @@ const _mainSchema = /*#__PURE__*/ v.query(
 	{
 		"params": /*#__PURE__*/ v.object(
 			{
+				/**
+				 * Filter by an indexed DID or cached handle
+				 */
+				"actor": /*#__PURE__*/ v.optional(/*#__PURE__*/ v.actorIdentifierString()),
+				/**
+				 * Filter by creativeWorkType
+				 */
+				"creativeWorkType": /*#__PURE__*/ v.optional(/*#__PURE__*/ v.string()),
 				"cursor": /*#__PURE__*/ v.optional(/*#__PURE__*/ v.string()),
 				/**
 				 * Number of likes records to embed
@@ -18,6 +26,10 @@ const _mainSchema = /*#__PURE__*/ v.query(
 					/*#__PURE__*/ v.integer(),
 					[/*#__PURE__*/ v.integerRange(1, 50)]
 				)),
+				/**
+				 * Filter by identifiers.tmdbId
+				 */
+				"identifiersTmdbId": /*#__PURE__*/ v.optional(/*#__PURE__*/ v.string()),
 				/**
 				 * @minimum 1
 				 * @maximum 200

@@ -1,0 +1,49 @@
+{
+  "defs": {
+    "main": {
+      "description": "Return the aggregate rating score for a TMDB movie or TV show.",
+      "output": {
+        "encoding": "application/json",
+        "schema": {
+          "properties": {
+            "count": {
+              "minimum": 0,
+              "type": "integer"
+            },
+            "score": {
+              "description": "Average rating as a decimal string.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "count"
+          ],
+          "type": "object"
+        }
+      },
+      "parameters": {
+        "properties": {
+          "creativeWorkType": {
+            "knownValues": [
+              "movie",
+              "tv_show"
+            ],
+            "type": "string"
+          },
+          "tmdbId": {
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "creativeWorkType",
+          "tmdbId"
+        ],
+        "type": "params"
+      },
+      "type": "query"
+    }
+  },
+  "id": "watch.atmo.review.getRatingSummary",
+  "lexicon": 1
+}

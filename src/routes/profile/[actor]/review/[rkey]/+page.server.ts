@@ -26,15 +26,17 @@ export const load: PageServerLoad = async ({ locals, params, parent }) => {
 	if (!review) error(404, 'Review not found');
 
 	const [interactions, mediaHeader] = await Promise.all([
-		getReviewInteractions(reviewUri, locals.did).catch((cause) => {
-			console.error('Could not load review interactions from Contrail', cause);
-			return {
-				likeCount: 0,
-				commentCount: 0,
-				viewerLikeUri: null,
-				comments: []
-			};
-		}),
+		getReviewInteractions(reviewUri, locals.did, reviewResponse.data.likesCount ?? 0).catch(
+			(cause) => {
+				console.error('Could not load review interactions from Contrail', cause);
+				return {
+					likeCount: reviewResponse.data.likesCount ?? 0,
+					commentCount: reviewResponse.data.commentsCount ?? 0,
+					viewerLikeUri: null,
+					comments: []
+				};
+			}
+		),
 		getMediaHeader(review.media.tmdbId, review.media.creativeWorkType).catch((cause) => {
 			console.error('Could not load media header from TMDB', cause);
 			return null;

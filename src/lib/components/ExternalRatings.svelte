@@ -77,7 +77,7 @@
 			<a
 				href={`https://www.imdb.com/title/${imdbId}/`}
 				target="_blank"
-				rel="noopener noreferrer"
+				rel="external noopener noreferrer"
 				class="inline-flex items-center gap-1.5 text-base-200 transition-colors hover:text-white"
 				aria-label={`View on IMDb${imdbScore ? `. Rating: ${imdbScore} out of 10` : ''}${imdbVotes ? `. ${imdbVotes} votes` : ''}`}
 			>
@@ -128,7 +128,7 @@
 			<a
 				href={tmdbUrl}
 				target="_blank"
-				rel="noopener noreferrer"
+				rel="external noopener noreferrer"
 				class="inline-flex items-center gap-1.5 text-base-200 transition-colors hover:text-white"
 				aria-label={`View on TMDB. Rating: ${tmdbScore.toFixed(1)} out of 10${tmdbRatingCount !== null ? `. ${tmdbRatingCount.toLocaleString('en-US')} votes` : ''}`}
 			>

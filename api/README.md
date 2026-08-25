@@ -11,7 +11,7 @@ https://api.atmo.watch/lexicons
 https://api.atmo.watch/status
 ```
 
-Collection reads, profiles, and `watch.atmo.getCursor` are anonymous. Profile responses include both Bluesky and Popfeed profiles when available. Review responses include materialized `likesCount` and `commentsCount`; `watch.atmo.review.listWrittenRecords` filters out records whose text is empty or whitespace. List responses include `itemsCount`, `likesCount`, and `commentsCount`, plus optional relation hydration. Likes count distinct actors, while comments count records whose `subjectUri` is the review or list. List items can be filtered by list URI, media identifiers, work type, list type, status, and date. `watch.atmo.notifyOfUpdate` uses AT Protocol service auth with audience `did:web:api.atmo.watch`.
+Collection reads, profiles, and `watch.atmo.getCursor` are anonymous. Profile responses include both Bluesky and Popfeed profiles when available. Review responses include materialized `likesCount` and `commentsCount`; `watch.atmo.review.listWrittenRecords` filters out records whose text is empty or whitespace, and `watch.atmo.review.getRatingSummary` calculates a title's rating count and average directly in D1. List responses include `itemsCount`, `likesCount`, and `commentsCount`, plus optional relation hydration. Likes count distinct actors, while comments count records whose `subjectUri` is the review or list. List items can be filtered by list URI, media identifiers, work type, list type, status, and date. `watch.atmo.notifyOfUpdate` uses AT Protocol service auth with audience `did:web:api.atmo.watch`.
 
 ## Initial Cloudflare setup
 

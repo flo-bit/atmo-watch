@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
+	import type { ResolvedPathname } from '$app/types';
 	import { Clapperboard, ImagePlus } from '@lucide/svelte';
 	import Container from '$lib/components/Container.svelte';
 	import MediaHero from '$lib/components/MediaHero.svelte';
@@ -18,7 +19,7 @@
 	let showId = $derived(`${data.show.tmdbId}-${slugify(data.show.title)}`);
 	let showUrl = $derived(resolve('/[kind]/[id]', { kind: 'tv', id: showId }));
 	let videosUrl = $derived(
-		`${resolve('/[kind]/[id]/videos', { kind: 'tv', id: showId })}?season=${data.season.seasonNumber}`
+		`${resolve('/[kind]/[id]/videos', { kind: 'tv', id: showId })}?season=${data.season.seasonNumber}` as ResolvedPathname
 	);
 	let seasonPoster = $derived(data.season.poster ?? data.show.poster);
 	let episodeBackdrop = $derived(data.episodes.find((episode) => episode.still)?.still ?? null);
