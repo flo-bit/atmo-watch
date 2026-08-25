@@ -169,6 +169,9 @@
 						imdbId={current.imdbId}
 						imdbVotes={current.imdbVotes}
 						ratings={current.ratings}
+						tmdbScore={current.item.tmdbScore}
+						tmdbRatingCount={current.item.tmdbRatingCount}
+						tmdbUrl={`https://www.themoviedb.org/${current.item.creativeWorkType === 'tv_show' ? 'tv' : 'movie'}/${current.item.tmdbId}`}
 						showCounts={false}
 					/>
 				</div>

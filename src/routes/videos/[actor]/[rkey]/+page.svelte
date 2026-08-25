@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import Container from '$lib/components/Container.svelte';
-	import { posterUrl } from '$lib/images';
+	import { backdropUrl, posterUrl } from '$lib/images';
 	import { slugify } from '$lib/utils';
 	import type { PageData } from './$types';
 
@@ -69,8 +69,17 @@
 	{/if}
 </svelte:head>
 
-<main class="min-h-dvh bg-base-950 pb-16 text-base-50">
-	<Container class="px-4 pt-8 sm:pt-12">
+<main class="relative isolate min-h-dvh overflow-hidden bg-base-950 pb-16 text-base-50">
+	{#if data.mediaHeader?.item.backdrop}
+		<img
+			src={backdropUrl(data.mediaHeader.item.backdrop, 'w300')}
+			alt=""
+			class="pointer-events-none fixed inset-0 z-0 size-full scale-110 object-cover object-center blur-3xl"
+		/>
+		<div class="pointer-events-none fixed inset-0 z-0 bg-black/65"></div>
+	{/if}
+
+	<Container class="relative z-10 px-4 pt-8 sm:pt-12">
 		<div class="mx-auto max-w-4xl">
 			<div
 				class="aspect-video overflow-hidden rounded-xl border border-white/10 bg-black shadow-2xl shadow-black/30"
@@ -85,23 +94,9 @@
 				></iframe>
 			</div>
 
-			<div class="mt-5 flex flex-wrap items-start justify-between gap-3">
-				<h1 class="min-w-0 text-xl leading-tight font-semibold tracking-tight sm:text-2xl">
-					{data.video.name}
-				</h1>
-				<div class="flex shrink-0 items-center gap-2">
-					<span
-						class="rounded-full bg-white/10 px-2.5 py-1 text-[0.6875rem] font-semibold uppercase"
-					>
-						{data.video.type}
-					</span>
-					{#if data.video.containsSpoilers}
-						<span class="rounded-full bg-white/10 px-2.5 py-1 text-[0.6875rem] font-semibold">
-							spoilers
-						</span>
-					{/if}
-				</div>
-			</div>
+			<h1 class="mt-5 text-xl leading-tight font-semibold tracking-tight sm:text-2xl">
+				{data.video.name}
+			</h1>
 
 			{#if context && rootMediaUrl}
 				<div class="mt-7 flex w-fit max-w-full items-center gap-3">

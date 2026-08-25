@@ -51,6 +51,18 @@
 		})
 	);
 	let profileUrl = $derived(resolve('/profile/[actor]', { actor: data.review.author.did }));
+	let canonicalUrl = $derived(`${page.url.origin}${page.url.pathname}`);
+	let ogImageUrl = $derived(`${canonicalUrl.replace(/\/$/, '')}/og.png`);
+	let socialTitle = $derived(
+		reviewText
+			? `${data.review.media.title} review by @${reviewerHandle}`
+			: `${data.review.media.title} rated ${data.review.rating}/10 by @${reviewerHandle}`
+	);
+	let socialDescription = $derived(
+		reviewText
+			? `Read @${reviewerHandle}'s review of ${data.review.media.title}.`
+			: `See @${reviewerHandle}'s ${data.review.rating}/10 rating of ${data.review.media.title}.`
+	);
 
 	const dateFormatter = new Intl.DateTimeFormat('en', {
 		dateStyle: 'medium',
@@ -115,10 +127,28 @@
 </script>
 
 <svelte:head>
-	<title>{data.review.media.title} review by @{reviewerHandle} | atmo.watch</title>
+	<title>{socialTitle} | atmo.watch</title>
+	<meta name="description" content={socialDescription} />
+
+	<meta property="og:url" content={canonicalUrl} />
+	<meta property="og:type" content="article" />
+	<meta property="og:title" content={socialTitle} />
+	<meta property="og:description" content={socialDescription} />
+	<meta property="og:image" content={ogImageUrl} />
+	<meta property="og:image:width" content="1200" />
+	<meta property="og:image:height" content="630" />
 	<meta
-		name="description"
-		content={`Read @${reviewerHandle}'s review of ${data.review.media.title}.`}
+		property="og:image:alt"
+		content={`@${reviewerHandle}'s ${data.review.rating}/10 rating of ${data.review.media.title}`}
+	/>
+
+	<meta name="twitter:card" content="summary_large_image" />
+	<meta name="twitter:title" content={socialTitle} />
+	<meta name="twitter:description" content={socialDescription} />
+	<meta name="twitter:image" content={ogImageUrl} />
+	<meta
+		name="twitter:image:alt"
+		content={`@${reviewerHandle}'s ${data.review.rating}/10 rating of ${data.review.media.title}`}
 	/>
 </svelte:head>
 
