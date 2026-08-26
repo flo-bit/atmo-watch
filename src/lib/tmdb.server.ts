@@ -217,6 +217,7 @@ function toMediaCredit(source: PersonCombinedCastCredit): MediaCredit {
 function toCastMember(person: Cast): CastMember {
 	return {
 		id: person.id,
+		creditId: person.credit_id,
 		name: person.name,
 		character: person.character,
 		profile_path: person.profile_path ?? null

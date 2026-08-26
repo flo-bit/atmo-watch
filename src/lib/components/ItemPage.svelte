@@ -529,7 +529,7 @@
 						class="mt-4 gap-4 pb-3 lg:grid lg:grid-cols-5 lg:gap-x-4 lg:gap-y-6 lg:overflow-visible lg:pb-0"
 						label="Cast"
 					>
-						{#each data.cast as castMember, index (castMember.id)}
+						{#each data.cast as castMember, index (castMember.creditId)}
 							<a
 								href={resolve('/cast/[id]', {
 									id: `${castMember.id}-${slugify(castMember.name)}`

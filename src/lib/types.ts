@@ -166,6 +166,7 @@ export type StreamingAvailability = {
 
 export type CastMember = {
 	id: number;
+	creditId: string;
 	name: string;
 	character: string;
 	profile_path: string | null;
