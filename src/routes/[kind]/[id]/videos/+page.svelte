@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import Container from '$lib/components/Container.svelte';
+	import DefaultOpenGraphImage from '$lib/components/DefaultOpenGraphImage.svelte';
 	import VideoGallery from '$lib/components/VideoGallery.svelte';
 	import { posterUrl } from '$lib/images';
 	import { slugify, toMediaRouteKind } from '$lib/utils';
@@ -87,6 +88,8 @@
 		content={`Watch trailers, scenes, interviews, reviews, and other videos for ${data.item.title}.`}
 	/>
 </svelte:head>
+
+<DefaultOpenGraphImage />
 
 <main class="min-h-dvh bg-base-950 pb-16 text-base-50">
 	<Container class="px-4 pt-10 sm:pt-14">

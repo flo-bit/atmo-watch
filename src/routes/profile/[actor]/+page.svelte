@@ -3,6 +3,7 @@
 	import { UserProfile } from '@foxui/social';
 	import { untrack } from 'svelte';
 	import Container from '$lib/components/Container.svelte';
+	import DefaultOpenGraphImage from '$lib/components/DefaultOpenGraphImage.svelte';
 	import ItemCard from '$lib/components/ItemCard.svelte';
 	import ListCard from '$lib/components/ListCard.svelte';
 	import Review from '$lib/components/Review.svelte';
@@ -82,6 +83,8 @@
 	<title>@{data.profile.handle} | atmo.watch</title>
 	<meta name="description" content={`Movie and TV reviews and lists by @${data.profile.handle}.`} />
 </svelte:head>
+
+<DefaultOpenGraphImage />
 
 <main class="min-h-dvh bg-base-950 pb-12 text-base-50">
 	<Container class="px-4 sm:pt-8">

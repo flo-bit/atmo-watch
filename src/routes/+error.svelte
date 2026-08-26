@@ -2,6 +2,7 @@
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import Container from '$lib/components/Container.svelte';
+	import DefaultOpenGraphImage from '$lib/components/DefaultOpenGraphImage.svelte';
 
 	let title = $derived(page.status === 404 ? 'Page not found' : 'Something went wrong');
 	let message = $derived(
@@ -15,6 +16,8 @@
 <svelte:head>
 	<title>{page.status} — {title} | atmo.watch</title>
 </svelte:head>
+
+<DefaultOpenGraphImage />
 
 <main class="min-h-dvh bg-base-950 text-base-50">
 	<Container class="flex min-h-[75dvh] items-center px-4 py-16">

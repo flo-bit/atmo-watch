@@ -4,6 +4,7 @@
 	import type { ResolvedPathname } from '$app/types';
 	import { Clapperboard, ImagePlus } from '@lucide/svelte';
 	import Container from '$lib/components/Container.svelte';
+	import DefaultOpenGraphImage from '$lib/components/DefaultOpenGraphImage.svelte';
 	import MediaHero from '$lib/components/MediaHero.svelte';
 	import TrailerDialog from '$lib/components/TrailerDialog.svelte';
 	import VideoGallery from '$lib/components/VideoGallery.svelte';
@@ -114,6 +115,10 @@
 		<meta property="og:image" content={posterUrl(seasonPoster, 'w780')} />
 	{/if}
 </svelte:head>
+
+{#if !seasonPoster}
+	<DefaultOpenGraphImage />
+{/if}
 
 <main class="relative isolate min-h-dvh overflow-hidden bg-base-950 pb-16 text-white">
 	{#if data.show.backdrop}

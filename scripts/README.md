@@ -1,8 +1,22 @@
-# Video curation scripts
+# Project scripts
 
-These scripts discover and review YouTube videos, then submit the accepted records to AT Protocol repositories. Run them from the repository root with Node 22.19 or newer.
+Run these scripts from the repository root with Node 22.19 or newer.
 
-## 1. Find and review videos
+## Open Graph image
+
+Generate `static/og.png` from the current weekly trending movies and shows on TMDB. The renderer uses CSS 3D transforms in Chromium and requires `TMDB_ACCESS_TOKEN` or `TMDB_API_KEY` in `.env`.
+
+```sh
+pnpm og:generate
+```
+
+If Playwright's Chromium is unavailable, run `pnpm exec playwright install chromium` or point `OG_BROWSER_PATH` to a Chromium-based browser.
+
+## Video curation
+
+These scripts discover and review YouTube videos, then submit the accepted records to AT Protocol repositories.
+
+### 1. Find and review videos
 
 `find-videos.ts` resolves each target through TMDB and first gives its cast, characters, creators, keywords, seasons, and episodes to a pi SDK search-planning agent. That agent designs title-specific searches such as character best-scenes queries, season recaps, iconic episode clips, interviews, production material, and analysis. The script prints and saves this plan before running any YouTube searches.
 
@@ -38,7 +52,7 @@ Useful controls include:
 
 Use TMDB IDs for unambiguous targets. Run `pnpm videos:find -- --help` for every option.
 
-## 2. Upload submissions
+### 2. Upload submissions
 
 Use an AT Protocol app password rather than a primary password.
 

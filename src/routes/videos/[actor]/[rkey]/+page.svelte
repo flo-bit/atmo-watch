@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import Container from '$lib/components/Container.svelte';
+	import DefaultOpenGraphImage from '$lib/components/DefaultOpenGraphImage.svelte';
 	import { backdropUrl, posterUrl } from '$lib/images';
 	import { slugify } from '$lib/utils';
 	import type { PageData } from './$types';
@@ -68,6 +69,10 @@
 		<meta property="og:image" content={data.video.thumbnailUrl} />
 	{/if}
 </svelte:head>
+
+{#if !data.video.thumbnailUrl}
+	<DefaultOpenGraphImage />
+{/if}
 
 <main class="relative isolate min-h-dvh overflow-hidden bg-base-950 pb-16 text-base-50">
 	{#if data.mediaHeader?.item.backdrop}

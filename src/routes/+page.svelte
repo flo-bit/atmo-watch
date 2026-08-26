@@ -2,6 +2,7 @@
 	import { resolve } from '$app/paths';
 	import { tick } from 'svelte';
 	import Container from '$lib/components/Container.svelte';
+	import DefaultOpenGraphImage from '$lib/components/DefaultOpenGraphImage.svelte';
 	import MediaCollection from '$lib/components/MediaCollection.svelte';
 	import Review from '$lib/components/Review.svelte';
 	import SearchCommand from '$lib/components/SearchCommand.svelte';
@@ -78,6 +79,8 @@
 	<title>Search movies and TV | atmo.watch</title>
 	<meta name="description" content="Find a movie or TV show to review." />
 </svelte:head>
+
+<DefaultOpenGraphImage />
 
 <main class="min-h-dvh bg-base-950 pb-12 text-base-50">
 	<h1 class="sr-only">Search movies and TV shows</h1>

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { Check, ChevronDown, RotateCcw } from '@lucide/svelte';
+	import DefaultOpenGraphImage from '$lib/components/DefaultOpenGraphImage.svelte';
 	import MediaHero from '$lib/components/MediaHero.svelte';
 	import { backdropUrl, logoUrl } from '$lib/images';
 	import type { ActionData, PageData } from './$types';
@@ -48,6 +49,8 @@
 	<title>Edit artwork for {data.item.title} | atmo.watch</title>
 	<meta name="robots" content="noindex" />
 </svelte:head>
+
+<DefaultOpenGraphImage />
 
 <main class="min-h-dvh bg-base-950 pb-20 text-base-50">
 	<section class="relative isolate overflow-hidden">

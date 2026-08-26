@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import Container from '$lib/components/Container.svelte';
+	import DefaultOpenGraphImage from '$lib/components/DefaultOpenGraphImage.svelte';
 	import VideoGallery from '$lib/components/VideoGallery.svelte';
 	import type { MediaVideo } from '$lib/types';
 	import type { PageData } from './$types';
@@ -54,6 +55,8 @@
 	<title>Random scenes | atmo.watch</title>
 	<meta name="description" content="Discover random movie and TV scenes on atmo.watch." />
 </svelte:head>
+
+<DefaultOpenGraphImage />
 
 <main class="min-h-dvh bg-base-950 pb-12 text-base-50">
 	<Container class="px-4 pt-4 pb-16 sm:pt-6">

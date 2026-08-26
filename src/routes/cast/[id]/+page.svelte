@@ -3,6 +3,7 @@
 	import type { PageData } from './$types';
 	import Avatar from '$lib/components/Avatar.svelte';
 	import Container from '$lib/components/Container.svelte';
+	import DefaultOpenGraphImage from '$lib/components/DefaultOpenGraphImage.svelte';
 	import ItemsGrid from '$lib/components/ItemsGrid.svelte';
 	import { profileUrl } from '$lib/images';
 
@@ -37,6 +38,10 @@
 		<meta property="og:image" content={profileUrl(data.personDetails.profile_path, 'h632')} />
 	{/if}
 </svelte:head>
+
+{#if !data.personDetails.profile_path}
+	<DefaultOpenGraphImage />
+{/if}
 
 <Container class="relative z-10 pt-4 pb-8">
 	<div class="flex items-center gap-4 px-4 pt-8">

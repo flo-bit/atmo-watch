@@ -2,6 +2,7 @@
 	import { resolve } from '$app/paths';
 	import Avatar from '$lib/components/Avatar.svelte';
 	import Container from '$lib/components/Container.svelte';
+	import DefaultOpenGraphImage from '$lib/components/DefaultOpenGraphImage.svelte';
 	import ItemCard from '$lib/components/ItemCard.svelte';
 	import type { PageData } from './$types';
 
@@ -27,6 +28,8 @@
 		content={data.list.description || `${data.list.name}, a movie and TV list by @${handle}.`}
 	/>
 </svelte:head>
+
+<DefaultOpenGraphImage />
 
 <main class="min-h-dvh bg-base-950 pb-16 text-base-50">
 	<Container class="px-4 pt-10 sm:pt-14">
