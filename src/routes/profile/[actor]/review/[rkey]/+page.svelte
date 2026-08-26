@@ -1,20 +1,19 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
-	import { oauthLogin } from '$lib/atproto/oauth.remote';
 	import Avatar from '$lib/components/Avatar.svelte';
+	import CommentThread from '$lib/components/CommentThread.svelte';
 	import Container from '$lib/components/Container.svelte';
 	import MediaHero from '$lib/components/MediaHero.svelte';
 	import Rating from '$lib/components/Rating.svelte';
+	import { loginDialog } from '$lib/login.svelte';
 	import { likeReview, unlikeReview } from '$lib/review-interactions.remote';
 	import { slugify, toMediaRouteKind } from '$lib/utils';
-	import { AtprotoLoginModal } from '@foxui/social';
 	import { Heart, MessageCircle } from '@lucide/svelte';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
 
-	let loginOpen = $state(false);
 	let liking = $state(false);
 	let interactionError = $state('');
 	// These are intentionally local snapshots so the like can update optimistically.
@@ -24,6 +23,9 @@
 	let liked = $state(Boolean(data.viewerLikeUri));
 	// svelte-ignore state_referenced_locally
 	let likeCount = $state(data.likeCount);
+	// svelte-ignore state_referenced_locally
+	let threadCommentCount = $state(data.comments.length);
+	let commentCount = $derived(Math.max(data.commentCount, threadCommentCount));
 	let spoilerRevealed = $state(false);
 
 	let releaseYear = $derived(data.mediaHeader?.item.releaseDate?.slice(0, 4) || null);
@@ -83,17 +85,10 @@
 		return minutes ? `${hours}h ${minutes}m` : `${hours}h`;
 	}
 
-	async function login(handle: string) {
-		const returnTo = page.url.pathname + page.url.search + page.url.hash;
-		const { url } = await oauthLogin({ handle: handle.trim(), returnTo });
-		window.location.assign(url);
-		return true;
-	}
-
 	async function toggleLike() {
 		interactionError = '';
 		if (!data.did) {
-			loginOpen = true;
+			loginDialog.show();
 			return;
 		}
 		if (liking) return;
@@ -258,11 +253,11 @@
 
 					<a
 						href="#comments-heading"
-						aria-label={`${data.commentCount} ${data.commentCount === 1 ? 'comment' : 'comments'}`}
+						aria-label={`${commentCount} ${commentCount === 1 ? 'comment' : 'comments'}`}
 						class="inline-flex items-center gap-1.5 text-sm transition-colors hover:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent-400"
 					>
 						<MessageCircle class="size-5" strokeWidth={1.5} aria-hidden="true" />
-						{#if data.commentCount > 0}<span>{data.commentCount}</span>{/if}
+						{#if commentCount > 0}<span>{commentCount}</span>{/if}
 					</a>
 				</div>
 
@@ -273,49 +268,22 @@
 		</article>
 
 		<section class="mx-auto mt-10 max-w-2xl" aria-labelledby="comments-heading">
-			<h2 id="comments-heading" class="text-lg font-semibold text-white">comments</h2>
+			<h2 id="comments-heading" class="text-lg font-semibold text-white">
+				Comments
+				{#if commentCount > 0}
+					<span class="ml-1 text-sm font-normal text-base-500">{commentCount}</span>
+				{/if}
+			</h2>
 
-			{#if data.comments.length > 0}
-				<div class="mt-5 space-y-6">
-					{#each data.comments as comment (comment.uri)}
-						<article class="flex gap-3">
-							<a href={resolve('/profile/[actor]', { actor: comment.author.did })} class="shrink-0">
-								<Avatar
-									src={comment.author.avatarUrl}
-									alt={`@${comment.author.handle}'s avatar`}
-									class="size-9"
-								/>
-							</a>
-							<div class="min-w-0 flex-1">
-								<header class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
-									<a
-										href={resolve('/profile/[actor]', { actor: comment.author.did })}
-										class="truncate text-sm font-semibold text-white transition-colors hover:text-accent-300"
-									>
-										{comment.author.displayName || `@${comment.author.handle.replace(/^@/, '')}`}
-									</a>
-									{#if comment.author.displayName}
-										<span class="truncate text-xs text-base-500">
-											@{comment.author.handle.replace(/^@/, '')}
-										</span>
-									{/if}
-									<span class="text-base-700" aria-hidden="true">·</span>
-									<time datetime={comment.createdAt} class="text-xs text-base-500">
-										{formatDate(comment.createdAt)}
-									</time>
-								</header>
-								<p class="mt-2 text-sm leading-6 break-words whitespace-pre-wrap text-base-200">
-									{comment.text}
-								</p>
-							</div>
-						</article>
-					{/each}
-				</div>
-			{:else}
-				<p class="mt-4 text-sm text-base-500">No comments yet.</p>
-			{/if}
+			{#key data.review.uri}
+				<CommentThread
+					reviewUri={data.review.uri}
+					comments={data.comments}
+					viewerDid={data.did}
+					viewerAvatarUrl={data.avatarUrl}
+					onCountChange={(count) => (threadCommentCount = count)}
+				/>
+			{/key}
 		</section>
 	</Container>
 </main>
-
-<AtprotoLoginModal bind:open={loginOpen} {login} />

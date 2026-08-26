@@ -123,6 +123,8 @@ export type ReviewCommentModel = {
 	author: ActorSummary;
 	text: string;
 	createdAt: string;
+	parentUri: string;
+	rootUri: string | null;
 };
 
 export type MediaListModel = {

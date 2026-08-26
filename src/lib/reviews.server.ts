@@ -143,21 +143,37 @@ export async function getReviewInteractions(
 	viewerDid: Did | null,
 	likeCount: number
 ) {
-	// Direct comments often omit rootUri, while replies use it. Query both indexed
-	// fields and de-duplicate rather than downloading the service's entire comment collection.
+	// Direct comments generally omit rootUri. Replies use the top-level comment as
+	// their root, so load each direct comment's thread instead of scanning the
+	// service's entire comment collection. Querying rootUri=reviewUri also keeps
+	// comments from clients that use the review itself as the thread root.
 	const [direct, rooted, viewerLikeUri] = await Promise.all([
 		getCommentRecords({ subjectUri: reviewUri }),
 		getCommentRecords({ rootUri: reviewUri }),
 		getViewerLikeUri(reviewUri, viewerDid)
 	]);
 	const comments = new Map<string, CommentListRecords.Record>();
-	for (const comment of [...direct.records, ...rooted.records]) comments.set(comment.uri, comment);
-
 	const commentProfiles = new Map<string, CommentListRecords.ProfileEntry>();
-	for (const profile of [...direct.profiles, ...rooted.profiles]) {
-		if (!commentProfiles.has(profile.did) || profile.collection === 'app.bsky.actor.profile') {
-			commentProfiles.set(profile.did, profile);
+
+	function addComments(page: Awaited<ReturnType<typeof getCommentRecords>>) {
+		for (const comment of page.records) comments.set(comment.uri, comment);
+		for (const profile of page.profiles) {
+			if (!commentProfiles.has(profile.did) || profile.collection === 'app.bsky.actor.profile') {
+				commentProfiles.set(profile.did, profile);
+			}
 		}
+	}
+	addComments(direct);
+	addComments(rooted);
+
+	const batchSize = 8;
+	for (let index = 0; index < direct.records.length; index += batchSize) {
+		const pages = await Promise.all(
+			direct.records
+				.slice(index, index + batchSize)
+				.map((comment) => getCommentRecords({ rootUri: comment.uri }))
+		);
+		for (const page of pages) addComments(page);
 	}
 
 	const reviewComments: ReviewCommentModel[] = [...comments.values()]
@@ -165,7 +181,9 @@ export async function getReviewInteractions(
 			uri: comment.uri,
 			author: getCommentAuthor(comment.did, commentProfiles),
 			text: comment.value.text,
-			createdAt: comment.value.createdAt
+			createdAt: comment.value.createdAt,
+			parentUri: comment.value.subjectUri,
+			rootUri: comment.value.rootUri ?? null
 		}))
 		.sort((left, right) => Date.parse(right.createdAt) - Date.parse(left.createdAt));
 
