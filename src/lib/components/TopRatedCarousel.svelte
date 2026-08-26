@@ -88,7 +88,7 @@
 	<section
 		class="relative h-[50svh] w-full touch-pan-y overflow-hidden bg-base-900 sm:aspect-video sm:h-auto lg:aspect-auto lg:h-[80svh]"
 		aria-roledescription="carousel"
-		aria-label="Trending movies and shows"
+		aria-label="Top-rated movies and shows from the last 30 days"
 		ontouchstart={handleTouchStart}
 		ontouchend={handleTouchEnd}
 		ontouchcancel={() => {
@@ -172,7 +172,7 @@
 						tmdbScore={current.item.tmdbScore}
 						tmdbRatingCount={current.item.tmdbRatingCount}
 						tmdbUrl={`https://www.themoviedb.org/${current.item.creativeWorkType === 'tv_show' ? 'tv' : 'movie'}/${current.item.tmdbId}`}
-						showCounts={false}
+						showCounts={true}
 					/>
 				</div>
 			</div>
@@ -183,7 +183,7 @@
 				type="button"
 				onclick={() => goTo(currentIndex - 1)}
 				class="absolute top-1/2 left-2 z-50 inline-flex size-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-md transition-colors hover:bg-black/70 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:left-3"
-				aria-label="Previous trending title"
+				aria-label="Previous top-rated title"
 			>
 				<ChevronLeft class="size-5" strokeWidth={1.8} aria-hidden="true" />
 			</button>
@@ -191,7 +191,7 @@
 				type="button"
 				onclick={() => goTo(currentIndex + 1)}
 				class="absolute top-1/2 right-2 z-30 inline-flex size-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-md transition-colors hover:bg-black/70 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:right-3"
-				aria-label="Next trending title"
+				aria-label="Next top-rated title"
 			>
 				<ChevronRight class="size-5" strokeWidth={1.8} aria-hidden="true" />
 			</button>

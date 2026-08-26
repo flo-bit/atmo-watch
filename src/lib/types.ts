@@ -7,6 +7,12 @@ export type MediaIdentity = {
 	tmdbId: number;
 };
 
+export type TopRatedMedia = MediaIdentity & {
+	score: number;
+	weightedScore: number;
+	ratingCount: number;
+};
+
 export type MediaSummary = MediaIdentity & {
 	title: string;
 	poster: MediaImage | null;

@@ -1,0 +1,79 @@
+{
+  "lexicon": 1,
+  "id": "watch.atmo.review.getTopRated",
+  "defs": {
+    "main": {
+      "type": "query",
+      "description": "Return the twenty highest-rated TMDB movies and TV shows from reviews created in the last 30 days, ranked with three prior ratings of 5 out of 10.",
+      "output": {
+        "encoding": "application/json",
+        "schema": {
+          "type": "object",
+          "required": [
+            "items",
+            "windowDays",
+            "priorCount",
+            "priorScore"
+          ],
+          "properties": {
+            "items": {
+              "type": "array",
+              "maxLength": 20,
+              "items": {
+                "type": "ref",
+                "ref": "#item"
+              }
+            },
+            "windowDays": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "priorCount": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "priorScore": {
+              "type": "string",
+              "description": "Prior rating as a decimal string."
+            }
+          }
+        }
+      }
+    },
+    "item": {
+      "type": "object",
+      "required": [
+        "creativeWorkType",
+        "tmdbId",
+        "score",
+        "weightedScore",
+        "count"
+      ],
+      "properties": {
+        "creativeWorkType": {
+          "type": "string",
+          "knownValues": [
+            "movie",
+            "tv_show"
+          ]
+        },
+        "tmdbId": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "score": {
+          "type": "string",
+          "description": "Average rating in the 30-day window as a decimal string."
+        },
+        "weightedScore": {
+          "type": "string",
+          "description": "Bayesian ranking score as a decimal string."
+        },
+        "count": {
+          "type": "integer",
+          "minimum": 1
+        }
+      }
+    }
+  }
+}

@@ -14,6 +14,20 @@ type RatingSummaryRow = {
 	score: number | null;
 };
 
+type TopRatedRow = {
+	creative_work_type: 'movie' | 'tv_show';
+	tmdb_id: number;
+	rating_count: number;
+	score: number;
+	weighted_score: number;
+};
+
+const TOP_RATED_LIMIT = 20;
+const TOP_RATED_WINDOW_DAYS = 30;
+const TOP_RATED_PRIOR_COUNT = 3;
+const TOP_RATED_PRIOR_SCORE = 5;
+const DAY_MS = 24 * 60 * 60 * 1000;
+
 export const config: ContrailConfig = {
 	namespace: 'watch.atmo',
 	profiles: [
@@ -105,6 +119,83 @@ export const config: ContrailConfig = {
 				}
 			},
 			queries: {
+				getTopRated: async (db) => {
+					const dialect = getDialect(db);
+					const workType = dialect.jsonExtract('r.record', 'creativeWorkType');
+					const recordTmdbId = dialect.jsonExtract('r.record', 'identifiers.tmdbId');
+					const rating = dialect.jsonExtract('r.record', 'rating');
+					const cutoffUs = (Date.now() - TOP_RATED_WINDOW_DAYS * DAY_MS) * 1000;
+					const priorTotal = TOP_RATED_PRIOR_COUNT * TOP_RATED_PRIOR_SCORE;
+					const result = await db
+						.prepare(
+							`WITH recent AS (
+							   SELECT r.uri,
+							          r.did,
+							          r.time_us,
+							          ${workType} AS creative_work_type,
+							          CAST(${recordTmdbId} AS INTEGER) AS tmdb_id,
+							          CAST(${rating} AS REAL) AS rating
+							     FROM ${recordsTableName('review')} r
+							    WHERE r.cid IS NOT NULL
+							      AND r.record IS NOT NULL
+							      AND r.time_us >= ?
+							      AND ${workType} IN ('movie', 'tv_show')
+							      AND TYPEOF(${recordTmdbId}) IN ('text', 'integer')
+							      AND CAST(${recordTmdbId} AS TEXT) <> ''
+							      AND CAST(${recordTmdbId} AS TEXT) NOT GLOB '*[^0-9]*'
+							      AND CAST(${recordTmdbId} AS INTEGER) BETWEEN 1 AND 2147483647
+							      AND TYPEOF(${rating}) IN ('integer', 'real')
+							      AND CAST(${rating} AS REAL) BETWEEN 0 AND 10
+							 ), deduplicated AS (
+							   SELECT creative_work_type,
+							          tmdb_id,
+							          rating,
+							          time_us,
+							          ROW_NUMBER() OVER (
+							            PARTITION BY did, creative_work_type, tmdb_id
+							            ORDER BY time_us DESC, uri ASC
+							          ) AS duplicate_rank
+							     FROM recent
+							 ), ranked AS (
+							   SELECT creative_work_type,
+							          tmdb_id,
+							          COUNT(*) AS rating_count,
+							          AVG(rating) AS score,
+							          (SUM(rating) + ?) / (COUNT(*) + ?) AS weighted_score,
+							          MAX(time_us) AS latest_time_us
+							     FROM deduplicated
+							    WHERE duplicate_rank = 1
+							    GROUP BY creative_work_type, tmdb_id
+							 )
+							 SELECT creative_work_type, tmdb_id, rating_count, score, weighted_score
+							   FROM ranked
+							  ORDER BY weighted_score DESC,
+							           rating_count DESC,
+							           score DESC,
+							           latest_time_us DESC,
+							           creative_work_type ASC,
+							           tmdb_id ASC
+							  LIMIT ?`
+						)
+						.bind(cutoffUs, priorTotal, TOP_RATED_PRIOR_COUNT, TOP_RATED_LIMIT)
+						.all<TopRatedRow>();
+
+					return Response.json(
+						{
+							items: result.results.map((row) => ({
+								creativeWorkType: row.creative_work_type,
+								tmdbId: row.tmdb_id,
+								score: String(row.score),
+								weightedScore: String(row.weighted_score),
+								count: row.rating_count
+							})),
+							windowDays: TOP_RATED_WINDOW_DAYS,
+							priorCount: TOP_RATED_PRIOR_COUNT,
+							priorScore: String(TOP_RATED_PRIOR_SCORE)
+						},
+						{ headers: { 'Cache-Control': 'public, max-age=21600' } }
+					);
+				},
 				getRatingSummary: async (db, params) => {
 					const creativeWorkType = params.get('creativeWorkType');
 					const tmdbId = Number(params.get('tmdbId'));

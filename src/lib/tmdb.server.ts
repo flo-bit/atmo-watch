@@ -6,7 +6,7 @@ import {
 	readPublicDataCache,
 	writePublicDataCache
 } from '$lib/cache.server';
-import { getMediaRatingSummary } from '$lib/reviews.server';
+import { getMediaRatingSummary, getTopRatedMedia } from '$lib/reviews.server';
 import {
 	TMDB,
 	TMDBError,
@@ -531,10 +531,8 @@ async function loadHomePage(
 	omdbQuotaCache: ReturnType<typeof getPublicDataCache>
 ) {
 	const empty = {
-		trending: [] as MediaFeature[],
-		currentlyInTheaters: [] as MediaSummary[],
-		popularMovies: [] as MediaSummary[],
-		popularShows: [] as MediaSummary[]
+		topRated: [] as MediaFeature[],
+		currentlyInTheaters: [] as MediaSummary[]
 	};
 	let tmdb: TMDB;
 
@@ -544,18 +542,9 @@ async function loadHomePage(
 		return empty;
 	}
 
-	const [
-		theatersResult,
-		popularMoviesResult,
-		popularTvResult,
-		trendingMoviesResult,
-		trendingTvResult
-	] = await Promise.allSettled([
+	const [theatersResult, topRatedResult] = await Promise.allSettled([
 		tmdb.movie_lists.now_playing({ page: 1, region: 'US' }),
-		tmdb.movie_lists.popular({ page: 1, region: 'US' }),
-		tmdb.tv_lists.popular({ page: 1 }),
-		tmdb.trending.movies({ time_window: 'day' }),
-		tmdb.trending.tv({ time_window: 'day' })
+		getTopRatedMedia()
 	]);
 
 	const currentlyInTheaters =
@@ -564,79 +553,40 @@ async function loadHomePage(
 					.map((item) => toMediaSummary(item, 'movie'))
 					.filter((item) => item.poster)
 			: [];
-	const popularMovies =
-		popularMoviesResult.status === 'fulfilled'
-			? popularMoviesResult.value.results
-					.map((item) => toMediaSummary(item, 'movie'))
-					.filter((item) => item.poster)
-			: [];
-	const popularShows =
-		popularTvResult.status === 'fulfilled'
-			? popularTvResult.value.results
-					.map((item) => toMediaSummary(item, 'tv_show'))
-					.filter((item) => item.poster)
-			: [];
-
-	const trendingMovies =
-		trendingMoviesResult.status === 'fulfilled'
-			? trendingMoviesResult.value.results.filter((item) => item.backdrop_path).slice(0, 10)
-			: [];
-	const trendingShows =
-		trendingTvResult.status === 'fulfilled'
-			? trendingTvResult.value.results.filter((item) => item.backdrop_path).slice(0, 10)
-			: [];
-	const trendingCandidates: Array<{
-		tmdbId: number;
-		creativeWorkType: SupportedCreativeWorkType;
-	}> = [];
-	for (let index = 0; index < Math.max(trendingMovies.length, trendingShows.length); index += 1) {
-		if (trendingMovies[index]) {
-			trendingCandidates.push({ tmdbId: trendingMovies[index].id, creativeWorkType: 'movie' });
-		}
-		if (trendingShows[index]) {
-			trendingCandidates.push({ tmdbId: trendingShows[index].id, creativeWorkType: 'tv_show' });
-		}
+	if (topRatedResult.status === 'rejected') {
+		console.error('Could not load top-rated media from Contrail', topRatedResult.reason);
 	}
-
-	const trending = (
+	const topRatedCandidates = topRatedResult.status === 'fulfilled' ? topRatedResult.value : [];
+	const topRated = (
 		await Promise.all(
-			trendingCandidates.map(async ({ tmdbId, creativeWorkType }) => {
+			topRatedCandidates.map(async ({ tmdbId, creativeWorkType, score, ratingCount }) => {
 				try {
 					const details = await getMediaSource(tmdbId, creativeWorkType, mediaCache);
 					const item = toMediaDetails(details, creativeWorkType);
 					if (!item.backdrop) return null;
 
 					const imdbId = details.external_ids.imdb_id ?? null;
-					const [omdb, popfeed] = await Promise.all([
-						imdbId
-							? getRatings(imdbId, omdbCache, omdbFailureCache, omdbQuotaCache)
-							: Promise.resolve(EMPTY_OMDB_DATA),
-						getMediaRatingSummary(tmdbId, creativeWorkType).catch((cause) => {
-							console.error(
-								`Could not load Popfeed rating for ${creativeWorkType} ${tmdbId}`,
-								cause
-							);
-							return { score: null, count: 0 };
-						})
-					]);
+					const omdb = imdbId
+						? await getRatings(imdbId, omdbCache, omdbFailureCache, omdbQuotaCache)
+						: EMPTY_OMDB_DATA;
 					return {
 						item,
 						logo: getTitleLogo(details),
-						popfeedScore: popfeed.score,
-						popfeedRatingCount: popfeed.count,
+						popfeedScore: score,
+						popfeedRatingCount: ratingCount,
 						imdbId,
 						imdbVotes: omdb.imdbVotes,
 						ratings: omdb.ratings
 					} satisfies MediaFeature;
 				} catch (cause) {
-					console.error(`Could not load trending ${creativeWorkType} ${tmdbId} from TMDB`, cause);
+					console.error(`Could not load top-rated ${creativeWorkType} ${tmdbId} from TMDB`, cause);
 					return null;
 				}
 			})
 		)
-	).filter((feature): feature is MediaFeature => feature !== null);
+	).filter((feature) => feature !== null);
 
-	return { trending, currentlyInTheaters, popularMovies, popularShows };
+	return { topRated, currentlyInTheaters };
 }
 
 export function getHomePage() {
@@ -647,15 +597,9 @@ export function getHomePage() {
 	const omdbQuotaCache = getPublicDataCache(getOmdbQuotaFailureTtl());
 	return cachePublicData(
 		cache,
-		'tmdb:home:v6',
+		'tmdb:home:v9',
 		() => loadHomePage(mediaCache, omdbCache, omdbFailureCache, omdbQuotaCache),
-		(data) =>
-			Boolean(
-				data.trending.length ||
-				data.currentlyInTheaters.length ||
-				data.popularMovies.length ||
-				data.popularShows.length
-			)
+		(data) => Boolean(data.topRated.length || data.currentlyInTheaters.length)
 	);
 }
 

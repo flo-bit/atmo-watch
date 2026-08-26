@@ -9,7 +9,8 @@ import type {
 	ReviewCardModel,
 	ReviewFeedPage,
 	ReviewCommentModel,
-	SupportedCreativeWorkType
+	SupportedCreativeWorkType,
+	TopRatedMedia
 } from '$lib/types';
 
 type ReviewRecord = Pick<
@@ -20,6 +21,7 @@ type ReviewRecord = Pick<
 const REVIEW_LIST_METHOD = 'watch.atmo.review.listRecords' as const;
 const WRITTEN_REVIEW_LIST_METHOD = 'watch.atmo.review.listWrittenRecords' as const;
 const RATING_SUMMARY_METHOD = 'watch.atmo.review.getRatingSummary' as const;
+const TOP_RATED_METHOD = 'watch.atmo.review.getTopRated' as const;
 
 function getCreativeWorkType(value: string): SupportedCreativeWorkType | undefined {
 	if (value === 'movie' || value === 'tv_show') return value;
@@ -234,6 +236,40 @@ export async function getRecentReviewsPage({
 	});
 
 	return { reviews, cursor: response.data.cursor ?? null };
+}
+
+export async function getTopRatedMedia(): Promise<TopRatedMedia[]> {
+	const response = await contrail.get(TOP_RATED_METHOD);
+	if (!response.ok) {
+		throw new Error(`Could not load top-rated media from Contrail (${response.status})`);
+	}
+
+	return response.data.items.flatMap((item) => {
+		const creativeWorkType = getCreativeWorkType(item.creativeWorkType);
+		const score = Number(item.score);
+		const weightedScore = Number(item.weightedScore);
+		if (
+			!creativeWorkType ||
+			!Number.isSafeInteger(item.tmdbId) ||
+			item.tmdbId < 1 ||
+			!Number.isFinite(score) ||
+			!Number.isFinite(weightedScore) ||
+			!Number.isSafeInteger(item.count) ||
+			item.count < 1
+		) {
+			return [];
+		}
+
+		return [
+			{
+				creativeWorkType,
+				tmdbId: item.tmdbId,
+				score,
+				weightedScore,
+				ratingCount: item.count
+			}
+		];
+	});
 }
 
 export async function getMediaRatingSummary(

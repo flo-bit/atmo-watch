@@ -5,16 +5,19 @@
 	import MediaCollection from '$lib/components/MediaCollection.svelte';
 	import Review from '$lib/components/Review.svelte';
 	import SearchCommand from '$lib/components/SearchCommand.svelte';
-	import TrendingCarousel from '$lib/components/TrendingCarousel.svelte';
+	import TopRatedCarousel from '$lib/components/TopRatedCarousel.svelte';
 	import type { ReviewFeedPage } from '$lib/types';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
+	let carouselItems = $derived(data.topRated.slice(0, 10));
 	let collections = $derived(
 		[
-			{ title: 'Popular movies', items: data.popularMovies },
 			{ title: 'In theaters', items: data.currentlyInTheaters },
-			{ title: 'Popular shows', items: data.popularShows }
+			{
+				title: 'Popular movies and shows',
+				items: data.topRated.map((feature) => feature.item).filter((item) => item.poster)
+			}
 		].filter((collection) => collection.items.length > 0)
 	);
 	// These are local snapshots because subsequent pages are appended in the browser.
@@ -79,19 +82,19 @@
 <main class="min-h-dvh bg-base-950 pb-12 text-base-50">
 	<h1 class="sr-only">Search movies and TV shows</h1>
 
-	{#if data.trending.length > 0}
-		<TrendingCarousel items={data.trending} />
+	{#if carouselItems.length > 0}
+		<TopRatedCarousel items={carouselItems} />
 	{/if}
 
 	<Container class="px-4">
 		<div
-			class={`mx-auto w-full max-w-xl ${data.trending.length > 0 ? 'mt-8' : 'pt-[18vh] sm:pt-[22vh]'}`}
+			class={`mx-auto w-full max-w-xl ${data.topRated.length > 0 ? 'mt-8' : 'pt-[18vh] sm:pt-[22vh]'}`}
 		>
 			<SearchCommand did={data.did} />
 		</div>
 
 		{#if collections.length > 0 || reviews.length > 0 || cursor}
-			<div class={`${data.trending.length > 0 ? 'mt-12' : 'mt-20'} pb-12`}>
+			<div class={`${data.topRated.length > 0 ? 'mt-12' : 'mt-20'} pb-12`}>
 				{#if collections.length > 0}
 					<div class="space-y-12">
 						{#each collections as collection, index (collection.title)}
@@ -147,7 +150,7 @@
 					</section>
 				{/if}
 			</div>
-		{:else if data.trending.length === 0}
+		{:else if data.topRated.length === 0}
 			<p class="mt-20 pb-12 text-sm text-base-400">
 				No movies, shows, or reviews are available right now.
 			</p>
