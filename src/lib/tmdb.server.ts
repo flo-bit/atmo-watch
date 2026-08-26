@@ -6,6 +6,11 @@ import {
 	readPublicDataCache,
 	writePublicDataCache
 } from '$lib/cache.server';
+import {
+	getMediaArtworkOverride,
+	getMediaArtworkRevision,
+	type MediaArtworkOverride
+} from '$lib/media-curation.server';
 import { getMediaRatingSummary, getTopRatedMedia } from '$lib/reviews.server';
 import {
 	TMDB,
@@ -33,6 +38,7 @@ import type {
 	MediaDetails,
 	MediaFeature,
 	MediaImage,
+	MediaLogo,
 	MediaSummary,
 	MediaVideo,
 	PersonDetails,
@@ -244,14 +250,19 @@ function toTvSeason(source: TVSeasonItem): TvSeasonSummary {
 	};
 }
 
-function toBackdropGallery(source: MediaDetailsSource): MediaImage[] {
+function toBackdropOptions(source: MediaDetailsSource): MediaImage[] {
 	const paths = [source.backdrop_path, ...source.images.backdrops.map((image) => image.file_path)];
-	return [...new Set(paths.filter((path): path is string => Boolean(path)))]
-		.slice(0, 6)
-		.map((path) => ({ source: 'tmdb', path }));
+	return [...new Set(paths.filter((path): path is string => Boolean(path)))].map((path) => ({
+		source: 'tmdb',
+		path
+	}));
 }
 
-function getTitleLogo(source: MediaDetailsSource) {
+function toBackdropGallery(source: MediaDetailsSource): MediaImage[] {
+	return toBackdropOptions(source).slice(0, 6);
+}
+
+function getTitleLogo(source: MediaDetailsSource): MediaLogo | null {
 	const logos = source.images.logos;
 	const logo =
 		logos.find((candidate) => candidate.iso_639_1 === 'en') ??
@@ -259,6 +270,53 @@ function getTitleLogo(source: MediaDetailsSource) {
 		logos[0];
 
 	return logo ? { path: logo.file_path, width: logo.width, height: logo.height } : null;
+}
+
+function toLogoOptions(source: MediaDetailsSource): MediaLogo[] {
+	const defaultLogo = getTitleLogo(source);
+	const candidates = [
+		...(defaultLogo ? [defaultLogo] : []),
+		...source.images.logos.map((logo) => ({
+			path: logo.file_path,
+			width: logo.width,
+			height: logo.height
+		}))
+	];
+	const seen = new Set<string>();
+	return candidates.filter((logo) => {
+		if (seen.has(logo.path)) return false;
+		seen.add(logo.path);
+		return true;
+	});
+}
+
+function resolveMediaArtwork(
+	source: MediaDetailsSource,
+	override: MediaArtworkOverride | null,
+	defaultBackdropPath: string | null = source.backdrop_path ?? null
+) {
+	const backdrops = toBackdropOptions(source);
+	const logos = toLogoOptions(source);
+	const backdropPaths = new Set(
+		backdrops.flatMap((image) => (image.source === 'tmdb' ? [image.path] : []))
+	);
+	const backdropOverridePath =
+		override?.backdropPath && backdropPaths.has(override.backdropPath)
+			? override.backdropPath
+			: null;
+	const logoOverride = override?.logoPath
+		? (logos.find((logo) => logo.path === override.logoPath) ?? null)
+		: null;
+
+	return {
+		backdrop: toTmdbImage(backdropOverridePath ?? defaultBackdropPath),
+		logo: logoOverride ?? getTitleLogo(source),
+		backdropOverridePath,
+		logoOverridePath: logoOverride?.path ?? null,
+		artworkRevision: override?.updatedAt ?? null,
+		backdrops,
+		logos
+	};
 }
 
 const regionNames = new Intl.DisplayNames(['en'], { type: 'region' });
@@ -464,29 +522,35 @@ export async function getMediaPage(
 	const omdbCache = getPersistentPublicDataCache(OMDB_DATA_TTL);
 	const omdbFailureCache = getPublicDataCache(OMDB_TRANSIENT_FAILURE_TTL);
 	const omdbQuotaCache = getPublicDataCache(getOmdbQuotaFailureTtl());
-	const [details, currentTvDetails] = await Promise.all([
+	const [details, currentTvDetails, override] = await Promise.all([
 		getMediaSource(tmdbId, creativeWorkType, cache),
 		creativeWorkType === 'tv_show'
 			? getTvScheduleSource(tmdbId).catch((cause) => {
 					console.error('Could not refresh TV schedule data from TMDB', cause);
 					return null;
 				})
-			: Promise.resolve(null)
+			: Promise.resolve(null),
+		getMediaArtworkOverride(creativeWorkType, tmdbId)
 	]);
 	const omdb = details.external_ids.imdb_id
 		? await getRatings(details.external_ids.imdb_id, omdbCache, omdbFailureCache, omdbQuotaCache)
 		: EMPTY_OMDB_DATA;
 	const tvDetails =
 		currentTvDetails ?? ('first_air_date' in details ? (details as TVSeriesDetails) : null);
+	const artwork = resolveMediaArtwork(details, override, (tvDetails ?? details).backdrop_path);
 
 	return {
-		item: toMediaDetails(tvDetails ?? details, creativeWorkType),
+		item: {
+			...toMediaDetails(tvDetails ?? details, creativeWorkType),
+			backdrop: artwork.backdrop
+		},
 		recommendations: details.recommendations.results.map((item) =>
 			toMediaSummary(item, creativeWorkType)
 		),
 		cast: details.credits.cast.map(toCastMember),
 		backdrops: toBackdropGallery(details),
-		logo: getTitleLogo(details),
+		logo: artwork.logo,
+		artworkRevision: artwork.artworkRevision,
 		seasons: (tvDetails?.seasons ?? []).map(toTvSeason),
 		nextEpisode: toTvEpisode(tvDetails?.next_episode_to_air),
 		lastEpisode: toTvEpisode(tvDetails?.last_episode_to_air),
@@ -505,20 +569,25 @@ export async function getMediaVideosPage(
 	creativeWorkType: SupportedCreativeWorkType
 ) {
 	const cache = getPublicDataCache(MEDIA_DATA_TTL);
-	const [details, currentTvDetails] = await Promise.all([
+	const [details, currentTvDetails, override] = await Promise.all([
 		getMediaSource(tmdbId, creativeWorkType, cache),
 		creativeWorkType === 'tv_show'
 			? getTvScheduleSource(tmdbId).catch((cause) => {
 					console.error('Could not refresh TV schedule data from TMDB', cause);
 					return null;
 				})
-			: Promise.resolve(null)
+			: Promise.resolve(null),
+		getMediaArtworkOverride(creativeWorkType, tmdbId)
 	]);
 	const tvDetails =
 		currentTvDetails ?? ('first_air_date' in details ? (details as TVSeriesDetails) : null);
+	const artwork = resolveMediaArtwork(details, override, (tvDetails ?? details).backdrop_path);
 
 	return {
-		item: toMediaDetails(tvDetails ?? details, creativeWorkType),
+		item: {
+			...toMediaDetails(tvDetails ?? details, creativeWorkType),
+			backdrop: artwork.backdrop
+		},
 		seasons: (tvDetails?.seasons ?? []).map(toTvSeason),
 		videos: toMediaVideos(details.videos.results)
 	};
@@ -561,8 +630,15 @@ async function loadHomePage(
 		await Promise.all(
 			topRatedCandidates.map(async ({ tmdbId, creativeWorkType, score, ratingCount }) => {
 				try {
-					const details = await getMediaSource(tmdbId, creativeWorkType, mediaCache);
-					const item = toMediaDetails(details, creativeWorkType);
+					const [details, override] = await Promise.all([
+						getMediaSource(tmdbId, creativeWorkType, mediaCache),
+						getMediaArtworkOverride(creativeWorkType, tmdbId)
+					]);
+					const artwork = resolveMediaArtwork(details, override);
+					const item = {
+						...toMediaDetails(details, creativeWorkType),
+						backdrop: artwork.backdrop
+					};
 					if (!item.backdrop) return null;
 
 					const imdbId = details.external_ids.imdb_id ?? null;
@@ -571,7 +647,7 @@ async function loadHomePage(
 						: EMPTY_OMDB_DATA;
 					return {
 						item,
-						logo: getTitleLogo(details),
+						logo: artwork.logo,
 						popfeedScore: score,
 						popfeedRatingCount: ratingCount,
 						imdbId,
@@ -589,15 +665,16 @@ async function loadHomePage(
 	return { topRated, currentlyInTheaters };
 }
 
-export function getHomePage() {
+export async function getHomePage() {
 	const cache = getPublicDataCache(DISCOVERY_TTL);
 	const mediaCache = getPublicDataCache(MEDIA_DATA_TTL);
 	const omdbCache = getPersistentPublicDataCache(OMDB_DATA_TTL);
 	const omdbFailureCache = getPublicDataCache(OMDB_TRANSIENT_FAILURE_TTL);
 	const omdbQuotaCache = getPublicDataCache(getOmdbQuotaFailureTtl());
+	const artworkRevision = await getMediaArtworkRevision();
 	return cachePublicData(
 		cache,
-		'tmdb:home:v9',
+		`tmdb:home:v10:${artworkRevision}`,
 		() => loadHomePage(mediaCache, omdbCache, omdbFailureCache, omdbQuotaCache),
 		(data) => Boolean(data.topRated.length || data.currentlyInTheaters.length)
 	);
@@ -633,16 +710,25 @@ export async function getDetails(
 	creativeWorkType: SupportedCreativeWorkType
 ): Promise<MediaDetails> {
 	const cache = getPublicDataCache(MEDIA_DATA_TTL);
-	const details = await getMediaSource(tmdbId, creativeWorkType, cache);
-	return toMediaDetails(details, creativeWorkType);
+	const [details, override] = await Promise.all([
+		getMediaSource(tmdbId, creativeWorkType, cache),
+		getMediaArtworkOverride(creativeWorkType, tmdbId)
+	]);
+	const artwork = resolveMediaArtwork(details, override);
+	return { ...toMediaDetails(details, creativeWorkType), backdrop: artwork.backdrop };
 }
 
 export async function getMediaHeader(tmdbId: number, creativeWorkType: SupportedCreativeWorkType) {
 	const cache = getPublicDataCache(MEDIA_DATA_TTL);
-	const details = await getMediaSource(tmdbId, creativeWorkType, cache);
+	const [details, override] = await Promise.all([
+		getMediaSource(tmdbId, creativeWorkType, cache),
+		getMediaArtworkOverride(creativeWorkType, tmdbId)
+	]);
+	const artwork = resolveMediaArtwork(details, override);
 	return {
-		item: toMediaDetails(details, creativeWorkType),
-		logo: getTitleLogo(details)
+		item: { ...toMediaDetails(details, creativeWorkType), backdrop: artwork.backdrop },
+		logo: artwork.logo,
+		artworkRevision: artwork.artworkRevision
 	};
 }
 
@@ -651,7 +737,11 @@ export async function getMediaOpenGraph(
 	creativeWorkType: SupportedCreativeWorkType
 ) {
 	const cache = getPublicDataCache(MEDIA_DATA_TTL);
-	const details = await getMediaSource(tmdbId, creativeWorkType, cache);
+	const [details, override] = await Promise.all([
+		getMediaSource(tmdbId, creativeWorkType, cache),
+		getMediaArtworkOverride(creativeWorkType, tmdbId)
+	]);
+	const artwork = resolveMediaArtwork(details, override);
 	const imdbId = details.external_ids.imdb_id ?? null;
 	const [omdb, popfeed] = await Promise.all([
 		imdbId ? getRatings(imdbId) : Promise.resolve(EMPTY_OMDB_DATA),
@@ -662,17 +752,43 @@ export async function getMediaOpenGraph(
 	]);
 
 	return {
-		item: toMediaDetails(details, creativeWorkType),
-		logo: getTitleLogo(details),
+		item: { ...toMediaDetails(details, creativeWorkType), backdrop: artwork.backdrop },
+		logo: artwork.logo,
 		popfeedScore: popfeed.score,
 		ratings: omdb.ratings
+	};
+}
+
+export async function getMediaArtworkEditor(
+	tmdbId: number,
+	creativeWorkType: SupportedCreativeWorkType
+) {
+	const cache = getPublicDataCache(MEDIA_DATA_TTL);
+	const [details, override] = await Promise.all([
+		getMediaSource(tmdbId, creativeWorkType, cache),
+		getMediaArtworkOverride(creativeWorkType, tmdbId)
+	]);
+	const artwork = resolveMediaArtwork(details, override);
+	const defaultLogo = getTitleLogo(details);
+
+	return {
+		item: { ...toMediaDetails(details, creativeWorkType), backdrop: artwork.backdrop },
+		logo: artwork.logo,
+		backdrops: artwork.backdrops,
+		logos: artwork.logos,
+		defaultBackdropPath: details.backdrop_path ?? null,
+		defaultLogoPath: defaultLogo?.path ?? null,
+		backdropOverridePath: artwork.backdropOverridePath,
+		logoOverridePath: artwork.logoOverridePath,
+		updatedBy: override?.updatedBy ?? null,
+		updatedAt: override?.updatedAt ?? null
 	};
 }
 
 export async function getTvSeasonPage(tmdbId: number, seasonNumber: number) {
 	const cache = getPublicDataCache(TV_SCHEDULE_TTL);
 	const mediaCache = getPublicDataCache(MEDIA_DATA_TTL);
-	const [show, seasonSource, mediaDetails] = await Promise.all([
+	const [show, seasonSource, mediaDetails, override] = await Promise.all([
 		getTvScheduleSource(tmdbId, cache),
 		cachePublicData(cache, `tmdb:tv-season:v2:${tmdbId}:${seasonNumber}`, () =>
 			getClient().tv_seasons.details({
@@ -681,8 +797,10 @@ export async function getTvSeasonPage(tmdbId: number, seasonNumber: number) {
 				append_to_response: TV_SEASON_APPENDS
 			})
 		),
-		getMediaSource(tmdbId, 'tv_show', mediaCache)
+		getMediaSource(tmdbId, 'tv_show', mediaCache),
+		getMediaArtworkOverride('tv_show', tmdbId)
 	]);
+	const artwork = resolveMediaArtwork(mediaDetails, override, show.backdrop_path);
 	const seasons = (show.seasons ?? []).map(toTvSeason);
 	const navigableSeasons = seasons
 		.filter((season) => season.seasonNumber > 0)
@@ -701,8 +819,8 @@ export async function getTvSeasonPage(tmdbId: number, seasonNumber: number) {
 	};
 
 	return {
-		show: toMediaDetails(show, 'tv_show'),
-		logo: getTitleLogo(mediaDetails),
+		show: { ...toMediaDetails(show, 'tv_show'), backdrop: artwork.backdrop },
+		logo: artwork.logo,
 		season,
 		episodes: seasonSource.episodes.flatMap((source) => {
 			const episode = toTvEpisode(source);
@@ -729,7 +847,11 @@ export async function getReviewRecordMetadata(
 	creativeWorkType: SupportedCreativeWorkType
 ) {
 	const cache = getPublicDataCache(MEDIA_DATA_TTL);
-	const details = await getMediaSource(tmdbId, creativeWorkType, cache);
+	const [details, override] = await Promise.all([
+		getMediaSource(tmdbId, creativeWorkType, cache),
+		getMediaArtworkOverride(creativeWorkType, tmdbId)
+	]);
+	const artwork = resolveMediaArtwork(details, override);
 	const summary = toMediaSummary(details, creativeWorkType);
 
 	let releaseDate: string | undefined;
@@ -752,7 +874,7 @@ export async function getReviewRecordMetadata(
 
 	return {
 		title: summary.title,
-		backdrop: toTmdbImage(details.backdrop_path),
+		backdrop: artwork.backdrop,
 		genres: details.genres.map((genre) => genre.name),
 		imdbId: details.external_ids.imdb_id ?? undefined,
 		releaseDate,

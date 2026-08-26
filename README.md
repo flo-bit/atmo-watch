@@ -35,7 +35,9 @@ The web app uses `@sveltejs/adapter-cloudflare` and the Worker configuration in
 - `OAUTH_STATES`
 - `MEDIA_CACHE`
 
-The first two namespaces store AT Protocol OAuth state and sessions. `MEDIA_CACHE` stores only the small, slow-changing OMDb ratings dataset. General TMDB data uses Cloudflare's Cache API with a small per-isolate memory cache, avoiding high-volume KV writes for media and search caching.
+The first two namespaces store AT Protocol OAuth state and sessions. `MEDIA_CACHE` stores the small, slow-changing OMDb ratings dataset and site-wide TMDB artwork overrides. General TMDB data uses Cloudflare's Cache API with a small per-isolate memory cache, avoiding high-volume KV writes for media and search caching.
+
+Media artwork can be curated at `/movie/[id]/edit` or `/tv/[id]/edit`. Access is restricted by AT Protocol DID; additional curator DIDs can be configured with the comma- or whitespace-separated `MEDIA_CURATOR_DIDS` private runtime value.
 
 Before the first deployment, configure the private runtime values without adding them to `wrangler.jsonc`:
 

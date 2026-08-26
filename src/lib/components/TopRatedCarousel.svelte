@@ -172,7 +172,7 @@
 						tmdbScore={current.item.tmdbScore}
 						tmdbRatingCount={current.item.tmdbRatingCount}
 						tmdbUrl={`https://www.themoviedb.org/${current.item.creativeWorkType === 'tv_show' ? 'tv' : 'movie'}/${current.item.tmdbId}`}
-						showCounts={true}
+						showCounts={false}
 					/>
 				</div>
 			</div>

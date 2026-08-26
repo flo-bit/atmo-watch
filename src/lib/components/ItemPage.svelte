@@ -65,7 +65,9 @@
 
 	let { data }: { data: ItemPageData } = $props();
 	let canonicalUrl = $derived(`${page.url.origin}${page.url.pathname}`);
-	let ogImageUrl = $derived(`${canonicalUrl.replace(/\/$/, '')}/og.png?v=4`);
+	let ogImageUrl = $derived(
+		`${canonicalUrl.replace(/\/$/, '')}/og.png?v=${encodeURIComponent(data.artworkRevision ?? '4')}`
+	);
 	let tmdbUrl = $derived(
 		`https://www.themoviedb.org/${data.item.creativeWorkType === 'tv_show' ? 'tv' : 'movie'}/${data.item.tmdbId}`
 	);

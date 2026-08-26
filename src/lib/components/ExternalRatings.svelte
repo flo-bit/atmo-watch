@@ -1,4 +1,5 @@
 <script lang="ts">
+	import imdbIcon from '$lib/icons/imdb.svg';
 	import popfeedIcon from '$lib/icons/popfeed.svg';
 	import tmdbIcon from '$lib/icons/tmdb.svg';
 	import type { ExternalRating } from '$lib/types';
@@ -59,10 +60,10 @@
 				aria-label={`Popfeed rating: ${popfeedScore.toFixed(1)} out of 10 from ${popfeedRatingCount} ${popfeedRatingCount === 1 ? 'rating' : 'ratings'}`}
 			>
 				<span
-					class="inline-flex size-4 shrink-0 items-center justify-center rounded-sm bg-accent-400"
+					class="inline-flex size-3.5 shrink-0 items-center justify-center rounded-sm bg-accent-400"
 					aria-hidden="true"
 				>
-					<img src={popfeedIcon} alt="" class="size-3.5" />
+					<img src={popfeedIcon} alt="" class="size-3" />
 				</span>
 				<span class="text-xs font-semibold tabular-nums">{popfeedScore.toFixed(1)}</span>
 				{#if showCounts && compactPopfeedRatings}
@@ -81,11 +82,7 @@
 				class="inline-flex items-center gap-1.5 text-base-200 transition-colors hover:text-white"
 				aria-label={`View on IMDb${imdbScore ? `. Rating: ${imdbScore} out of 10` : ''}${imdbVotes ? `. ${imdbVotes} votes` : ''}`}
 			>
-				<span
-					class="inline-flex h-4 items-center rounded-sm bg-[#f5c518] px-0.5 text-[0.55rem] leading-none font-black tracking-tight text-black"
-				>
-					IMDb
-				</span>
+				<img src={imdbIcon} alt="" class="h-3.5 w-auto shrink-0" aria-hidden="true" />
 				{#if imdbScore}
 					<span class="text-xs font-semibold tabular-nums">{imdbScore}</span>
 				{/if}
@@ -104,7 +101,7 @@
 			>
 				<svg
 					xmlns="http://www.w3.org/2000/svg"
-					class="size-4 shrink-0"
+					class="size-3.5 shrink-0"
 					viewBox="0 0 512 512"
 					aria-hidden="true"
 				>
@@ -132,7 +129,7 @@
 				class="inline-flex items-center gap-1.5 text-base-200 transition-colors hover:text-white"
 				aria-label={`View on TMDB. Rating: ${tmdbScore.toFixed(1)} out of 10${tmdbRatingCount !== null ? `. ${tmdbRatingCount.toLocaleString('en-US')} votes` : ''}`}
 			>
-				<img src={tmdbIcon} alt="" class="h-3.5 w-auto shrink-0" aria-hidden="true" />
+				<img src={tmdbIcon} alt="" class="h-3 w-auto shrink-0" aria-hidden="true" />
 				<span class="text-xs font-semibold tabular-nums">{tmdbScore.toFixed(1)}</span>
 				{#if showCounts && compactTmdbRatings}
 					<span class="text-[0.625rem] text-base-400 tabular-nums">
