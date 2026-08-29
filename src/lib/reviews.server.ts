@@ -54,6 +54,7 @@ export function toReview(
 
 	return {
 		uri: record.uri,
+		createdAt: record.value.createdAt,
 		author: {
 			did: record.did,
 			handle

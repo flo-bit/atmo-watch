@@ -2,6 +2,7 @@
 	import { resolve } from '$app/paths';
 	import { isCanonicalResourceUri, parseCanonicalResourceUri } from '@atcute/lexicons';
 	import { EyeOff, Heart, Image as ImageIcon, MessageCircle } from '@lucide/svelte';
+	import { formatDateTime, formatRelativeDateTime } from '$lib/dates';
 	import { posterUrl } from '$lib/images';
 	import { loginDialog } from '$lib/login.svelte';
 	import { likeReview, unlikeReview } from '$lib/review-interactions.remote';
@@ -46,6 +47,8 @@
 		});
 	});
 	let text = $derived(review.text.trim());
+	let createdAtLabel = $derived(formatRelativeDateTime(review.createdAt));
+	let createdAtTitle = $derived(formatDateTime(review.createdAt));
 	let hasSpoilerText = $derived(review.containsSpoilers && Boolean(text));
 	let spoilerRevealed = $state(false);
 	let spoilerHidden = $derived(hasSpoilerText && !revealSpoilers && !spoilerRevealed);
@@ -187,6 +190,15 @@
 						</span>
 					</span>
 				</a>
+				{#if createdAtLabel}
+					<time
+						datetime={review.createdAt}
+						title={createdAtTitle ?? undefined}
+						class="mt-1 block text-xs text-base-500"
+					>
+						{createdAtLabel}
+					</time>
+				{/if}
 				{#if compact && text}
 					<div class="mt-2">
 						<Rating rating={review.rating} size="size-4" />

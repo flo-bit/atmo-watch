@@ -109,6 +109,7 @@ export type ActorSummary = {
 
 export type ReviewCardModel = {
 	uri: string;
+	createdAt: string;
 	author: ActorSummary;
 	media: MediaSummary;
 	rating: number;

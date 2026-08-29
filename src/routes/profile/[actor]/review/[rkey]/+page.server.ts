@@ -50,8 +50,7 @@ export const load: PageServerLoad = async ({ locals, params, parent }) => {
 				...review.author,
 				displayName: profile.displayName,
 				avatarUrl: profile.avatarUrl
-			},
-			createdAt: reviewResponse.data.value.createdAt
+			}
 		},
 		mediaHeader,
 		...interactions

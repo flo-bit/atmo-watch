@@ -6,6 +6,7 @@
 	import Container from '$lib/components/Container.svelte';
 	import MediaHero from '$lib/components/MediaHero.svelte';
 	import Rating from '$lib/components/Rating.svelte';
+	import { formatDateTime, formatRelativeDateTime } from '$lib/dates';
 	import { loginDialog } from '$lib/login.svelte';
 	import { likeReview, unlikeReview } from '$lib/review-interactions.remote';
 	import { slugify, toMediaRouteKind } from '$lib/utils';
@@ -42,6 +43,8 @@
 		].filter((fact): fact is string => fact !== null)
 	);
 	let reviewText = $derived(data.review.text.trim());
+	let createdAtLabel = $derived(formatRelativeDateTime(data.review.createdAt));
+	let createdAtTitle = $derived(formatDateTime(data.review.createdAt));
 	let spoilerHidden = $derived(
 		data.review.containsSpoilers && Boolean(reviewText) && !spoilerRevealed
 	);
@@ -67,16 +70,6 @@
 			? `Read @${reviewerHandle}'s review of ${data.review.media.title}.`
 			: `See @${reviewerHandle}'s ${data.review.rating}/10 rating of ${data.review.media.title}.`
 	);
-
-	const dateFormatter = new Intl.DateTimeFormat('en', {
-		dateStyle: 'medium',
-		timeZone: 'UTC'
-	});
-
-	function formatDate(value: string) {
-		const date = new Date(value);
-		return Number.isNaN(date.getTime()) ? '' : dateFormatter.format(date);
-	}
 
 	function formatRuntime(runtime: number | null) {
 		if (!runtime) return null;
@@ -195,9 +188,15 @@
 					</span>
 				</a>
 
-				<time datetime={data.review.createdAt} class="mt-3 block text-xs text-base-500">
-					{formatDate(data.review.createdAt)}
-				</time>
+				{#if createdAtLabel}
+					<time
+						datetime={data.review.createdAt}
+						title={createdAtTitle ?? undefined}
+						class="mt-3 block text-xs text-base-500"
+					>
+						{createdAtLabel}
+					</time>
+				{/if}
 
 				<div class="mt-3">
 					<Rating rating={data.review.rating} size="size-6" />
