@@ -15,7 +15,7 @@
 		"check": "pnpm run lexicons:check && tsc --noEmit"
 	},
 	"dependencies": {
-		"@atmo-dev/contrail": "^0.19.0"
+		"@atmo-dev/contrail": "^0.21.2"
 	},
 	"devDependencies": {
 		"@atcute/lex-cli": "^3.2.1",

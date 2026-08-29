@@ -4,3 +4,7 @@ packages:
 allowBuilds:
   esbuild: true
   workerd: true
+
+patchedDependencies:
+  '@atmo-dev/contrail@0.21.2': patches/@atmo-dev__contrail@0.21.2.patch
+  partysocket@1.3.0: patches/partysocket@1.3.0.patch

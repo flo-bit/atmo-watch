@@ -1,0 +1,58 @@
+diff --git a/dist/ws.cjs b/dist/ws.cjs
+index 56ecd6b29236431ea03d46666b4eeb8212002e4e..5398f6c6ca2edf241648d8b395212352dd2b4b85 100644
+--- a/dist/ws.cjs
++++ b/dist/ws.cjs
+@@ -40,11 +40,23 @@ const Events = {
+ function assert(condition, msg) {
+   if (!condition) throw new Error(msg);
+ }
++function cloneMessageEvent(e) {
++  // Cloudflare Workers rejects a WebSocket-valued MessageEvent.source when
++  // another MessageEvent is used directly as the initializer. PartySocket only
++  // needs to preserve the payload metadata when redispatching this event.
++  return new MessageEvent(e.type, {
++    data: e.data,
++    origin: e.origin,
++    lastEventId: e.lastEventId,
++    ports: e.ports
++  });
++}
+ function cloneEventBrowser(e) {
++  if ("data" in e) return cloneMessageEvent(e);
+   return new e.constructor(e.type, e);
+ }
+ function cloneEventNode(e) {
+-  if ("data" in e) return new MessageEvent(e.type, e);
++  if ("data" in e) return cloneMessageEvent(e);
+   if ("code" in e || "reason" in e)
+     return new CloseEvent(e.code || 1999, e.reason || "unknown reason", e);
+   if ("error" in e) return new ErrorEvent(e.error, e);
+diff --git a/dist/ws.js b/dist/ws.js
+index 0e844fd074243961c00db049f340f788303da99f..e33544d2a53b0a7ad6f1a4c907eca088d6b5178f 100644
+--- a/dist/ws.js
++++ b/dist/ws.js
+@@ -36,11 +36,23 @@ const Events = {
+ function assert(condition, msg) {
+   if (!condition) throw new Error(msg);
+ }
++function cloneMessageEvent(e) {
++  // Cloudflare Workers rejects a WebSocket-valued MessageEvent.source when
++  // another MessageEvent is used directly as the initializer. PartySocket only
++  // needs to preserve the payload metadata when redispatching this event.
++  return new MessageEvent(e.type, {
++    data: e.data,
++    origin: e.origin,
++    lastEventId: e.lastEventId,
++    ports: e.ports
++  });
++}
+ function cloneEventBrowser(e) {
++  if ("data" in e) return cloneMessageEvent(e);
+   return new e.constructor(e.type, e);
+ }
+ function cloneEventNode(e) {
+-  if ("data" in e) return new MessageEvent(e.type, e);
++  if ("data" in e) return cloneMessageEvent(e);
+   if ("code" in e || "reason" in e)
+     return new CloseEvent(e.code || 1999, e.reason || "unknown reason", e);
+   if ("error" in e) return new ErrorEvent(e.error, e);

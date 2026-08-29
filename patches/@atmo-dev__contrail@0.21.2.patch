@@ -1,0 +1,30 @@
+diff --git a/dist/chunk-QSFEXFPO.js b/dist/chunk-QSFEXFPO.js
+index fbea95c3bb279a5d7c4fb1e867f300aece87ee2f..1cbe0c2a714292cb7a8f6742f200072555f5332a 100644
+--- a/dist/chunk-QSFEXFPO.js
++++ b/dist/chunk-QSFEXFPO.js
+@@ -5293,11 +5293,20 @@ function admissionFilteredCount(dropped) {
+ function runtimeCpuUsage() {
+   const runtimeProcess = globalThis.process;
+   if (!runtimeProcess?.cpuUsage) return null;
+-  const start = runtimeProcess.cpuUsage();
+-  return () => {
+-    const elapsed = runtimeProcess.cpuUsage(start);
+-    return Math.round((elapsed.user + elapsed.system) / 100) / 10;
+-  };
++  try {
++    const start = runtimeProcess.cpuUsage();
++    return () => {
++      try {
++        const elapsed = runtimeProcess.cpuUsage(start);
++        return Math.round((elapsed.user + elapsed.system) / 100) / 10;
++      } catch {
++        return null;
++      }
++    };
++  } catch {
++    // Cloudflare Workers exposes process.cpuUsage as an unimplemented stub.
++    return null;
++  }
+ }
+ async function runIngestCycle(db, config, budgetInput = DEFAULT_SCHEDULED_INGEST_BUDGET, state) {
+   const log = getLogger2(config);
