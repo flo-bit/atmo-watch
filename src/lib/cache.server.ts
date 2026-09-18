@@ -19,6 +19,7 @@ type CloudflareCacheStorage = CacheStorage & {
 const KV_CACHE_BINDING = 'MEDIA_CACHE';
 const CACHE_VERSION = 'v1';
 const CACHE_URL_BASE = 'https://atmo.watch/__data-cache/';
+const CACHE_EXPIRY_HEADER = 'X-Atmo-Cache-Expires-At';
 const MAX_MEMORY_ENTRIES = 500;
 const memoryCache = new Map<string, MemoryEntry>();
 const pendingLoads = new Map<string, Promise<unknown>>();
@@ -31,7 +32,7 @@ function cacheRequest(key: string) {
 	return new Request(`${CACHE_URL_BASE}${encodeURIComponent(key)}`);
 }
 
-function getCloudflareCache() {
+export function getCloudflareCache() {
 	try {
 		return (globalThis.caches as CloudflareCacheStorage | undefined)?.default;
 	} catch {
@@ -80,8 +81,15 @@ export function getPublicDataCache(ttl: number): PublicDataCache {
 			const response = await cloudflareCache.match(cacheRequest(key));
 			if (!response) return undefined;
 
+			// Do not restart the TTL when an almost-expired edge entry warms an isolate.
+			// Older entries without this header keep their existing behavior.
+			const expiresAt = response.headers.get(CACHE_EXPIRY_HEADER);
+			const remainingTtl =
+				expiresAt === null ? ttl : Math.min(ttl, (Number(expiresAt) - Date.now()) / 1000);
+			if (!Number.isFinite(remainingTtl) || remainingTtl <= 0) return undefined;
+
 			const value = (await response.json()) as unknown;
-			writeMemoryCache(key, value, ttl);
+			writeMemoryCache(key, value, remainingTtl);
 			return value;
 		},
 		async set(key, value) {
@@ -95,7 +103,8 @@ export function getPublicDataCache(ttl: number): PublicDataCache {
 				new Response(JSON.stringify(value), {
 					headers: {
 						'Cache-Control': `public, max-age=${ttl}`,
-						'Content-Type': 'application/json; charset=utf-8'
+						'Content-Type': 'application/json; charset=utf-8',
+						[CACHE_EXPIRY_HEADER]: String(Date.now() + ttl * 1000)
 					}
 				})
 			);

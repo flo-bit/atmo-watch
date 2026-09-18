@@ -1,8 +1,11 @@
 import type { ResourceUri } from '@atcute/lexicons';
+import { cachePublicData, getPublicDataCache } from '$lib/cache.server';
 import { contrail } from '$lib/contrail-client.server';
 import type * as VideoListRecords from '$lib/contrail/types/types/watch/atmo/video/listRecords';
 import type { MediaVideo } from '$lib/types';
 import { VIDEO_TYPE_LABELS, VIDEO_TYPES, type VideoType } from '$lib/videos';
+
+const PUBLIC_VIDEO_TTL = 60;
 
 export type SubmittedVideoQuery =
 	| {
@@ -113,6 +116,19 @@ function toSubmittedVideos(
 }
 
 export async function getSubmittedVideos(query: SubmittedVideoQuery): Promise<MediaVideo[]> {
+	const key = JSON.stringify(
+		'tmdbId' in query
+			? [query.creativeWorkType, query.tmdbId]
+			: ['descendants', query.tmdbTvSeriesId, query.seasonNumber ?? null]
+	);
+	return cachePublicData(
+		getPublicDataCache(PUBLIC_VIDEO_TTL),
+		`contrail:submitted-videos:v1:${key}`,
+		() => loadSubmittedVideos(query)
+	);
+}
+
+async function loadSubmittedVideos(query: SubmittedVideoQuery): Promise<MediaVideo[]> {
 	const response = await contrail.get('watch.atmo.video.listRecords', {
 		params: {
 			limit: 200,

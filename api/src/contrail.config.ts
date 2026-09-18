@@ -34,10 +34,10 @@ export const config: ContrailConfig = {
 		{ collection: 'app.bsky.actor.profile', shortName: 'profile' },
 		{ collection: 'social.popfeed.actor.profile', shortName: 'popfeedProfile' }
 	],
-	jetstreams: ['wss://jetstream1.us-east.bsky.network'],
+	jetstreams: ['https://jetstream.us-east.bsky.network'],
 	orderedSource: {
 		source: 'jetstream',
-		epoch: 'api-atmo-watch-primary-2026-08'
+		epoch: 'api-atmo-watch-primary-jetstream-v2-2026-08'
 	},
 	notify: true,
 	serviceAuth: {

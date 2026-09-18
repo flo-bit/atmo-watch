@@ -735,12 +735,13 @@ export async function getMediaHeader(tmdbId: number, creativeWorkType: Supported
 
 export async function getMediaOpenGraph(
 	tmdbId: number,
-	creativeWorkType: SupportedCreativeWorkType
+	creativeWorkType: SupportedCreativeWorkType,
+	knownOverride?: MediaArtworkOverride | null
 ) {
 	const cache = getPublicDataCache(MEDIA_DATA_TTL);
 	const [details, override] = await Promise.all([
 		getMediaSource(tmdbId, creativeWorkType, cache),
-		getMediaArtworkOverride(creativeWorkType, tmdbId)
+		knownOverride === undefined ? getMediaArtworkOverride(creativeWorkType, tmdbId) : knownOverride
 	]);
 	const artwork = resolveMediaArtwork(details, override);
 	const imdbId = details.external_ids.imdb_id ?? null;

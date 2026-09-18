@@ -32,6 +32,15 @@ The web app uses `@sveltejs/adapter-cloudflare` and the Worker configuration in
 
 The first two namespaces store AT Protocol OAuth state and sessions. `MEDIA_CACHE` stores the small, slow-changing OMDb ratings dataset and site-wide TMDB artwork overrides. General TMDB data uses Cloudflare's Cache API with a small per-isolate memory cache, avoiding high-volume KV writes for media and search caching.
 
+### Public response caching
+
+- Movie/TV `og.png` handlers cache **rendered PNGs for 24 hours** in Cloudflare's Cache API. Keys use the media type, numeric TMDB ID, and saved artwork revision; slugs and query parameters cannot create extra render variants. Editing artwork selects a new cache key. Concurrent requests for the same key share one render within an isolate, with a separate readable response body for each caller. Bump the cache version in `src/lib/og-cache.server.ts` when changing the image template.
+- Public rating summaries, **anonymous** media review pages, and submitted video lists use a **60-second** Cache API + per-isolate memory cache. Successful empty results are cached; failed requests are not. Review pagination, media types/IDs, and TV seasons have separate keys. Signed-in review requests bypass this cache so hydrated viewer likes cannot leak between users. Community changes can take about a minute to appear in cached public data; scores embedded in OG images refresh with the image TTL.
+- Cache API storage is best-effort and local to each Cloudflare data center. New/evicted keys still require rendering or API reads; this complements crawler blocking, rather than replacing it. Cache failures fall back to normal generation/fetching. Outside Cloudflare, public JSON caching still uses memory; finished PNGs are not retained after their in-flight render completes.
+- Do not enable blanket shared caching for HTML: pages contain viewer-specific likes and country-dependent streaming availability. OAuth/session data is never put into these public caches. Profile-review OG images and intentionally random scene reads are unchanged.
+
+Run the server-side cache regression tests with `pnpm exec vitest run --project server`.
+
 Media artwork can be curated at `/movie/[id]/edit` or `/tv/[id]/edit`. Access is restricted by AT Protocol DID; additional curator DIDs can be configured with the comma- or whitespace-separated `MEDIA_CURATOR_DIDS` private runtime value.
 
 Before the first deployment, configure the private runtime values without adding them to `wrangler.jsonc`:

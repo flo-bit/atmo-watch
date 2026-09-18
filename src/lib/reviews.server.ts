@@ -1,5 +1,6 @@
 import type { ActorIdentifier, Did } from '@atcute/lexicons';
 import { getAtprotoCdnImageUrl } from '$lib/atproto/images';
+import { cachePublicData, getPublicDataCache } from '$lib/cache.server';
 import { contrail } from '$lib/contrail-client.server';
 import type * as CommentListRecords from '$lib/contrail/types/types/watch/atmo/comment/listRecords';
 import type * as ReviewListRecords from '$lib/contrail/types/types/watch/atmo/review/listRecords';
@@ -22,6 +23,7 @@ const REVIEW_LIST_METHOD = 'watch.atmo.review.listRecords' as const;
 const WRITTEN_REVIEW_LIST_METHOD = 'watch.atmo.review.listWrittenRecords' as const;
 const RATING_SUMMARY_METHOD = 'watch.atmo.review.getRatingSummary' as const;
 const TOP_RATED_METHOD = 'watch.atmo.review.getTopRated' as const;
+const PUBLIC_REVIEW_TTL = 60;
 
 function getCreativeWorkType(value: string): SupportedCreativeWorkType | undefined {
 	if (value === 'movie' || value === 'tv_show') return value;
@@ -277,18 +279,24 @@ export async function getMediaRatingSummary(
 	tmdbId: number,
 	creativeWorkType: SupportedCreativeWorkType
 ): Promise<{ score: number | null; count: number }> {
-	const response = await contrail.get(RATING_SUMMARY_METHOD, {
-		params: { tmdbId, creativeWorkType }
-	});
-	if (!response.ok) {
-		throw new Error(`Could not load media rating summary from Contrail (${response.status})`);
-	}
+	return cachePublicData(
+		getPublicDataCache(PUBLIC_REVIEW_TTL),
+		`contrail:rating-summary:v1:${creativeWorkType}:${tmdbId}`,
+		async () => {
+			const response = await contrail.get(RATING_SUMMARY_METHOD, {
+				params: { tmdbId, creativeWorkType }
+			});
+			if (!response.ok) {
+				throw new Error(`Could not load media rating summary from Contrail (${response.status})`);
+			}
 
-	const score = response.data.score === undefined ? null : Number(response.data.score);
-	return {
-		score: score !== null && Number.isFinite(score) ? score : null,
-		count: response.data.count
-	};
+			const score = response.data.score === undefined ? null : Number(response.data.score);
+			return {
+				score: score !== null && Number.isFinite(score) ? score : null,
+				count: response.data.count
+			};
+		}
+	);
 }
 
 export async function getProfileReviewsPage({
@@ -334,19 +342,38 @@ export async function getProfileReviewsPage({
 	return { reviews, cursor: response.data.cursor ?? null };
 }
 
-export async function getMediaReviewsPage({
-	tmdbId,
-	creativeWorkType,
-	cursor,
-	limit,
-	viewerDid
-}: {
+type MediaReviewsQuery = {
 	tmdbId: number;
 	creativeWorkType: SupportedCreativeWorkType;
 	cursor?: string;
 	limit: number;
 	viewerDid?: Did | null;
-}): Promise<ReviewFeedPage> {
+};
+
+export async function getMediaReviewsPage(query: MediaReviewsQuery): Promise<ReviewFeedPage> {
+	// Authenticated requests hydrate likes and must never enter the shared cache.
+	if (query.viewerDid) return loadMediaReviewsPage(query);
+
+	const key = JSON.stringify([
+		query.creativeWorkType,
+		query.tmdbId,
+		query.cursor ?? null,
+		query.limit
+	]);
+	return cachePublicData(
+		getPublicDataCache(PUBLIC_REVIEW_TTL),
+		`contrail:media-reviews:v1:${key}`,
+		() => loadMediaReviewsPage(query)
+	);
+}
+
+async function loadMediaReviewsPage({
+	tmdbId,
+	creativeWorkType,
+	cursor,
+	limit,
+	viewerDid
+}: MediaReviewsQuery): Promise<ReviewFeedPage> {
 	const response = await contrail.get(WRITTEN_REVIEW_LIST_METHOD, {
 		params: {
 			creativeWorkType,

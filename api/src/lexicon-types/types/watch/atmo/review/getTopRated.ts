@@ -39,12 +39,12 @@ const _mainSchema = /*#__PURE__*/ v.query(
 			"schema": /*#__PURE__*/ v.object(
 				{
 					/**
-					 * @maxLength 10
+					 * @maxLength 20
 					 */
 					get "items"() {
 						return /*#__PURE__*/ v.constrain(
 							/*#__PURE__*/ v.array(itemSchema),
-							[/*#__PURE__*/ v.arrayLength(0, 10)]
+							[/*#__PURE__*/ v.arrayLength(0, 20)]
 						)
 					},
 					/**

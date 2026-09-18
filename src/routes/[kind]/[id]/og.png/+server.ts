@@ -1,6 +1,8 @@
 import { ImageResponse } from '@ethercorps/sveltekit-og';
 import { error, type RequestHandler } from '@sveltejs/kit';
 import { backdropUrl, logoUrl } from '$lib/images';
+import { getMediaArtworkOverride } from '$lib/media-curation.server';
+import { cacheOgImage } from '$lib/og-cache.server';
 import { getMediaOpenGraph, TMDBError } from '$lib/tmdb.server';
 import type { ExternalRating, MediaDetails, MediaLogo } from '$lib/types';
 import { parseMediaRouteKind, parseTmdbId } from '$lib/utils';
@@ -115,14 +117,21 @@ export const GET: RequestHandler = async ({ params }) => {
 	}
 
 	try {
-		const { item, logo, popfeedScore, ratings } = await getMediaOpenGraph(tmdbId, creativeWorkType);
+		const override = await getMediaArtworkOverride(creativeWorkType, tmdbId);
+		// Use trusted media identity/revision, not slugs or arbitrary query strings.
+		// Reading the saved revision also invalidates images after artwork edits.
+		const key = JSON.stringify([creativeWorkType, tmdbId, override?.updatedAt ?? null]);
+		return await cacheOgImage(key, async () => {
+			const { item, logo, popfeedScore, ratings } = await getMediaOpenGraph(
+				tmdbId,
+				creativeWorkType,
+				override
+			);
 
-		return new ImageResponse(template(item, logo, popfeedScore, ratings), {
-			width: 1200,
-			height: 630,
-			headers: {
-				'Cache-Control': 'public, max-age=86400, stale-while-revalidate=604800'
-			}
+			return new ImageResponse(template(item, logo, popfeedScore, ratings), {
+				width: 1200,
+				height: 630
+			});
 		});
 	} catch (cause) {
 		if (cause instanceof TMDBError && cause.http_status_code === 404) {

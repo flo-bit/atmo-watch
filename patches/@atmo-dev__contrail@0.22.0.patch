@@ -1,8 +1,18 @@
-diff --git a/dist/chunk-QSFEXFPO.js b/dist/chunk-QSFEXFPO.js
-index fbea95c3bb279a5d7c4fb1e867f300aece87ee2f..1cbe0c2a714292cb7a8f6742f200072555f5332a 100644
---- a/dist/chunk-QSFEXFPO.js
-+++ b/dist/chunk-QSFEXFPO.js
-@@ -5293,11 +5293,20 @@ function admissionFilteredCount(dropped) {
+diff --git a/dist/chunk-M2SUSRVO.js b/dist/chunk-M2SUSRVO.js
+index 9cf5092ac40298ed8699f07d433705a745ed303e..557f6a23ff2fa2ccadef5a6bbd863068253baaab 100644
+--- a/dist/chunk-M2SUSRVO.js
++++ b/dist/chunk-M2SUSRVO.js
+@@ -3133,7 +3133,7 @@ async function assertSeqCursorAvailable(options) {
+   const url = new URL(`/xrpc/${SUBSCRIBE_EVENTS_NSID}`, service.origin);
+   url.searchParams.set("cursor", String(options.cursor));
+   url.searchParams.set("kinds", "commit");
+-  const response = await options.fetchImpl(url, {
++  const response = await options.fetchImpl.call(globalThis, url, {
+     cache: "no-store",
+-    redirect: "error",
++    redirect: "manual",
+     signal: options.signal
+@@ -5520,11 +5520,20 @@ function admissionFilteredCount(dropped) {
  function runtimeCpuUsage() {
    const runtimeProcess = globalThis.process;
    if (!runtimeProcess?.cpuUsage) return null;
