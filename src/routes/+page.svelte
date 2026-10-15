@@ -94,6 +94,11 @@
 			class={`mx-auto w-full max-w-xl ${data.topRated.length > 0 ? 'mt-8' : 'pt-[18vh] sm:pt-[22vh]'}`}
 		>
 			<SearchCommand did={data.did} />
+			{#if data.degraded}
+				<p class="mt-4 text-center text-sm text-base-400" role="status">
+					Some movie data is temporarily unavailable. You can still browse reviews or try searching.
+				</p>
+			{/if}
 		</div>
 
 		{#if collections.length > 0 || reviews.length > 0 || cursor}

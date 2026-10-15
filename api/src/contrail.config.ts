@@ -1,4 +1,5 @@
 import { getDialect, recordsTableName, type ContrailConfig } from '@atmo-dev/contrail';
+import { communityPresenceResponse } from './community-presence';
 
 type RandomVideoRow = {
 	uri: string;
@@ -119,6 +120,7 @@ export const config: ContrailConfig = {
 				}
 			},
 			queries: {
+				getCommunityPresence: communityPresenceResponse,
 				getTopRated: async (db) => {
 					const dialect = getDialect(db);
 					const workType = dialect.jsonExtract('r.record', 'creativeWorkType');

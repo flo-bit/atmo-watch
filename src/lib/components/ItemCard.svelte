@@ -8,8 +8,9 @@
 	let {
 		item,
 		showTitle = true,
-		rating
-	}: { item: MediaSummary; showTitle?: boolean; rating?: number } = $props();
+		rating,
+		nofollow = false
+	}: { item: MediaSummary; showTitle?: boolean; rating?: number; nofollow?: boolean } = $props();
 	let itemUrl = $derived(
 		resolve('/[kind]/[id]', {
 			kind: toMediaRouteKind(item.creativeWorkType),
@@ -40,7 +41,7 @@
 
 	{#if showTitle}
 		<h3 class="mt-2 text-sm font-medium text-base-50 sm:text-base">
-			<a href={itemUrl} data-sveltekit-preload-data="hover">
+			<a href={itemUrl} rel={nofollow ? 'nofollow' : undefined} data-sveltekit-preload-data="hover">
 				<span aria-hidden="true" class="absolute inset-0"></span>
 				<span class="line-clamp-2">{item.title}</span>
 			</a>
@@ -48,6 +49,7 @@
 	{:else}
 		<a
 			href={itemUrl}
+			rel={nofollow ? 'nofollow' : undefined}
 			aria-label={item.title}
 			class="absolute inset-0 z-30"
 			data-sveltekit-preload-data="hover"

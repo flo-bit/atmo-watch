@@ -1,9 +1,8 @@
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
-import { getMediaRatingSummary, getMediaReviewsPage } from '$lib/reviews.server';
+import { getMediaCommunity } from '$lib/community.server';
 import { getMediaPage, TMDBError } from '$lib/tmdb.server';
-import { parseMediaRouteKind, parseTmdbId } from '$lib/utils';
-import { getMediaSubmittedVideos } from '$lib/videos.server';
+import { mediaCanonicalPath, parseMediaRouteKind, parseTmdbId } from '$lib/utils';
 
 function normalizeRegion(value: string | null | undefined) {
 	const region = value?.trim().toUpperCase();
@@ -33,9 +32,7 @@ function getStreamingRegion(url: URL, request: Request) {
 	return null;
 }
 
-const REVIEW_PAGE_SIZE = 12;
-
-export const load: PageServerLoad = async ({ locals, params, request, url }) => {
+export const load: PageServerLoad = async ({ locals, params, request, setHeaders, url }) => {
 	const tmdbId = parseTmdbId(params.id);
 	const creativeWorkType = parseMediaRouteKind(params.kind);
 
@@ -44,33 +41,26 @@ export const load: PageServerLoad = async ({ locals, params, request, url }) => 
 	}
 
 	try {
-		const [mediaPage, reviewPage, ratingSummary, submittedVideos] = await Promise.all([
-			getMediaPage(tmdbId, creativeWorkType, getStreamingRegion(url, request)),
-			getMediaReviewsPage({
-				tmdbId,
-				creativeWorkType,
-				limit: REVIEW_PAGE_SIZE,
-				viewerDid: locals.did
-			}).catch((cause) => {
-				console.error('Could not load reviews from Contrail', cause);
-				return { reviews: [], cursor: null };
-			}),
-			getMediaRatingSummary(tmdbId, creativeWorkType).catch((cause) => {
-				console.error('Could not load rating summary from Contrail', cause);
-				return { score: null, count: 0 };
-			}),
-			getMediaSubmittedVideos(tmdbId, creativeWorkType).catch((cause) => {
-				console.error('Could not load submitted videos from Contrail', cause);
-				return [];
-			})
-		]);
+		// Resolve the catalog entry first: nonexistent IDs must not trigger community work.
+		const mediaPage = await getMediaPage(
+			tmdbId,
+			creativeWorkType,
+			getStreamingRegion(url, request)
+		);
+		const { submittedVideos, ...community } = await getMediaCommunity({
+			tmdbId,
+			creativeWorkType,
+			viewerDid: locals.did
+		});
+		if (community.hasCommunityContent === false) {
+			setHeaders({ 'X-Robots-Tag': 'noindex, nofollow' });
+		}
 
 		return {
 			...mediaPage,
 			videos: [...mediaPage.videos, ...submittedVideos],
-			reviews: reviewPage.reviews,
-			reviewCursor: reviewPage.cursor,
-			ratingSummary,
+			...community,
+			canonicalUrl: new URL(mediaCanonicalPath(mediaPage.item), url.origin).href,
 			today: new Date().toISOString().slice(0, 10)
 		};
 	} catch (cause) {

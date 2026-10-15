@@ -65,6 +65,7 @@
 						id: showId,
 						season: String(season.seasonNumber)
 					})}
+					rel="nofollow"
 					class={`${seasonLayoutClass(index)} group block w-32 min-w-0 shrink-0 snap-start focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white/70 sm:w-36 lg:w-auto`}
 				>
 					<div

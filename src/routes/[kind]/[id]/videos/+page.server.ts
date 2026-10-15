@@ -2,7 +2,7 @@ import { error } from '@sveltejs/kit';
 import { getMediaVideosPage, TMDBError } from '$lib/tmdb.server';
 import type { MediaVideo } from '$lib/types';
 import { parseMediaRouteKind, parseTmdbId } from '$lib/utils';
-import { getMediaSubmittedVideos } from '$lib/videos.server';
+import { getCatalogSubmittedVideos } from '$lib/videos.server';
 import type { PageServerLoad } from './$types';
 
 function parseSeason(value: string | null) {
@@ -11,19 +11,21 @@ function parseSeason(value: string | null) {
 	return Number.isSafeInteger(season) ? season : null;
 }
 
-export const load: PageServerLoad = async ({ params, url }) => {
+export const load: PageServerLoad = async ({ locals, params, url }) => {
 	const tmdbId = parseTmdbId(params.id);
 	const creativeWorkType = parseMediaRouteKind(params.kind);
 	if (!tmdbId || !creativeWorkType) error(404, 'Not found');
 
 	try {
-		const [mediaPage, submittedVideos] = await Promise.all([
-			getMediaVideosPage(tmdbId, creativeWorkType),
-			getMediaSubmittedVideos(tmdbId, creativeWorkType).catch((cause) => {
-				console.error('Could not load submitted videos from Contrail', cause);
-				return [];
-			})
-		]);
+		const mediaPage = await getMediaVideosPage(tmdbId, creativeWorkType);
+		const submittedVideos = await getCatalogSubmittedVideos(
+			tmdbId,
+			creativeWorkType,
+			Boolean(locals.did)
+		).catch((cause) => {
+			console.error('Could not load submitted videos from Contrail', cause);
+			return [];
+		});
 		const officialVideos: MediaVideo[] = mediaPage.videos.map((video) => ({
 			...video,
 			context: {

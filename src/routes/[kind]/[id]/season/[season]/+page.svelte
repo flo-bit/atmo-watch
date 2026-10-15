@@ -97,6 +97,7 @@
 
 <svelte:head>
 	<title>{data.show.title}: {data.season.name} | atmo.watch</title>
+	<meta name="robots" content="noindex, nofollow" />
 	<meta
 		name="description"
 		content={data.season.overview ||

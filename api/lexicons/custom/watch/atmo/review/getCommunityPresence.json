@@ -1,0 +1,33 @@
+{
+  "lexicon": 1,
+  "id": "watch.atmo.review.getCommunityPresence",
+  "defs": {
+    "main": {
+      "type": "query",
+      "description": "Check for community reviews (including rating-only records), exact-title videos and TV descendant videos without hydration or aggregation.",
+      "parameters": {
+        "type": "params",
+        "required": ["creativeWorkType", "tmdbId"],
+        "properties": {
+          "creativeWorkType": {
+            "type": "string",
+            "knownValues": ["movie", "tv_show"]
+          },
+          "tmdbId": { "type": "integer", "minimum": 1 }
+        }
+      },
+      "output": {
+        "encoding": "application/json",
+        "schema": {
+          "type": "object",
+          "required": ["hasReviews", "hasVideos", "hasDescendantVideos"],
+          "properties": {
+            "hasReviews": { "type": "boolean" },
+            "hasVideos": { "type": "boolean" },
+            "hasDescendantVideos": { "type": "boolean" }
+          }
+        }
+      }
+    }
+  }
+}

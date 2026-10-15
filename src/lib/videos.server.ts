@@ -1,6 +1,7 @@
 import type { ResourceUri } from '@atcute/lexicons';
 import { cachePublicData, getPublicDataCache } from '$lib/cache.server';
 import { contrail } from '$lib/contrail-client.server';
+import { getCommunityPresence, type CommunityPresence } from '$lib/community-presence.server';
 import type * as VideoListRecords from '$lib/contrail/types/types/watch/atmo/video/listRecords';
 import type { MediaVideo } from '$lib/types';
 import { VIDEO_TYPE_LABELS, VIDEO_TYPES, type VideoType } from '$lib/videos';
@@ -115,7 +116,11 @@ function toSubmittedVideos(
 	});
 }
 
-export async function getSubmittedVideos(query: SubmittedVideoQuery): Promise<MediaVideo[]> {
+export async function getSubmittedVideos(
+	query: SubmittedVideoQuery,
+	bypassCache = false
+): Promise<MediaVideo[]> {
+	if (bypassCache) return loadSubmittedVideos(query);
 	const key = JSON.stringify(
 		'tmdbId' in query
 			? [query.creativeWorkType, query.tmdbId]
@@ -152,16 +157,32 @@ async function loadSubmittedVideos(query: SubmittedVideoQuery): Promise<MediaVid
 	return toSubmittedVideos(response.data.records, response.data.profiles ?? []);
 }
 
+export async function getCatalogSubmittedVideos(
+	tmdbId: number,
+	creativeWorkType: 'movie' | 'tv_show',
+	isAuthenticated = false
+) {
+	const presence = isAuthenticated ? null : await getCommunityPresence(tmdbId, creativeWorkType);
+	return getMediaSubmittedVideos(tmdbId, creativeWorkType, presence, isAuthenticated);
+}
+
 export async function getMediaSubmittedVideos(
 	tmdbId: number,
-	creativeWorkType: 'movie' | 'tv_show'
+	creativeWorkType: 'movie' | 'tv_show',
+	presence?: CommunityPresence | null,
+	bypassCache = false
 ) {
-	const exactVideos = getSubmittedVideos({ tmdbId, creativeWorkType });
+	const exactVideos =
+		presence?.hasVideos === false
+			? Promise.resolve([])
+			: getSubmittedVideos({ tmdbId, creativeWorkType }, bypassCache);
 	if (creativeWorkType === 'movie') return exactVideos;
 
 	const [showVideos, descendantVideos] = await Promise.all([
 		exactVideos,
-		getSubmittedVideos({ tmdbTvSeriesId: tmdbId })
+		presence?.hasDescendantVideos === false
+			? Promise.resolve([])
+			: getSubmittedVideos({ tmdbTvSeriesId: tmdbId }, bypassCache)
 	]);
 	const seen = new Set<string>();
 	return [...showVideos, ...descendantVideos].filter((video) => {

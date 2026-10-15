@@ -241,8 +241,8 @@ export async function getRecentReviewsPage({
 	return { reviews, cursor: response.data.cursor ?? null };
 }
 
-export async function getTopRatedMedia(): Promise<TopRatedMedia[]> {
-	const response = await contrail.get(TOP_RATED_METHOD);
+export async function getTopRatedMedia(signal?: AbortSignal): Promise<TopRatedMedia[]> {
+	const response = await contrail.get(TOP_RATED_METHOD, signal ? { signal } : undefined);
 	if (!response.ok) {
 		throw new Error(`Could not load top-rated media from Contrail (${response.status})`);
 	}
@@ -277,25 +277,30 @@ export async function getTopRatedMedia(): Promise<TopRatedMedia[]> {
 
 export async function getMediaRatingSummary(
 	tmdbId: number,
-	creativeWorkType: SupportedCreativeWorkType
+	creativeWorkType: SupportedCreativeWorkType,
+	bypassCache = false,
+	signal?: AbortSignal
 ): Promise<{ score: number | null; count: number }> {
+	const load = async () => {
+		const response = await contrail.get(RATING_SUMMARY_METHOD, {
+			params: { tmdbId, creativeWorkType },
+			...(signal ? { signal } : {})
+		});
+		if (!response.ok) {
+			throw new Error(`Could not load media rating summary from Contrail (${response.status})`);
+		}
+
+		const score = response.data.score === undefined ? null : Number(response.data.score);
+		return {
+			score: score !== null && Number.isFinite(score) ? score : null,
+			count: response.data.count
+		};
+	};
+	if (bypassCache) return load();
 	return cachePublicData(
 		getPublicDataCache(PUBLIC_REVIEW_TTL),
 		`contrail:rating-summary:v1:${creativeWorkType}:${tmdbId}`,
-		async () => {
-			const response = await contrail.get(RATING_SUMMARY_METHOD, {
-				params: { tmdbId, creativeWorkType }
-			});
-			if (!response.ok) {
-				throw new Error(`Could not load media rating summary from Contrail (${response.status})`);
-			}
-
-			const score = response.data.score === undefined ? null : Number(response.data.score);
-			return {
-				score: score !== null && Number.isFinite(score) ? score : null,
-				count: response.data.count
-			};
-		}
+		load
 	);
 }
 

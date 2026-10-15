@@ -1,6 +1,7 @@
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { getTvSeasonPage, TMDBError } from '$lib/tmdb.server';
+import { getCommunityPresence } from '$lib/community-presence.server';
 import { parseMediaRouteKind, parseTmdbId } from '$lib/utils';
 import { getSubmittedVideos } from '$lib/videos.server';
 
@@ -10,7 +11,7 @@ function parseSeasonNumber(value: string) {
 	return Number.isSafeInteger(seasonNumber) ? seasonNumber : null;
 }
 
-export const load: PageServerLoad = async ({ params }) => {
+export const load: PageServerLoad = async ({ locals, params }) => {
 	const tmdbId = parseTmdbId(params.id);
 	const creativeWorkType = parseMediaRouteKind(params.kind);
 	const seasonNumber = parseSeasonNumber(params.season);
@@ -20,13 +21,18 @@ export const load: PageServerLoad = async ({ params }) => {
 	}
 
 	try {
-		const [seasonPage, submittedVideos] = await Promise.all([
-			getTvSeasonPage(tmdbId, seasonNumber),
-			getSubmittedVideos({ tmdbTvSeriesId: tmdbId, seasonNumber }).catch((cause) => {
-				console.error('Could not load submitted season videos from Contrail', cause);
-				return [];
-			})
-		]);
+		const seasonPage = await getTvSeasonPage(tmdbId, seasonNumber);
+		const presence = locals.did ? null : await getCommunityPresence(tmdbId, creativeWorkType);
+		const submittedVideos =
+			presence?.hasDescendantVideos === false
+				? []
+				: await getSubmittedVideos(
+						{ tmdbTvSeriesId: tmdbId, seasonNumber },
+						Boolean(locals.did)
+					).catch((cause) => {
+						console.error('Could not load submitted season videos from Contrail', cause);
+						return [];
+					});
 		return {
 			...seasonPage,
 			submittedVideos,

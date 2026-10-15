@@ -30,6 +30,7 @@
 <svelte:head>
 	<title>{data.personDetails.name} | skywatched</title>
 	<meta name="description" content={description} />
+	<meta name="robots" content="noindex, nofollow" />
 	<meta property="og:url" content={canonicalUrl} />
 	<meta property="og:type" content="profile" />
 	<meta property="og:title" content={`${data.personDetails.name} | skywatched`} />
@@ -83,7 +84,7 @@
 		{#if data.combinedCredits.length > 0}
 			<section class="mb-4 max-w-2xl">
 				<h2 class="mb-2 text-lg font-semibold">appearing in</h2>
-				<ItemsGrid items={data.combinedCredits} />
+				<ItemsGrid items={data.combinedCredits} nofollow />
 			</section>
 		{/if}
 	</div>

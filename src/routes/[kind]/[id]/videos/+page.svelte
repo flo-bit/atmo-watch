@@ -83,6 +83,7 @@
 
 <svelte:head>
 	<title>{data.item.title} videos | atmo.watch</title>
+	<meta name="robots" content="noindex, nofollow" />
 	<meta
 		name="description"
 		content={`Watch trailers, scenes, interviews, reviews, and other videos for ${data.item.title}.`}

@@ -2,6 +2,7 @@ import { dev } from '$app/environment';
 import { env } from '$env/dynamic/private';
 import { cloudflareKV } from '@svelte-atproto/oauth/server/stores/cloudflare';
 import type { SupportedCreativeWorkType } from '$lib/types';
+import { withTimeout } from '$lib/upstream.server';
 
 const KV_BINDING = 'MEDIA_CACHE';
 const KEY_PREFIX = 'media-curation:v1';
@@ -73,7 +74,9 @@ export async function getMediaArtworkOverride(
 	tmdbId: number
 ): Promise<MediaArtworkOverride | null> {
 	try {
-		const value = await readValue(overrideKey(creativeWorkType, tmdbId));
+		const value = await withTimeout('Artwork override read', 1_000, () =>
+			readValue(overrideKey(creativeWorkType, tmdbId))
+		);
 		return isOverride(value) ? value : null;
 	} catch (cause) {
 		console.error(`Could not load artwork override for ${creativeWorkType} ${tmdbId}`, cause);
@@ -83,7 +86,7 @@ export async function getMediaArtworkOverride(
 
 export async function getMediaArtworkRevision() {
 	try {
-		const value = await readValue(REVISION_KEY);
+		const value = await withTimeout('Artwork revision read', 1_000, () => readValue(REVISION_KEY));
 		return typeof value === 'string' && value ? value : '0';
 	} catch {
 		return '0';

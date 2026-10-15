@@ -1,4 +1,4 @@
-import type { MediaIdentity, SupportedCreativeWorkType } from './types';
+import type { MediaIdentity, MediaSummary, SupportedCreativeWorkType } from './types';
 
 export function cn(...classes: Array<string | false | null | undefined>) {
 	return classes.filter(Boolean).join(' ');
@@ -12,6 +12,13 @@ export function parseMediaRouteKind(value: unknown): SupportedCreativeWorkType |
 
 export function toMediaRouteKind(creativeWorkType: SupportedCreativeWorkType): 'movie' | 'tv' {
 	return creativeWorkType === 'tv_show' ? 'tv' : 'movie';
+}
+
+/** A stable title URL independent of incoming slugs, query strings and leading zeros. */
+export function mediaCanonicalPath(
+	media: Pick<MediaSummary, 'creativeWorkType' | 'tmdbId' | 'title'>
+) {
+	return `/${toMediaRouteKind(media.creativeWorkType)}/${media.tmdbId}-${slugify(media.title)}`;
 }
 
 export function mediaKey(media: MediaIdentity) {

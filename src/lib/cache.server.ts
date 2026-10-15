@@ -1,4 +1,5 @@
 import { cloudflareKV } from '@svelte-atproto/oauth/server/stores/cloudflare';
+import { withTimeout } from '$lib/upstream.server';
 
 type Awaitable<T> = T | PromiseLike<T>;
 
@@ -128,7 +129,8 @@ export async function readPublicDataCache<T>(
 	if (!cache) return undefined;
 
 	try {
-		return (await cache.get(versionedKey(key))) as T | undefined;
+		return (await withTimeout('Public cache read', 750, () => cache.get(versionedKey(key)))) as
+			T | undefined;
 	} catch {
 		// Treat cache errors as misses.
 		return undefined;
@@ -143,7 +145,7 @@ export async function writePublicDataCache(
 	if (!cache) return;
 
 	try {
-		await cache.set(versionedKey(key), value);
+		await withTimeout('Public cache write', 750, () => cache.set(versionedKey(key), value));
 	} catch {
 		// A failed cache write should not fail the request.
 	}

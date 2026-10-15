@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { page } from '$app/state';
 	import { Dialog } from 'bits-ui';
 	import { Plus, X } from '@lucide/svelte';
 	import { untrack } from 'svelte';
@@ -33,6 +32,8 @@
 		reviews: ReviewCardModel[];
 		reviewCursor: string | null;
 		ratingSummary: { score: number | null; count: number };
+		hasCommunityContent: boolean | null;
+		canonicalUrl: string;
 		today: string;
 	};
 
@@ -64,7 +65,7 @@
 	}
 
 	let { data }: { data: ItemPageData } = $props();
-	let canonicalUrl = $derived(`${page.url.origin}${page.url.pathname}`);
+	let canonicalUrl = $derived(data.canonicalUrl);
 	let ogImageUrl = $derived(
 		`${canonicalUrl.replace(/\/$/, '')}/og.png?v=${encodeURIComponent(data.artworkRevision ?? '4')}`
 	);
@@ -240,6 +241,10 @@
 <svelte:head>
 	<title>{data.item.title} | atmo.watch</title>
 	<meta name="description" content={`Rate and review "${data.item.title}" on atmo.watch`} />
+	<link rel="canonical" href={canonicalUrl} />
+	{#if data.hasCommunityContent === false}
+		<meta name="robots" content="noindex, nofollow" />
+	{/if}
 
 	<meta property="og:url" content={canonicalUrl} />
 	<meta property="og:type" content="website" />
@@ -472,6 +477,7 @@
 					{#if data.videos.length > 3}
 						<a
 							href={videosPageUrl}
+							rel="nofollow"
 							class="mt-5 inline-flex h-8 items-center rounded-full border border-white/15 bg-white/[0.07] px-3 text-xs font-semibold text-white transition-colors hover:bg-white/[0.12] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70"
 						>
 							see more
@@ -488,12 +494,12 @@
 					<HorizontalScroller class="mt-4 gap-3 pb-3 lg:hidden" label="Similar titles">
 						{#each data.recommendations as item (`${item.creativeWorkType}:${item.tmdbId}`)}
 							<div class="w-32 shrink-0 snap-start sm:w-36">
-								<ItemCard {item} />
+								<ItemCard {item} nofollow />
 							</div>
 						{/each}
 					</HorizontalScroller>
 					<div class="hidden lg:block">
-						<ItemsGrid items={desktopRecommendations} class="mt-4" />
+						<ItemsGrid items={desktopRecommendations} class="mt-4" nofollow />
 					</div>
 
 					{#if !showAllRecommendations && data.recommendations.length > 5}
@@ -534,6 +540,7 @@
 								href={resolve('/cast/[id]', {
 									id: `${castMember.id}-${slugify(castMember.name)}`
 								})}
+								rel="nofollow"
 								class={`flex w-24 min-w-0 shrink-0 snap-start flex-col items-center gap-1.5 transition-opacity hover:opacity-75 sm:w-28 lg:w-auto ${showAllCast || index < 5 ? 'lg:flex' : 'lg:hidden'}`}
 							>
 								<Avatar

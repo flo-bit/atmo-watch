@@ -1,3 +1,10 @@
-# allow crawling everything by default
+# Keep community title/review/list pages discoverable, not the entire TMDB graph.
+# These rules are voluntary; enforce unwanted-bot blocks at the Cloudflare edge.
 User-agent: *
-Disallow:
+Disallow: /cast/
+Disallow: /api/
+Disallow: /movie/*/edit
+Disallow: /tv/*/edit
+Disallow: /movie/*/videos
+Disallow: /tv/*/videos
+Disallow: /tv/*/season/

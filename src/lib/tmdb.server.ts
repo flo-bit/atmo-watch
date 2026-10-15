@@ -12,6 +12,8 @@ import {
 	type MediaArtworkOverride
 } from '$lib/media-curation.server';
 import { getMediaRatingSummary, getTopRatedMedia } from '$lib/reviews.server';
+import { getTmdbJson } from '$lib/tmdb-request.server';
+import { DeadlineError, fetchWithDeadline, withTimeout } from '$lib/upstream.server';
 import {
 	TMDB,
 	TMDBError,
@@ -77,6 +79,7 @@ const EMPTY_OMDB_DATA: OmdbData = {
 type OmdbData = {
 	ratings: ExternalRating[];
 	imdbVotes: string | null;
+	degraded?: boolean;
 };
 
 type OmdbFetchResult = {
@@ -125,22 +128,19 @@ function getClient() {
 function getMediaSource(
 	tmdbId: number,
 	creativeWorkType: SupportedCreativeWorkType,
-	cache: ReturnType<typeof getPublicDataCache>
+	cache: ReturnType<typeof getPublicDataCache>,
+	signal?: AbortSignal
 ): Promise<MediaDetailsSource> {
-	return cachePublicData(cache, `tmdb:media:v2:${creativeWorkType}:${tmdbId}`, async () => {
-		const tmdb = getClient();
-		return creativeWorkType === 'movie'
-			? tmdb.movies.details({
-					movie_id: tmdbId,
-					append_to_response: MEDIA_APPENDS,
-					include_image_language: ['en', 'null']
-				})
-			: tmdb.tv_series.details({
-					series_id: tmdbId,
-					append_to_response: MEDIA_APPENDS,
-					include_image_language: ['en', 'null']
-				});
-	});
+	return cachePublicData(cache, `tmdb:media:v2:${creativeWorkType}:${tmdbId}`, () =>
+		getTmdbJson<MediaDetailsSource>(
+			`${creativeWorkType === 'movie' ? 'movie' : 'tv'}/${tmdbId}`,
+			{
+				append_to_response: MEDIA_APPENDS.join(','),
+				include_image_language: 'en,null'
+			},
+			signal
+		)
+	);
 }
 
 function getTvScheduleSource(
@@ -426,7 +426,8 @@ async function loadRatings(
 	imdbId: string,
 	cache: ReturnType<typeof getPersistentPublicDataCache>,
 	failureCache: ReturnType<typeof getPublicDataCache>,
-	quotaCache: ReturnType<typeof getPublicDataCache>
+	quotaCache: ReturnType<typeof getPublicDataCache>,
+	signal?: AbortSignal
 ): Promise<OmdbData> {
 	const ratingsKey = `omdb:ratings:${imdbId}`;
 	const cached = await readPublicDataCache<OmdbFetchResult>(cache, ratingsKey);
@@ -446,7 +447,7 @@ async function loadRatings(
 
 	const failureKey = `omdb:failure:${keyFingerprint}:${imdbId}`;
 	if ((await readPublicDataCache<boolean>(failureCache, failureKey)) === true) {
-		return EMPTY_OMDB_DATA;
+		return { ...EMPTY_OMDB_DATA, degraded: true };
 	}
 
 	const url = new URL('https://www.omdbapi.com/');
@@ -457,12 +458,12 @@ async function loadRatings(
 	let data: OmdbResponse;
 
 	try {
-		response = await fetch(url);
+		response = await fetchWithDeadline(url, { signal }, 1_800);
 		data = (await response.json()) as OmdbResponse;
 	} catch (cause) {
 		console.error(`OMDb request for ${imdbId} failed`, cause);
 		await writePublicDataCache(failureCache, failureKey, true);
-		return EMPTY_OMDB_DATA;
+		return { ...EMPTY_OMDB_DATA, degraded: true };
 	}
 
 	if (isOmdbQuotaFailure(response, data)) {
@@ -476,7 +477,7 @@ async function loadRatings(
 	if (!response.ok) {
 		console.warn(`OMDb request for ${imdbId} failed with HTTP ${response.status}`);
 		await writePublicDataCache(failureCache, failureKey, true);
-		return EMPTY_OMDB_DATA;
+		return { ...EMPTY_OMDB_DATA, degraded: true };
 	}
 
 	const result: OmdbFetchResult =
@@ -501,15 +502,26 @@ export function getRatings(
 	imdbId: string,
 	cache = getPersistentPublicDataCache(OMDB_DATA_TTL),
 	failureCache = getPublicDataCache(OMDB_TRANSIENT_FAILURE_TTL),
-	quotaCache = getPublicDataCache(getOmdbQuotaFailureTtl())
+	quotaCache = getPublicDataCache(getOmdbQuotaFailureTtl()),
+	signal?: AbortSignal
 ): Promise<OmdbData> {
 	const pendingKey = `${env.OMDB_API_KEY ?? ''}:${imdbId}`;
 	const pending = pendingRatings.get(pendingKey);
 	if (pending) return pending;
 
-	const request = loadRatings(imdbId, cache, failureCache, quotaCache).finally(() => {
-		pendingRatings.delete(pendingKey);
-	});
+	const request = withTimeout(
+		'OMDb enrichment',
+		3_500,
+		(deadlineSignal) => loadRatings(imdbId, cache, failureCache, quotaCache, deadlineSignal),
+		signal
+	)
+		.catch(() => {
+			console.warn(`OMDb enrichment unavailable for ${imdbId}`);
+			return { ...EMPTY_OMDB_DATA, degraded: true };
+		})
+		.finally(() => {
+			pendingRatings.delete(pendingKey);
+		});
 	pendingRatings.set(pendingKey, request);
 	return request;
 }
@@ -598,23 +610,23 @@ async function loadHomePage(
 	mediaCache: ReturnType<typeof getPublicDataCache>,
 	omdbCache: ReturnType<typeof getPersistentPublicDataCache>,
 	omdbFailureCache: ReturnType<typeof getPublicDataCache>,
-	omdbQuotaCache: ReturnType<typeof getPublicDataCache>
+	omdbQuotaCache: ReturnType<typeof getPublicDataCache>,
+	signal: AbortSignal
 ) {
+	let degraded = false;
 	const empty = {
 		topRated: [] as MediaFeature[],
 		currentlyInTheaters: [] as MediaSummary[]
 	};
-	let tmdb: TMDB;
-
-	try {
-		tmdb = getClient();
-	} catch {
-		return empty;
-	}
+	if (!env.TMDB_ACCESS_TOKEN && !env.TMDB_API_KEY) return { ...empty, degraded: true };
 
 	const [theatersResult, topRatedResult] = await Promise.allSettled([
-		tmdb.movie_lists.now_playing({ page: 1, region: 'US' }),
-		getTopRatedMedia()
+		getTmdbJson<Awaited<ReturnType<TMDB['movie_lists']['now_playing']>>>(
+			'movie/now_playing',
+			{ page: 1 },
+			signal
+		),
+		getTopRatedMedia(signal)
 	]);
 
 	const currentlyInTheaters =
@@ -623,17 +635,32 @@ async function loadHomePage(
 					.map((item) => toMediaSummary(item, 'movie'))
 					.filter((item) => item.poster)
 			: [];
+	if (theatersResult.status === 'rejected') {
+		degraded = true;
+		console.warn('Could not load homepage theaters from TMDB', theatersResult.reason);
+	}
 	if (topRatedResult.status === 'rejected') {
-		console.error('Could not load top-rated media from Contrail', topRatedResult.reason);
+		degraded = true;
+		console.warn('Could not load top-rated media from Contrail', topRatedResult.reason);
 	}
 	const topRatedCandidates = topRatedResult.status === 'fulfilled' ? topRatedResult.value : [];
 	const topRated = (
 		await Promise.all(
-			topRatedCandidates.map(async ({ tmdbId, creativeWorkType, score, ratingCount }) => {
+			topRatedCandidates.slice(0, 20).map(async ({ tmdbId, creativeWorkType }) => {
 				try {
-					const [details, override] = await Promise.all([
-						getMediaSource(tmdbId, creativeWorkType, mediaCache),
-						getMediaArtworkOverride(creativeWorkType, tmdbId)
+					// The 30-day scores choose/order titles, but the displayed rating
+					// must use the same all-time summary as the title's own page.
+					const [details, override, ratingSummary] = await Promise.all([
+						getMediaSource(tmdbId, creativeWorkType, mediaCache, signal),
+						getMediaArtworkOverride(creativeWorkType, tmdbId),
+						getMediaRatingSummary(tmdbId, creativeWorkType, false, signal).catch((cause) => {
+							degraded = true;
+							console.warn(
+								`Could not load homepage rating for ${creativeWorkType} ${tmdbId}`,
+								cause
+							);
+							return { score: null, count: 0 };
+						})
 					]);
 					const artwork = resolveMediaArtwork(details, override);
 					const item = {
@@ -644,41 +671,76 @@ async function loadHomePage(
 
 					const imdbId = details.external_ids.imdb_id ?? null;
 					const omdb = imdbId
-						? await getRatings(imdbId, omdbCache, omdbFailureCache, omdbQuotaCache)
+						? await withTimeout(
+								'Homepage external ratings',
+								2_000,
+								() => getRatings(imdbId, omdbCache, omdbFailureCache, omdbQuotaCache, signal),
+								signal
+							).catch(() => {
+								degraded = true;
+								return EMPTY_OMDB_DATA;
+							})
 						: EMPTY_OMDB_DATA;
+					if (omdb.degraded) degraded = true;
 					return {
 						item,
 						logo: artwork.logo,
-						popfeedScore: score,
-						popfeedRatingCount: ratingCount,
+						popfeedScore: ratingSummary.score,
+						popfeedRatingCount: ratingSummary.count,
 						imdbId,
 						imdbVotes: omdb.imdbVotes,
 						ratings: omdb.ratings
 					} satisfies MediaFeature;
 				} catch (cause) {
-					console.error(`Could not load top-rated ${creativeWorkType} ${tmdbId} from TMDB`, cause);
+					degraded = true;
+					console.warn(`Could not load top-rated ${creativeWorkType} ${tmdbId} from TMDB`, cause);
 					return null;
 				}
 			})
 		)
 	).filter((feature) => feature !== null);
 
-	return { topRated, currentlyInTheaters };
+	return { topRated, currentlyInTheaters, degraded };
 }
 
 export async function getHomePage() {
-	const cache = getPublicDataCache(DISCOVERY_TTL);
+	const standardCache = getPublicDataCache(DISCOVERY_TTL);
+	const cache: typeof standardCache = {
+		get: standardCache.get,
+		set(key, value) {
+			const page = value as Awaited<ReturnType<typeof loadHomePage>>;
+			// A timeout/partial result must not hide healthy data for six hours.
+			const ttl =
+				page.degraded || !(page.topRated.length || page.currentlyInTheaters.length)
+					? 60
+					: DISCOVERY_TTL;
+			return getPublicDataCache(ttl).set(key, value);
+		}
+	};
 	const mediaCache = getPublicDataCache(MEDIA_DATA_TTL);
 	const omdbCache = getPersistentPublicDataCache(OMDB_DATA_TTL);
 	const omdbFailureCache = getPublicDataCache(OMDB_TRANSIENT_FAILURE_TTL);
 	const omdbQuotaCache = getPublicDataCache(getOmdbQuotaFailureTtl());
 	const artworkRevision = await getMediaArtworkRevision();
-	return cachePublicData(
-		cache,
-		`tmdb:home:v10:${artworkRevision}`,
-		() => loadHomePage(mediaCache, omdbCache, omdbFailureCache, omdbQuotaCache),
-		(data) => Boolean(data.topRated.length || data.currentlyInTheaters.length)
-	);
+	return cachePublicData(cache, `tmdb:home:v12:${artworkRevision}`, async () => {
+		const controller = new AbortController();
+		const timer = setTimeout(() => controller.abort(new DeadlineError('Homepage')), 8_000);
+		try {
+			return await loadHomePage(
+				mediaCache,
+				omdbCache,
+				omdbFailureCache,
+				omdbQuotaCache,
+				controller.signal
+			);
+		} catch (cause) {
+			controller.abort(cause);
+			console.warn('Homepage enrichment unavailable', cause);
+			return { topRated: [], currentlyInTheaters: [], degraded: true };
+		} finally {
+			clearTimeout(timer);
+		}
+	});
 }
 
 export function searchMedia(query: string): Promise<MediaSummary[]> {
