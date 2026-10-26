@@ -1,8 +1,21 @@
 diff --git a/dist/chunk-M2SUSRVO.js b/dist/chunk-M2SUSRVO.js
-index 9cf5092ac40298ed8699f07d433705a745ed303e..557f6a23ff2fa2ccadef5a6bbd863068253baaab 100644
+index 9cf5092ac40298ed8699f07d433705a745ed303e..8efe8ff9f56cd869404f1cb6320bff577804c502 100644
 --- a/dist/chunk-M2SUSRVO.js
 +++ b/dist/chunk-M2SUSRVO.js
-@@ -3133,7 +3133,7 @@ async function assertSeqCursorAvailable(options) {
+@@ -3099,6 +3099,12 @@ var JetstreamLiveHistoryExpiredError = class extends Error {
+     this.name = "JetstreamLiveHistoryExpiredError";
+   }
+ };
++var JetstreamFutureCursorError = class extends Error {
++  constructor(message) {
++    super(message);
++    this.name = "JetstreamFutureCursorError";
++  }
++};
+ function isJetstreamTimestampCursor(cursor) {
+   return cursor >= JETSTREAM_V2_SEQ_THRESHOLD;
+ }
+@@ -3133,9 +3139,9 @@ async function assertSeqCursorAvailable(options) {
    const url = new URL(`/xrpc/${SUBSCRIBE_EVENTS_NSID}`, service.origin);
    url.searchParams.set("cursor", String(options.cursor));
    url.searchParams.set("kinds", "commit");
@@ -12,7 +25,30 @@ index 9cf5092ac40298ed8699f07d433705a745ed303e..557f6a23ff2fa2ccadef5a6bbd863068
 -    redirect: "error",
 +    redirect: "manual",
      signal: options.signal
-@@ -5520,11 +5520,20 @@ function admissionFilteredCount(dropped) {
+   });
+   const body = (await response.text()).slice(0, 2e3);
+@@ -3243,6 +3249,11 @@ var JetstreamLiveSubscription = class {
+             `Jetstream timestamp cursor is older than the live retention window${info.message ? `: ${info.message}` : ""}`
+           );
+         }
++        if (info.name === "FutureCursor") {
++          throw new JetstreamFutureCursorError(
++            `Jetstream cursor is ahead of the source; history continuity cannot be assumed. Rebuild or resync before replacing the cursor${info.message ? `: ${info.message}` : ""}`
++          );
++        }
+         options.onInfo?.(info);
+       }
+     };
+@@ -3262,7 +3273,7 @@ var JetstreamLiveSubscription = class {
+         yield normalizeLiveEvent(event);
+       }
+     } catch (error) {
+-      if (error instanceof JetstreamLiveHistoryExpiredError) throw error;
++      if (error instanceof JetstreamLiveHistoryExpiredError || error instanceof JetstreamFutureCursorError) throw error;
+       if (preflightComplete && !isJetstreamTimestampCursor(this.cursor) && !options.signal?.aborted) {
+         try {
+           await assertSeqCursorAvailable({
+@@ -5520,11 +5531,20 @@ function admissionFilteredCount(dropped) {
  function runtimeCpuUsage() {
    const runtimeProcess = globalThis.process;
    if (!runtimeProcess?.cpuUsage) return null;
@@ -38,3 +74,40 @@ index 9cf5092ac40298ed8699f07d433705a745ed303e..557f6a23ff2fa2ccadef5a6bbd863068
  }
  async function runIngestCycle(db, config, budgetInput = DEFAULT_SCHEDULED_INGEST_BUDGET, state) {
    const log = getLogger2(config);
+@@ -7056,7 +7076,7 @@ async function runPersistent(db, config, options) {
+       reconnectAttempts = 0;
+     } catch (err) {
+       if (signal?.aborted) break;
+-      if (err instanceof JetstreamLiveHistoryExpiredError) throw err;
++      if (err instanceof JetstreamLiveHistoryExpiredError || err instanceof JetstreamFutureCursorError) throw err;
+       log.error(`Jetstream connection error: ${err}`);
+       const delay = Math.min(1e3 * Math.pow(2, reconnectAttempts), 3e4);
+       reconnectAttempts++;
+diff --git a/dist/worker/index.js b/dist/worker/index.js
+index 485b8bdd52c74cae45c914be4bcef7e7a92709f3..bf34099ebc17a4212ce6faa3b8c82d7bb9536f49 100644
+--- a/dist/worker/index.js
++++ b/dist/worker/index.js
+@@ -79,10 +79,12 @@ function createWorker(config, options = {}) {
+       await ensureReady(env, db);
+       ctx.waitUntil(
+         (async () => {
++          let ingestFailure;
+           try {
+             await contrail.ingest(options.scheduledIngest, db);
+           } catch (error) {
+-            contrail.config.logger?.error(
++            ingestFailure = { error };
++            (contrail.config.logger ?? console).error(
+               `[ingest] scheduled cycle failed: ${error}`
+             );
+           }
+@@ -112,6 +114,9 @@ function createWorker(config, options = {}) {
+               );
+             }
+           }
++          // Keep retry/delivery maintenance, but do not report failed ingestion
++          // as a successful cron invocation (including non-Error rejections).
++          if (ingestFailure) throw ingestFailure.error;
+         })()
+       );
+     }

@@ -21,12 +21,24 @@ sequence number or the date of the newest review. This makes a stuck importer vi
 well before the upstream live-retention window expires. External alert delivery must
 be configured separately.
 
-If ingestion reports `JetstreamLiveHistoryExpiredError`, do not simply clear or jump
-its cursor: doing so skips the missing interval. Preserve a D1 backup, capture a fresh
-source boundary, resync repositories (retaining unavailable accounts), reconcile
+If ingestion reports `JetstreamLiveHistoryExpiredError` or `JetstreamFutureCursorError`,
+do not simply clear or jump its cursor: continuity is no longer established. A future
+cursor means the saved sequence is ahead of the upstream archive, for example after
+an archive reset or rollback. The pinned Contrail patch rejects this advisory before
+the SDK can silently discard lower live sequences as duplicates. Scheduled ingestion
+failures are logged (using console when no logger is configured) and reject the cron's
+`waitUntil` promise, after retry/delivery maintenance, rather than reporting success.
+
+For this disposable index, recovery can use a fresh D1 database and full backfill;
+keeping an export or preserving records from unavailable repositories is optional.
+Capture a fresh source boundary before backfill, cover changes during the backfill
+with capture/replay, and verify multiple subsequent scheduled checkpoints advance
+before cutover. A clean rebuild reflects currently available repositories only.
+
+For an in-place recovery that must retain old content, preserve a D1 backup, capture a
+fresh source boundary, resync repositories (retaining unavailable accounts), reconcile
 missing records only through authoritative PDS responses, then replay from that
-pre-resync boundary. Verify multiple subsequent scheduled checkpoints advance.
-Completed discovery/backfill tasks must be explicitly requeued for a recovery resync;
+pre-resync boundary. Completed discovery/backfill tasks must be explicitly requeued;
 a normal resumable backfill alone will skip them.
 
 Collection reads, profiles, and `watch.atmo.getCursor` are anonymous. Profile responses include both Bluesky and Popfeed profiles when available. Review responses include materialized `likesCount` and `commentsCount`; `watch.atmo.review.listWrittenRecords` filters out records whose text is empty or whitespace, and `watch.atmo.review.getRatingSummary` calculates a title's rating count and average directly in D1. `watch.atmo.review.getTopRated` returns the twenty highest-rated TMDB movies and shows from the last 30 days, counting at most one rating per actor and weighting each title with three prior ratings of 5/10. List responses include `itemsCount`, `likesCount`, and `commentsCount`, plus optional relation hydration. Likes count distinct actors, while comments count records whose `subjectUri` is the review or list. List items can be filtered by list URI, media identifiers, work type, list type, status, and date. `watch.atmo.notifyOfUpdate` uses AT Protocol service auth with audience `did:web:api.atmo.watch`.
