@@ -38,7 +38,7 @@ export const config: ContrailConfig = {
 	jetstreams: ['https://jetstream.us-east.bsky.network'],
 	orderedSource: {
 		source: 'jetstream',
-		epoch: 'api-atmo-watch-primary-jetstream-v2-2026-08'
+		epoch: 'api-atmo-watch-primary-jetstream-v2-2026-10-26'
 	},
 	notify: true,
 	serviceAuth: {

@@ -15,8 +15,8 @@
 	"d1_databases": [
 		{
 			"binding": "DB",
-			"database_name": "atmo-watch-contrail-g20260819",
-			"database_id": "e95b62d4-4875-4856-97cd-e41359bba330"
+			"database_name": "atmo-watch-contrail-g20261026",
+			"database_id": "93dbdac8-57a5-4485-b884-f12899122a69"
 		}
 	],
 	"triggers": {
