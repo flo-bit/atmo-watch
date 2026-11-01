@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { UserProfile } from '@foxui/social';
+	import { UserProfile, Icon } from '@atmo-dev/kit';
+	import { ChevronDown } from '@sketchyicons/svelte';
 	import { untrack } from 'svelte';
 	import Container from '$lib/components/Container.svelte';
 	import DefaultOpenGraphImage from '$lib/components/DefaultOpenGraphImage.svelte';
@@ -89,9 +90,11 @@
 <main class="min-h-dvh bg-base-950 pb-12 text-base-50">
 	<Container class="px-4 sm:pt-8">
 		<UserProfile
-			class="not-prose -mx-4 w-[calc(100%+2rem)] max-w-none sm:mx-auto sm:w-auto sm:max-w-2xl sm:pb-0 [&>div:last-child]:hidden"
+			class="not-prose mx-auto max-w-2xl pb-2"
+			metrics={[]}
 			profile={{
-				handle: `@${data.profile.handle}`,
+				did: data.profile.did,
+				handle: data.profile.handle,
 				displayName: data.profile.displayName,
 				avatar: data.profile.avatarUrl,
 				banner: data.profile.bannerUrl
@@ -116,20 +119,7 @@
 								class="mt-5 inline-flex h-8 items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.07] px-3 text-xs font-semibold text-white transition-colors hover:bg-white/[0.12] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70"
 							>
 								show more
-								<svg
-									class="size-3.5"
-									viewBox="0 0 24 24"
-									fill="none"
-									stroke="currentColor"
-									aria-hidden="true"
-								>
-									<path
-										stroke-linecap="round"
-										stroke-linejoin="round"
-										stroke-width="1.8"
-										d="m6 9 6 6 6-6"
-									/>
-								</svg>
+								<Icon img={ChevronDown} class="size-3.5" />
 							</button>
 						{/if}
 					</section>
@@ -158,20 +148,7 @@
 								class={`mt-5 inline-flex h-8 items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.07] px-3 text-xs font-semibold text-white transition-colors hover:bg-white/[0.12] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70 ${ratings.length <= 10 ? 'lg:hidden' : ''}`}
 							>
 								show more
-								<svg
-									class="size-3.5"
-									viewBox="0 0 24 24"
-									fill="none"
-									stroke="currentColor"
-									aria-hidden="true"
-								>
-									<path
-										stroke-linecap="round"
-										stroke-linejoin="round"
-										stroke-width="1.8"
-										d="m6 9 6 6 6-6"
-									/>
-								</svg>
+								<Icon img={ChevronDown} class="size-3.5" />
 							</button>
 						{/if}
 					</section>

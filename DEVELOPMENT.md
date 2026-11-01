@@ -13,6 +13,58 @@ pnpm dev:stack    # start the local API and web app together
 
 Local mode uses `http://127.0.0.1:8787` and stores its SQLite database under `.contrail/`. It never falls back to production when the local API is unavailable. For a custom local port, run `CONTRAIL_URL=http://127.0.0.1:<port> pnpm dev`.
 
+### Atmo Kit
+
+Watch uses published `@atmo-dev/kit` components and Sketchyicons. Keep the movie-specific layouts in Watch; shared controls, login, profiles, and theme tokens come from Kit. The app stays dark zinc/fuchsia, with the theme on `<body>` so portaled dialogs inherit the same color scheme.
+
+Use Corepack to honor the pinned pnpm version. To develop against the sibling checkout, first run Kit's package watcher in another terminal:
+
+```sh
+cd ../00-atmo-kit/kit
+corepack pnpm install
+corepack pnpm exec svelte-package --watch
+```
+
+Then, from Watch:
+
+```sh
+corepack pnpm kit:local
+corepack pnpm dev
+```
+
+`kit:local` switches only the installed dependencies to `../00-atmo-kit/kit`, without changing manifests or the committed registry lockfile. `ATMO_KIT_PATH=/path/to/kit corepack pnpm kit:local` selects another built checkout. Imports continue to use the package's `dist` exports; Vite follows its resolved location and deduplicates Svelte and Bits UI.
+
+To switch back:
+
+```sh
+corepack pnpm kit:registry
+```
+
+Restart the dev server after switching. A frozen install also restores published dependencies; rerun `kit:local` after installing if needed. Local mode is rejected in CI. `kit:local` is independent of `dev:local`, which selects the API backend.
+
+Run `corepack pnpm test:kit-dev` for offline dependency-switching tests and `corepack pnpm exec vitest run --project client` for browser regressions covering avatar/poster sizing, view selection, filled half-star ratings, navigation, backdrops, the footer, and portaled dark-theme/focus behavior.
+
+#### Temporary lightbox backport
+
+Kit's `PhotoLightbox` has not been published in `0.3.0` yet. `patches/@atmo-dev__kit@0.3.0.patch` backports its packaged component, types, and exports from the local Kit checkout. Registry installs and CI therefore remain self-contained; Watch imports `PhotoLightbox` from `@atmo-dev/kit` rather than keeping a second app-owned carousel. Local mode skips only this Kit patch, since the checkout already includes it. Remove the patch and its `patchedDependencies` entry when adopting a Kit release that exports the lightbox.
+
+### App icons
+
+The app icon uses Sketchyicons' hand-drawn camera on fuchsia, matching Watch's accent. Regenerate the SVG favicon, multi-size ICO, PNG favicon, Apple touch icon, regular app icons, maskable icon, and web manifest with:
+
+```sh
+corepack pnpm generate:favicons
+corepack pnpm test:favicons
+```
+
+The generator follows RSVP's setup. Tests check committed copies, SVG geometry, PNG/ICO dimensions, manifest links, opaque home-screen backgrounds, and the maskable safe area.
+
+### Legal pages
+
+`src/lib/legal.ts` owns the Terms, Privacy, and Imprint text. Kit renders those snapshots and the footer; TMDB/JustWatch attribution sits above the legal links. Contact and reports use `reports@atmo.social`.
+
+These documents are drafts and receive `noindex, nofollow`. Review `legalReviewNeeded` before publishing: the imprint needs a full postal address, and legal bases, retention periods, processors/transfers, third-party media/storage requirements, and reporting procedures still need confirmation. Do not invent those details or mark documents published automatically during a package update. After review, update the app-owned text, set `status: 'published'`, and provide its reviewed revision date.
+
 ### API contract changes
 
 Run `pnpm contrail:generate` after changing the API config. Deploy the API before the frontend, then refresh the production provider lock and generated target:

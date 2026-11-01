@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
-	import { Send } from '@lucide/svelte';
+	import { Button, Textarea, Icon } from '@atmo-dev/kit';
+	import { Send } from '@sketchyicons/svelte';
 	import { isCanonicalResourceUri, parseCanonicalResourceUri } from '@atcute/lexicons';
 	import { createReviewComment } from '$lib/comment-write.remote';
 	import type { ReviewCardModel, ReviewCommentModel } from '$lib/types';
@@ -109,18 +110,18 @@
 			<label for={parent ? `reply-${parent.uri}` : `comment-${reviewUri}`} class="sr-only">
 				{parent ? `Reply to @${parentHandle}` : 'Add a comment'}
 			</label>
-			<textarea
-				bind:this={textarea}
+			<Textarea
+				bind:ref={textarea}
 				id={parent ? `reply-${parent.uri}` : `comment-${reviewUri}`}
 				bind:value={text}
 				oninput={() => (commentError = '')}
 				onkeydown={handleKeydown}
 				disabled={posting}
 				rows={parent ? 2 : 3}
-				maxlength="1000"
+				maxlength={1000}
 				{placeholder}
 				class="block w-full resize-none border-0 bg-transparent px-3 pt-2.5 pb-2 text-sm leading-6 text-white shadow-none ring-0 outline-none placeholder:text-base-500 focus:border-0 focus:ring-0 disabled:cursor-wait disabled:opacity-60"
-			></textarea>
+			></Textarea>
 
 			<div
 				class="flex min-h-10 items-center justify-between gap-3 border-t border-white/[0.07] px-2.5"
@@ -130,23 +131,26 @@
 				</span>
 				<div class="flex items-center gap-2">
 					{#if onCancel}
-						<button
+						<Button
+							variant="ghost"
+							size="sm"
 							type="button"
 							onclick={onCancel}
 							disabled={posting}
 							class="h-7 rounded-full px-2.5 text-xs font-semibold text-base-400 transition-colors hover:bg-white/10 hover:text-white disabled:opacity-50"
 						>
 							Cancel
-						</button>
+						</Button>
 					{/if}
-					<button
+					<Button
+						size="sm"
 						type="submit"
 						disabled={!text.trim() || posting}
-						class="inline-flex h-7 items-center gap-1.5 rounded-full bg-accent-500 px-3 text-xs font-bold text-white transition-colors hover:bg-accent-400 disabled:cursor-not-allowed disabled:opacity-40"
+						class="min-h-7 gap-1.5 px-3 py-1 text-xs"
 					>
-						<Send class="size-3" strokeWidth={2} aria-hidden="true" />
+						<Icon img={Send} class="size-3" strokeWidth={2} aria-hidden="true" />
 						{posting ? 'Posting…' : parent ? 'Reply' : 'Comment'}
-					</button>
+					</Button>
 				</div>
 			</div>
 		</div>

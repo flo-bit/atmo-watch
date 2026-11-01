@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { Check, ChevronDown, RotateCcw } from '@lucide/svelte';
+	import { Icon } from '@atmo-dev/kit';
+	import { Check, ChevronDown, RotateCcw } from '@sketchyicons/svelte';
 	import DefaultOpenGraphImage from '$lib/components/DefaultOpenGraphImage.svelte';
 	import MediaHero from '$lib/components/MediaHero.svelte';
 	import { backdropUrl, logoUrl } from '$lib/images';
@@ -113,7 +114,7 @@
 										<span
 											class="absolute top-2 right-2 inline-flex size-7 items-center justify-center rounded-full bg-accent-500 text-white shadow-lg"
 										>
-											<Check class="size-4" strokeWidth={2.2} aria-hidden="true" />
+											<Icon img={Check} class="size-4" strokeWidth={2.2} aria-hidden="true" />
 										</span>
 									{/if}
 								</label>
@@ -126,7 +127,8 @@
 							class="artwork-toggle mt-4 h-9 items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.05] px-4 text-xs font-semibold text-base-200 transition-colors hover:bg-white/[0.1] hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70"
 						>
 							{showAllBackdrops ? 'Show less' : 'Show more'}
-							<ChevronDown
+							<Icon
+								img={ChevronDown}
 								class={`size-3.5 transition-transform ${showAllBackdrops ? 'rotate-180' : ''}`}
 								strokeWidth={1.8}
 								aria-hidden="true"
@@ -205,7 +207,7 @@
 										<span
 											class="absolute top-2 right-2 inline-flex size-7 items-center justify-center rounded-full bg-accent-500 text-white shadow-lg"
 										>
-											<Check class="size-4" strokeWidth={2.2} aria-hidden="true" />
+											<Icon img={Check} class="size-4" strokeWidth={2.2} aria-hidden="true" />
 										</span>
 									{/if}
 								</label>
@@ -218,7 +220,8 @@
 							class="artwork-toggle mt-4 h-9 items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.05] px-4 text-xs font-semibold text-base-200 transition-colors hover:bg-white/[0.1] hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70"
 						>
 							{showAllLogos ? 'Show less' : 'Show more'}
-							<ChevronDown
+							<Icon
+								img={ChevronDown}
 								class={`size-3.5 transition-transform ${showAllLogos ? 'rotate-180' : ''}`}
 								strokeWidth={1.8}
 								aria-hidden="true"
@@ -259,7 +262,7 @@
 						onclick={restoreDefaults}
 						class="inline-flex h-10 items-center justify-center gap-2 rounded-full border border-white/15 bg-white/[0.05] px-5 text-sm font-semibold text-base-200 transition-colors hover:bg-white/[0.1] hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70"
 					>
-						<RotateCcw class="size-4" strokeWidth={1.8} aria-hidden="true" />
+						<Icon img={RotateCcw} class="size-4" strokeWidth={1.8} aria-hidden="true" />
 						Use TMDB defaults
 					</button>
 					<button

@@ -1,8 +1,7 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
-	import { Dialog } from 'bits-ui';
+	import { Modal, Button, Textarea, Checkbox } from '@atmo-dev/kit';
 	import { untrack } from 'svelte';
-	import { X } from '@lucide/svelte';
 	import { posterUrl } from '$lib/images';
 	import { reviewDialog } from '$lib/review.svelte';
 	import { loadReviewDraft, saveReviewRecord } from '$lib/review-write.remote';
@@ -117,98 +116,80 @@
 
 <svelte:window onkeydown={handleRatingShortcut} />
 
-<Dialog.Root bind:open={reviewDialog.open} onOpenChange={(open) => !open && reviewDialog.hide()}>
-	<Dialog.Portal>
-		<Dialog.Overlay class="fixed inset-0 z-100 bg-black/75 backdrop-blur-md" />
-		<Dialog.Content
-			class="fixed top-1/2 left-1/2 z-101 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 -translate-y-1/2 rounded-xl border border-white/10 bg-base-950 p-5 text-white shadow-2xl outline-none"
-		>
-			<Dialog.Title class="text-sm font-semibold">rate & review</Dialog.Title>
-			<Dialog.Description class="sr-only">
-				Choose a star rating, optionally write a review, and mark this title as watched.
-			</Dialog.Description>
-
-			<Dialog.Close
-				class="absolute top-3 right-3 inline-flex size-7 items-center justify-center rounded-full text-base-400 transition-colors hover:bg-white/10 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70"
-			>
-				<X class="size-4" strokeWidth={1.5} aria-hidden="true" />
-				<span class="sr-only">Close review</span>
-			</Dialog.Close>
-
-			{#if reviewDialog.item}
-				<div class:opacity-60={loading} class="mt-5">
-					<div class="flex items-center gap-4">
-						<div class="h-24 w-16 shrink-0 overflow-hidden rounded-md bg-base-900">
-							{#if reviewDialog.item.poster}
-								<img
-									src={posterUrl(reviewDialog.item.poster, 'w185')}
-									alt="Poster for {reviewDialog.item.title}"
-									class="size-full object-cover"
-								/>
-							{/if}
-						</div>
-						<div class="min-w-0">
-							<div class="truncate font-semibold">{reviewDialog.item.title}</div>
-							<div
-								class:pointer-events-none={loading || saving}
-								class="mt-2"
-								aria-disabled={loading || saving}
-							>
-								<RatingInput bind:value={rating} onchange={markChanged} />
-							</div>
-						</div>
-					</div>
-
-					<label for="review-text" class="sr-only">Review</label>
-					<textarea
-						id="review-text"
-						bind:value={review}
-						oninput={markChanged}
-						disabled={loading || saving}
-						rows="4"
-						maxlength="1000"
-						placeholder="write a review (optional)"
-						class="mt-4 block w-full resize-none rounded-lg border border-white/10 bg-base-900 px-3 py-2 text-sm text-white outline-none placeholder:text-base-500 focus:border-white/25 focus:ring-0 disabled:cursor-wait"
-					></textarea>
-
-					<div class="mt-3 flex flex-wrap gap-x-5 gap-y-2">
-						<label class="flex w-fit cursor-pointer items-center gap-2 text-xs text-base-300">
-							<input
-								type="checkbox"
-								bind:checked={markAsWatched}
-								onchange={markChanged}
-								disabled={loading || saving}
-								class="size-4 rounded border-base-700 bg-base-900 text-accent-500 focus:ring-2 focus:ring-accent-500/40 focus:ring-offset-0"
-							/>
-							mark as watched
-						</label>
-
-						<label class="flex w-fit cursor-pointer items-center gap-2 text-xs text-base-300">
-							<input
-								type="checkbox"
-								bind:checked={containsSpoilers}
-								onchange={markChanged}
-								disabled={loading || saving}
-								class="size-4 rounded border-base-700 bg-base-900 text-accent-500 focus:ring-2 focus:ring-accent-500/40 focus:ring-offset-0"
-							/>
-							contains spoilers
-						</label>
+<Modal
+	bind:open={reviewDialog.open}
+	title="rate & review"
+	class="max-w-sm bg-base-950 p-5 sm:p-5 [&_h2]:text-sm [&>header]:mb-4"
+>
+	{#if reviewDialog.item}
+		<div class:opacity-60={loading} class="mt-5">
+			<div class="flex items-center gap-4">
+				<div class="h-24 w-16 shrink-0 overflow-hidden rounded-md bg-base-900">
+					{#if reviewDialog.item.poster}
+						<img
+							src={posterUrl(reviewDialog.item.poster, 'w185')}
+							alt="Poster for {reviewDialog.item.title}"
+							class="size-full object-cover"
+						/>
+					{/if}
+				</div>
+				<div class="min-w-0">
+					<div class="truncate font-semibold">{reviewDialog.item.title}</div>
+					<div
+						class:pointer-events-none={loading || saving}
+						class="mt-2"
+						aria-disabled={loading || saving}
+					>
+						<RatingInput bind:value={rating} onchange={markChanged} />
 					</div>
 				</div>
+			</div>
 
-				{#if reviewError}
-					<p class="mt-3 text-sm text-red-300" role="alert">{reviewError}</p>
-				{/if}
+			<label for="review-text" class="sr-only">Review</label>
+			<Textarea
+				id="review-text"
+				bind:value={review}
+				oninput={markChanged}
+				disabled={loading || saving}
+				rows={4}
+				maxlength={1000}
+				placeholder="write a review (optional)"
+				class="mt-4 resize-none bg-base-900 text-sm"
+			></Textarea>
 
-				<button
-					type="button"
-					onclick={saveReview}
-					disabled={rating === 0 || loading || saving || saved}
-					class="mt-4 inline-flex h-9 w-full items-center justify-center rounded-lg border border-accent-900 bg-accent-950/80 text-sm font-semibold text-accent-300 transition-colors hover:bg-accent-950 disabled:cursor-not-allowed disabled:opacity-40"
-				>
-					{loading ? 'loading…' : saving ? 'saving…' : saved ? 'saved' : 'save review'}
-				</button>
-			{/if}
-		</Dialog.Content>
-	</Dialog.Portal>
-</Dialog.Root>
+			<div class="mt-3 flex flex-wrap gap-x-5 gap-y-2">
+				<label class="flex w-fit cursor-pointer items-center gap-2 text-xs text-base-300">
+					<Checkbox
+						bind:checked={markAsWatched}
+						onchange={markChanged}
+						disabled={loading || saving}
+					/>
+					mark as watched
+				</label>
+
+				<label class="flex w-fit cursor-pointer items-center gap-2 text-xs text-base-300">
+					<Checkbox
+						bind:checked={containsSpoilers}
+						onchange={markChanged}
+						disabled={loading || saving}
+					/>
+					contains spoilers
+				</label>
+			</div>
+		</div>
+
+		{#if reviewError}
+			<p class="mt-3 text-sm text-red-300" role="alert">{reviewError}</p>
+		{/if}
+
+		<Button
+			type="button"
+			onclick={saveReview}
+			disabled={rating === 0 || loading || saving || saved}
+			size="sm"
+			class="mt-4 w-full"
+		>
+			{loading ? 'loading…' : saving ? 'saving…' : saved ? 'saved' : 'save review'}
+		</Button>
+	{/if}
+</Modal>

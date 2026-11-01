@@ -7,4 +7,5 @@ allowBuilds:
 
 patchedDependencies:
   '@atmo-dev/contrail@0.22.0': patches/@atmo-dev__contrail@0.22.0.patch
+  '@atmo-dev/kit@0.3.0': patches/@atmo-dev__kit@0.3.0.patch
   partysocket@1.3.0: patches/partysocket@1.3.0.patch

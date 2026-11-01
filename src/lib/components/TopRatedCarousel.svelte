@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { ChevronLeft, ChevronRight } from '@lucide/svelte';
+	import { Icon } from '@atmo-dev/kit';
+	import { ChevronLeft, ChevronRight } from '@sketchyicons/svelte';
 	import { fade } from 'svelte/transition';
 	import { backdropUrl, logoUrl } from '$lib/images';
 	import type { MediaFeature } from '$lib/types';
@@ -185,7 +186,7 @@
 				class="absolute top-1/2 left-2 z-50 inline-flex size-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-md transition-colors hover:bg-black/70 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:left-3"
 				aria-label="Previous top-rated title"
 			>
-				<ChevronLeft class="size-5" strokeWidth={1.8} aria-hidden="true" />
+				<Icon img={ChevronLeft} class="size-5" strokeWidth={1.8} aria-hidden="true" />
 			</button>
 			<button
 				type="button"
@@ -193,7 +194,7 @@
 				class="absolute top-1/2 right-2 z-30 inline-flex size-9 -translate-y-1/2 items-center justify-center rounded-full bg-black/50 text-white backdrop-blur-md transition-colors hover:bg-black/70 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white sm:right-3"
 				aria-label="Next top-rated title"
 			>
-				<ChevronRight class="size-5" strokeWidth={1.8} aria-hidden="true" />
+				<Icon img={ChevronRight} class="size-5" strokeWidth={1.8} aria-hidden="true" />
 			</button>
 		{/if}
 	</section>

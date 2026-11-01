@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
+	import { Icon } from '@atmo-dev/kit';
+	import { ChevronRight } from '@sketchyicons/svelte';
 	import { formatCalendarDate, relativeCalendarDate } from '$lib/dates';
 	import { stillUrl } from '$lib/images';
 	import type { MediaDetails, TvEpisodeSummary } from '$lib/types';
@@ -70,14 +72,9 @@
 				{/if}
 			</div>
 		</div>
-		<svg
+		<Icon
+			img={ChevronRight}
 			class="size-3.5 shrink-0 text-base-500 transition-transform group-hover:translate-x-0.5"
-			viewBox="0 0 24 24"
-			fill="none"
-			stroke="currentColor"
-			aria-hidden="true"
-		>
-			<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m9 18 6-6-6-6" />
-		</svg>
+		/>
 	</a>
 </section>

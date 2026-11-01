@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { Dialog } from 'bits-ui';
-	import { Film } from '@lucide/svelte';
+	import { Icon } from '@atmo-dev/kit';
+	import { Film, Play, X } from '@sketchyicons/svelte';
 	import ActionTooltip from './ActionTooltip.svelte';
 	import { cn } from '$lib/utils';
 
@@ -47,11 +48,7 @@
 </script>
 
 {#snippet playIcon(className: string)}
-	<svg class={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-		<path
-			d="M8.75 6.1a1 1 0 0 1 1.52-.85l8.1 5.22a1 1 0 0 1 0 1.68l-8.1 5.22a1 1 0 0 1-1.52-.84V6.1Z"
-		/>
-	</svg>
+	<Icon img={Play} class={cn(className, '[&_path]:fill-current')} />
 {/snippet}
 
 {#if embedUrl}
@@ -98,7 +95,7 @@
 				<span
 					class="inline-flex size-10 items-center justify-center rounded-full border border-white/10 bg-white/10 text-white shadow-lg shadow-black/10 backdrop-blur-sm transition-colors group-hover:bg-white/15 lg:size-9"
 				>
-					<Film class="size-4" strokeWidth={1.8} aria-hidden="true" />
+					<Icon img={Film} class="size-4" strokeWidth={1.8} aria-hidden="true" />
 				</span>
 				<span
 					class={iconOnly ? 'sr-only' : 'text-xs leading-4 font-medium text-base-200 lg:sr-only'}
@@ -145,13 +142,7 @@
 				<Dialog.Close
 					class="absolute -top-12 right-0 z-10 inline-flex size-9 items-center justify-center rounded-full border border-white/15 bg-black/50 text-white backdrop-blur-sm transition-colors hover:bg-white/15 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70"
 				>
-					<svg class="size-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-						<path
-							fill-rule="evenodd"
-							d="M5.47 5.47a.75.75 0 0 1 1.06 0L12 10.94l5.47-5.47a.75.75 0 1 1 1.06 1.06L13.06 12l5.47 5.47a.75.75 0 1 1-1.06 1.06L12 13.06l-5.47 5.47a.75.75 0 0 1-1.06-1.06L10.94 12 5.47 6.53a.75.75 0 0 1 0-1.06Z"
-							clip-rule="evenodd"
-						/>
-					</svg>
+					<Icon img={X} class="size-5" />
 					<span class="sr-only">Close trailer</span>
 				</Dialog.Close>
 			</Dialog.Content>

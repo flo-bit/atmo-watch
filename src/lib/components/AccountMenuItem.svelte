@@ -2,7 +2,8 @@
 	import { page } from '$app/state';
 	import type { Pathname } from '$app/types';
 	import { loginDialog } from '$lib/login.svelte';
-	import { UserRound } from '@lucide/svelte';
+	import { Icon } from '@atmo-dev/kit';
+	import { UserRound } from '@sketchyicons/svelte';
 	import Avatar from './Avatar.svelte';
 	import MenuItem from './MenuItem.svelte';
 
@@ -46,6 +47,6 @@
 			class={`${variant === 'bottom' ? 'size-6' : 'size-7'} shrink-0 ${active ? 'ring-2 ring-accent-400 ring-offset-1 ring-offset-base-950' : ''}`}
 		/>
 	{:else}
-		<UserRound class="size-5 shrink-0" strokeWidth={1.5} aria-hidden="true" />
+		<Icon img={UserRound} class="size-5 shrink-0" strokeWidth={1.5} aria-hidden="true" />
 	{/if}
 </MenuItem>

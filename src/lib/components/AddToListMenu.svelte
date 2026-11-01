@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { DropdownMenu } from 'bits-ui';
-	import { BookmarkPlus } from '@lucide/svelte';
+	import { Icon } from '@atmo-dev/kit';
+	import { BookmarkPlus, LoaderCircle, Check, Plus } from '@sketchyicons/svelte';
 	import ActionTooltip from './ActionTooltip.svelte';
 	import { posterUrl } from '$lib/images';
 	import { createListDialog } from '$lib/list.svelte';
@@ -107,7 +108,8 @@
 				? 'inline-flex size-10 items-center justify-center rounded-full border border-white/10 bg-white/10 text-white shadow-lg shadow-black/10 backdrop-blur-sm transition-colors group-hover:bg-white/15 group-data-[state=open]:bg-white/15 lg:size-9'
 				: 'contents'}
 		>
-			<BookmarkPlus
+			<Icon
+				img={BookmarkPlus}
 				class={variant === 'action' ? 'size-4' : 'size-4 text-accent-400'}
 				strokeWidth={1.8}
 				aria-hidden="true"
@@ -137,16 +139,7 @@
 
 				{#if loading}
 					<div class="flex items-center gap-2 px-2.5 py-3 text-sm text-base-400" aria-live="polite">
-						<svg
-							class="size-4 animate-spin"
-							viewBox="0 0 24 24"
-							fill="none"
-							stroke="currentColor"
-							stroke-width="2"
-							aria-hidden="true"
-						>
-							<path stroke-linecap="round" d="M21 12a9 9 0 1 1-6.22-8.56" />
-						</svg>
+						<Icon img={LoaderCircle} class="size-4 motion-safe:animate-spin" />
 						loading lists…
 					</div>
 				{:else if lists.length > 0}
@@ -164,27 +157,9 @@
 									<span class="min-w-0 flex-1 truncate">{list.name}</span>
 									<span class="flex size-4 shrink-0 items-center justify-center text-accent-400">
 										{#if pendingUris.includes(list.uri)}
-											<svg
-												class="size-3.5 animate-spin"
-												viewBox="0 0 24 24"
-												fill="none"
-												stroke="currentColor"
-												stroke-width="2"
-												aria-hidden="true"
-											>
-												<path stroke-linecap="round" d="M21 12a9 9 0 1 1-6.22-8.56" />
-											</svg>
+											<Icon img={LoaderCircle} class="size-3.5 motion-safe:animate-spin" />
 										{:else if checked}
-											<svg
-												class="size-4"
-												viewBox="0 0 24 24"
-												fill="none"
-												stroke="currentColor"
-												stroke-width="2"
-												aria-hidden="true"
-											>
-												<path stroke-linecap="round" stroke-linejoin="round" d="m5 12 4 4L19 6" />
-											</svg>
+											<Icon img={Check} class="size-4" />
 										{/if}
 									</span>
 								{/snippet}
@@ -205,16 +180,7 @@
 				onSelect={showCreateListDialog}
 				class="flex min-h-9 items-center gap-2 rounded-lg px-2.5 py-2 text-sm font-medium outline-none select-none data-highlighted:bg-white/10"
 			>
-				<svg
-					class="size-4 text-accent-400"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					stroke-width="2"
-					aria-hidden="true"
-				>
-					<path stroke-linecap="round" d="M12 5v14M5 12h14" />
-				</svg>
+				<Icon img={Plus} class="size-4 text-accent-400" />
 				new list
 			</DropdownMenu.Item>
 		</DropdownMenu.Content>

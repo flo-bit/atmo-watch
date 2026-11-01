@@ -1,5 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
+	import { Button, Icon } from '@atmo-dev/kit';
+	import { ChevronDown } from '@sketchyicons/svelte';
 	import HorizontalScroller from './HorizontalScroller.svelte';
 	import { calendarDayDifference, formatCalendarDate } from '$lib/dates';
 	import { posterUrl } from '$lib/images';
@@ -107,27 +109,16 @@
 		</HorizontalScroller>
 
 		{#if !showAllSeasons && orderedSeasons.length > 10}
-			<button
+			<Button
+				variant="secondary"
+				size="sm"
 				type="button"
 				onclick={() => (showAllSeasons = true)}
 				class="mt-5 hidden h-8 items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.07] px-3 text-xs font-semibold text-white transition-colors hover:bg-white/[0.12] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70 lg:inline-flex"
 			>
 				show all seasons
-				<svg
-					class="size-3.5"
-					viewBox="0 0 24 24"
-					fill="none"
-					stroke="currentColor"
-					aria-hidden="true"
-				>
-					<path
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						stroke-width="1.8"
-						d="m6 9 6 6 6-6"
-					/>
-				</svg>
-			</button>
+				<Icon img={ChevronDown} class="size-3.5" />
+			</Button>
 		{/if}
 	</section>
 {/if}

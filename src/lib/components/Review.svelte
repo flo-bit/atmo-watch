@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { isCanonicalResourceUri, parseCanonicalResourceUri } from '@atcute/lexicons';
-	import { EyeOff, Heart, Image as ImageIcon, MessageCircle } from '@lucide/svelte';
+	import { Icon } from '@atmo-dev/kit';
+	import { EyeOff, Heart, Image as ImageIcon, MessageCircle } from '@sketchyicons/svelte';
 	import { formatDateTime, formatRelativeDateTime } from '$lib/dates';
 	import { posterUrl } from '$lib/images';
 	import { loginDialog } from '$lib/login.svelte';
@@ -149,7 +150,7 @@
 				/>
 			{:else}
 				<span class="flex size-full items-center justify-center text-base-600">
-					<ImageIcon class="size-8" strokeWidth={1.5} aria-hidden="true" />
+					<Icon img={ImageIcon} class="size-8" strokeWidth={1.5} aria-hidden="true" />
 				</span>
 			{/if}
 		</a>
@@ -236,7 +237,7 @@
 						onclick={handleSpoilerClick}
 						class="absolute inset-0 flex size-full flex-col items-center justify-center gap-1 rounded-lg bg-base-950/65 px-4 text-center backdrop-blur-[2px] transition-colors hover:bg-base-950/55 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent-400"
 					>
-						<EyeOff class="size-4 text-base-300" strokeWidth={1.5} aria-hidden="true" />
+						<Icon img={EyeOff} class="size-4 text-base-300" strokeWidth={1.5} aria-hidden="true" />
 						<span class="text-xs font-semibold text-white">This review may contain spoilers</span>
 						<span class="text-xs text-base-400">
 							{onOpen ? 'Click to open review' : 'Click to show review'}
@@ -262,8 +263,9 @@
 						liked ? 'text-accent-400 hover:text-accent-300' : 'hover:text-base-300'
 					)}
 				>
-					<Heart
-						class="size-3.5"
+					<Icon
+						img={Heart}
+						class="size-3.5 [&_path]:fill-[inherit]"
 						fill={liked ? 'currentColor' : 'none'}
 						strokeWidth={1.5}
 						aria-hidden="true"
@@ -276,7 +278,7 @@
 					aria-label={`${review.commentCount} ${review.commentCount === 1 ? 'comment' : 'comments'} on this review`}
 					class="-m-1.5 inline-flex min-h-7 min-w-7 items-center justify-center gap-1 rounded-md p-1.5 transition-colors hover:text-base-300 focus-visible:outline-2 focus-visible:outline-offset-0 focus-visible:outline-accent-400"
 				>
-					<MessageCircle class="size-3.5" strokeWidth={1.5} aria-hidden="true" />
+					<Icon img={MessageCircle} class="size-3.5" strokeWidth={1.5} aria-hidden="true" />
 					{#if review.commentCount > 0}<span>{review.commentCount}</span>{/if}
 				</a>
 			</div>

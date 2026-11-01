@@ -1,12 +1,24 @@
 import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'vitest/config';
+import { createRequire } from 'node:module';
+import { dirname } from 'node:path';
+import { searchForWorkspaceRoot } from 'vite';
 import { playwright } from '@vitest/browser-playwright';
 import adapter from '@sveltejs/adapter-cloudflare';
 import { sveltekit } from '@sveltejs/kit/vite';
 import { sveltekitOG } from '@ethercorps/sveltekit-og/plugin';
 
+// Follow the installed package in both registry and explicit kit:local mode.
+const kitRoot = dirname(dirname(createRequire(import.meta.url).resolve('@atmo-dev/kit/theme.css')));
+
 export default defineConfig({
-	server: { host: '127.0.0.1' },
+	resolve: { dedupe: ['svelte', 'bits-ui'] },
+	// Kit contains Svelte source. Keep its exports live when patches or local builds change.
+	optimizeDeps: { exclude: ['@atmo-dev/kit'] },
+	server: {
+		host: '127.0.0.1',
+		fs: { allow: [searchForWorkspaceRoot(process.cwd()), kitRoot] }
+	},
 	// Add Workerd to Vite's default SSR conditions so packages can select their Worker-safe exports.
 	ssr: {
 		resolve: { conditions: ['workerd', 'module', 'node', 'development|production'] }
@@ -35,6 +47,8 @@ export default defineConfig({
 				extends: './vite.config.ts',
 				test: {
 					name: 'client',
+					// Start Chromium after server tests, not alongside their cold module transforms.
+					sequence: { groupOrder: 1 },
 					browser: {
 						enabled: true,
 						provider: playwright(),

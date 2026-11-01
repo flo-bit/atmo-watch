@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/state';
-	import { Clapperboard } from '@lucide/svelte';
+	import { Icon } from '@atmo-dev/kit';
+	import { Clapperboard, House } from '@sketchyicons/svelte';
 	import AccountMenuItem from './AccountMenuItem.svelte';
 	import MenuItem from './MenuItem.svelte';
 	import SearchMenuItem from './SearchMenuItem.svelte';
@@ -9,20 +10,7 @@
 </script>
 
 {#snippet homeIcon()}
-	<svg
-		class="size-5 shrink-0"
-		viewBox="0 0 24 24"
-		fill="none"
-		stroke="currentColor"
-		stroke-width="1.5"
-		aria-hidden="true"
-	>
-		<path
-			stroke-linecap="round"
-			stroke-linejoin="round"
-			d="m2.25 12 8.954-8.955a1.125 1.125 0 0 1 1.591 0L21.75 12M4.5 9.75v10.125C4.5 20.496 5.004 21 5.625 21H9.75v-4.875C9.75 15.504 10.254 15 10.875 15h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75"
-		/>
-	</svg>
+	<Icon img={House} class="size-5 shrink-0" />
 {/snippet}
 
 <aside
@@ -35,7 +23,7 @@
 		</MenuItem>
 
 		<MenuItem href="/videos" label="Videos" active={page.url.pathname === '/videos'}>
-			<Clapperboard class="size-5 shrink-0" strokeWidth={1.5} aria-hidden="true" />
+			<Icon img={Clapperboard} class="size-5 shrink-0" />
 		</MenuItem>
 
 		<SearchMenuItem {did} />
@@ -52,7 +40,7 @@
 	</MenuItem>
 
 	<MenuItem href="/videos" label="Videos" active={page.url.pathname === '/videos'} variant="bottom">
-		<Clapperboard class="size-5 shrink-0" strokeWidth={1.5} aria-hidden="true" />
+		<Icon img={Clapperboard} class="size-5 shrink-0" />
 	</MenuItem>
 
 	<SearchMenuItem {did} variant="bottom" />

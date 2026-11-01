@@ -3,7 +3,8 @@
 	import ItemCard from './ItemCard.svelte';
 	import ItemsGrid from './ItemsGrid.svelte';
 	import type { MediaSummary } from '$lib/types';
-	import { cn } from '$lib/utils';
+	import { Button, Icon, cn } from '@atmo-dev/kit';
+	import { ChevronDown } from '@sketchyicons/svelte';
 
 	let {
 		title,
@@ -34,7 +35,9 @@
 	</div>
 
 	{#if !expanded && items.length > 5}
-		<button
+		<Button
+			variant="secondary"
+			size="sm"
 			type="button"
 			onclick={() => (expanded = true)}
 			class={cn(
@@ -42,15 +45,7 @@
 			)}
 		>
 			show more
-			<svg
-				class="size-3.5"
-				viewBox="0 0 24 24"
-				fill="none"
-				stroke="currentColor"
-				aria-hidden="true"
-			>
-				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="m6 9 6 6 6-6" />
-			</svg>
-		</button>
+			<Icon img={ChevronDown} class="size-3.5" />
+		</Button>
 	{/if}
 </section>

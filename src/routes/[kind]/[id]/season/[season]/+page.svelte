@@ -2,7 +2,8 @@
 	import { resolve } from '$app/paths';
 	import { page } from '$app/state';
 	import type { ResolvedPathname } from '$app/types';
-	import { Clapperboard, ImagePlus } from '@lucide/svelte';
+	import { Icon } from '@atmo-dev/kit';
+	import { Clapperboard, ImagePlus } from '@sketchyicons/svelte';
 	import Container from '$lib/components/Container.svelte';
 	import DefaultOpenGraphImage from '$lib/components/DefaultOpenGraphImage.svelte';
 	import MediaHero from '$lib/components/MediaHero.svelte';
@@ -198,7 +199,7 @@
 					<span
 						class="inline-flex size-10 items-center justify-center rounded-full border border-white/10 bg-white/10 text-white shadow-lg shadow-black/10 backdrop-blur-sm transition-colors group-hover:bg-white/15 lg:size-9"
 					>
-						<Clapperboard class="size-4" strokeWidth={1.8} aria-hidden="true" />
+						<Icon img={Clapperboard} class="size-4" strokeWidth={1.8} aria-hidden="true" />
 					</span>
 				</a>
 				<button
@@ -211,7 +212,7 @@
 					<span
 						class="inline-flex size-10 items-center justify-center rounded-full border border-white/10 bg-white/10 text-white shadow-lg shadow-black/10 backdrop-blur-sm transition-colors group-hover:bg-white/15 lg:size-9"
 					>
-						<ImagePlus class="size-4" strokeWidth={1.8} aria-hidden="true" />
+						<Icon img={ImagePlus} class="size-4" strokeWidth={1.8} aria-hidden="true" />
 					</span>
 				</button>
 			</div>

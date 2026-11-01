@@ -2,6 +2,8 @@
 	import { goto } from '$app/navigation';
 	import { resolve } from '$app/paths';
 	import { Command } from 'bits-ui';
+	import { Button, Icon } from '@atmo-dev/kit';
+	import { Search, LoaderCircle, Star } from '@sketchyicons/svelte';
 	import { posterUrl } from '$lib/images';
 	import { loginDialog } from '$lib/login.svelte';
 	import { reviewDialog } from '$lib/review.svelte';
@@ -154,21 +156,12 @@
 	)}
 >
 	<div class="flex h-16 items-center gap-3 px-4">
-		<svg
-			class="size-5 shrink-0 text-base-400"
-			viewBox="0 0 24 24"
-			fill="none"
-			stroke="currentColor"
-			stroke-width="2"
-			aria-hidden="true"
-		>
-			<circle cx="11" cy="11" r="7"></circle>
-			<path d="m20 20-3.5-3.5"></path>
-		</svg>
+		<Icon img={Search} class="size-5 shrink-0 text-base-400" />
 
 		<Command.Input
 			bind:value={query}
 			{autofocus}
+			data-autofocus={autofocus || undefined}
 			autocomplete="off"
 			spellcheck="false"
 			placeholder="Search movies and TV shows…"
@@ -176,17 +169,11 @@
 		/>
 
 		{#if searching}
-			<svg
-				class="size-5 animate-spin text-accent-400"
-				viewBox="0 0 24 24"
-				fill="none"
-				aria-label="Searching"
-			>
-				<circle class="opacity-25" cx="12" cy="12" r="9" stroke="currentColor" stroke-width="3"
-				></circle>
-				<path class="opacity-90" fill="currentColor" d="M21 12a9 9 0 0 0-9-9v3a6 6 0 0 1 6 6h3Z"
-				></path>
-			</svg>
+			<Icon
+				img={LoaderCircle}
+				class="size-5 text-accent-400 motion-safe:animate-spin"
+				label="Searching"
+			/>
 		{/if}
 	</div>
 
@@ -241,7 +228,9 @@
 										{item.title}
 									</div>
 
-									<button
+									<Button
+										variant="secondary"
+										size="sm"
 										type="button"
 										onclick={(event) => {
 											event.stopPropagation();
@@ -249,22 +238,9 @@
 										}}
 										class="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-white/15 bg-white/10 px-2.5 text-xs font-semibold text-white transition-colors hover:bg-white/15 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70"
 									>
-										<svg
-											class="size-3.5"
-											viewBox="0 0 24 24"
-											fill="none"
-											stroke="currentColor"
-											stroke-width="1.8"
-											aria-hidden="true"
-										>
-											<path
-												stroke-linecap="round"
-												stroke-linejoin="round"
-												d="m12 3.75 2.47 5.004 5.522.803-3.996 3.895.943 5.5L12 16.354l-4.939 2.598.943-5.5-3.996-3.895 5.522-.803L12 3.75Z"
-											/>
-										</svg>
+										<Icon img={Star} class="size-3.5" />
 										review
-									</button>
+									</Button>
 								</Command.Item>
 							{/each}
 						</Command.GroupItems>

@@ -10,7 +10,8 @@
 	import { loginDialog } from '$lib/login.svelte';
 	import { likeReview, unlikeReview } from '$lib/review-interactions.remote';
 	import { slugify, toMediaRouteKind } from '$lib/utils';
-	import { Heart, MessageCircle } from '@lucide/svelte';
+	import { Icon } from '@atmo-dev/kit';
+	import { Heart, MessageCircle } from '@sketchyicons/svelte';
 	import type { PageData } from './$types';
 
 	let { data }: { data: PageData } = $props();
@@ -243,8 +244,9 @@
 							liked ? 'text-accent-400 hover:text-accent-300' : 'hover:text-white'
 						}`}
 					>
-						<Heart
-							class="size-5"
+						<Icon
+							img={Heart}
+							class="size-5 [&_path]:fill-[inherit]"
 							fill={liked ? 'currentColor' : 'none'}
 							strokeWidth={1.5}
 							aria-hidden="true"
@@ -257,7 +259,7 @@
 						aria-label={`${commentCount} ${commentCount === 1 ? 'comment' : 'comments'}`}
 						class="inline-flex items-center gap-1.5 text-sm transition-colors hover:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent-400"
 					>
-						<MessageCircle class="size-5" strokeWidth={1.5} aria-hidden="true" />
+						<Icon img={MessageCircle} class="size-5" strokeWidth={1.5} aria-hidden="true" />
 						{#if commentCount > 0}<span>{commentCount}</span>{/if}
 					</a>
 				</div>

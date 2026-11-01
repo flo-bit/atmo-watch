@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import type { Pathname } from '$app/types';
-	import { cn } from '@foxui/core';
+	import { Button, cn } from '@atmo-dev/kit';
 	import type { Snippet } from 'svelte';
 
 	let {
@@ -45,6 +45,7 @@
 	<span class={variant === 'bottom' ? 'sr-only' : 'md:sr-only'}>{label}</span>
 	{#if variant === 'sidebar'}
 		<span
+			aria-hidden="true"
 			class="pointer-events-none absolute left-14 hidden rounded-lg bg-accent-950/20 px-3 py-2 text-xs whitespace-nowrap text-white opacity-0 backdrop-blur-md transition-opacity group-hover:opacity-100 md:block"
 		>
 			{tooltip}
@@ -53,11 +54,17 @@
 {/snippet}
 
 {#if href}
-	<a href={resolve(href)} class={styles} aria-current={active ? 'page' : undefined}>
+	<Button
+		variant="ghost"
+		href={resolve(href)}
+		class={styles}
+		aria-label={label}
+		aria-current={active ? 'page' : undefined}
+	>
 		{@render content()}
-	</a>
+	</Button>
 {:else}
-	<button type="button" {onclick} class={styles}>
+	<Button variant="ghost" {onclick} class={styles} aria-label={label}>
 		{@render content()}
-	</button>
+	</Button>
 {/if}

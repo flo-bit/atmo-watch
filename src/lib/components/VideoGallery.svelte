@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
 	import { Dialog } from 'bits-ui';
-	import { X } from '@lucide/svelte';
+	import { Icon } from '@atmo-dev/kit';
+	import { X } from '@sketchyicons/svelte';
 	import type { MediaVideo } from '$lib/types';
 	import { slugify } from '$lib/utils';
 	import HorizontalScroller from './HorizontalScroller.svelte';
@@ -218,7 +219,7 @@
 				<Dialog.Close
 					class="absolute -top-12 right-0 inline-flex size-9 items-center justify-center rounded-full border border-white/15 bg-black/60 text-white backdrop-blur-sm transition-colors hover:bg-white/15 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70"
 				>
-					<X class="size-5" strokeWidth={1.8} aria-hidden="true" />
+					<Icon img={X} class="size-5" strokeWidth={1.8} aria-hidden="true" />
 					<span class="sr-only">Close video</span>
 				</Dialog.Close>
 			</Dialog.Content>

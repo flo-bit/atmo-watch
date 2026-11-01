@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { resolve } from '$app/paths';
-	import { Dialog } from 'bits-ui';
-	import { Plus, X } from '@lucide/svelte';
+	import { Modal, Icon, Button } from '@atmo-dev/kit';
+	import { Plus, Star, ChevronDown } from '@sketchyicons/svelte';
 	import { untrack } from 'svelte';
 	import AddToListMenu from './AddToListMenu.svelte';
 	import Avatar from './Avatar.svelte';
@@ -224,18 +224,14 @@
 </script>
 
 {#snippet reviewButton()}
-	<button
+	<Button
 		type="button"
 		onclick={startReview}
 		class="inline-flex h-12 w-full max-w-lg items-center justify-center gap-2.5 rounded-full bg-base-50 px-6 text-sm font-bold text-base-950 shadow-xl shadow-black/30 transition hover:bg-base-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/80 active:scale-[0.99] lg:h-10 lg:w-auto lg:min-w-48 lg:px-5 lg:text-xs"
 	>
-		<svg class="size-5 lg:size-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-			<path
-				d="m12 2.75 2.82 5.71 6.3.92-4.56 4.44 1.08 6.28L12 17.13 6.36 20.1l1.08-6.28-4.56-4.44 6.3-.92L12 2.75Z"
-			/>
-		</svg>
+		<Icon img={Star} class="size-5 lg:size-4 [&_path]:fill-current" />
 		Rate &amp; review
-	</button>
+	</Button>
 {/snippet}
 
 <svelte:head>
@@ -437,20 +433,7 @@
 								: !showAllReviews && writtenReviews.length > 3
 									? 'see more reviews'
 									: 'load more reviews'}
-							<svg
-								class="size-3.5"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								aria-hidden="true"
-							>
-								<path
-									stroke-linecap="round"
-									stroke-linejoin="round"
-									stroke-width="1.8"
-									d="m6 9 6 6 6-6"
-								/>
-							</svg>
+							<Icon img={ChevronDown} class="size-3.5" />
 						</button>
 					{/if}
 
@@ -468,7 +451,7 @@
 						onclick={startVideoSubmission}
 						class="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.07] px-3 text-xs font-semibold text-white transition-colors hover:bg-white/[0.12] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70"
 					>
-						<Plus class="size-3.5" strokeWidth={1.8} aria-hidden="true" />
+						<Icon img={Plus} class="size-3.5" strokeWidth={1.8} aria-hidden="true" />
 						submit video
 					</button>
 				</div>
@@ -509,20 +492,7 @@
 							class="mt-5 hidden h-8 items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.07] px-3 text-xs font-semibold text-white transition-colors hover:bg-white/[0.12] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70 lg:inline-flex"
 						>
 							view more
-							<svg
-								class="size-3.5"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								aria-hidden="true"
-							>
-								<path
-									stroke-linecap="round"
-									stroke-linejoin="round"
-									stroke-width="1.8"
-									d="m6 9 6 6 6-6"
-								/>
-							</svg>
+							<Icon img={ChevronDown} class="size-3.5" />
 						</button>
 					{/if}
 				</section>
@@ -564,20 +534,7 @@
 							class="mt-5 hidden h-8 items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.07] px-3 text-xs font-semibold text-white transition-colors hover:bg-white/[0.12] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70 lg:inline-flex"
 						>
 							show more
-							<svg
-								class="size-3.5"
-								viewBox="0 0 24 24"
-								fill="none"
-								stroke="currentColor"
-								aria-hidden="true"
-							>
-								<path
-									stroke-linecap="round"
-									stroke-linejoin="round"
-									stroke-width="1.8"
-									d="m6 9 6 6 6-6"
-								/>
-							</svg>
+							<Icon img={ChevronDown} class="size-3.5" />
 						</button>
 					{/if}
 				</section>
@@ -594,36 +551,19 @@
 </main>
 
 {#if selectedReview}
-	<Dialog.Root bind:open={reviewPopupOpen} onOpenChange={handleReviewPopupOpenChange}>
-		<Dialog.Portal>
-			<Dialog.Overlay class="fixed inset-0 z-100 bg-black/75 backdrop-blur-md" />
-			<Dialog.Content
-				class="fixed top-1/2 left-1/2 z-101 max-h-[85dvh] w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 -translate-y-1/2 overflow-y-auto rounded-2xl border border-white/10 bg-base-950/95 p-5 text-white shadow-2xl backdrop-blur-xl outline-none"
-			>
-				<Dialog.Title class="sr-only">
-					Full review by @{selectedReview.author.handle.replace(/^@/, '')}
-				</Dialog.Title>
-				<Dialog.Description class="sr-only">
-					Read the complete review and interact with it.
-				</Dialog.Description>
-
-				<Dialog.Close
-					class="absolute top-3 right-3 z-10 inline-flex size-8 items-center justify-center rounded-full bg-black/35 text-base-300 backdrop-blur-sm transition-colors hover:bg-white/15 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70"
-				>
-					<X class="size-4" strokeWidth={1.8} aria-hidden="true" />
-					<span class="sr-only">Close review</span>
-				</Dialog.Close>
-
-				<div class="pr-7">
-					<Review
-						review={selectedReview}
-						viewerDid={data.did}
-						showItem={false}
-						revealSpoilers={true}
-						class="py-0"
-					/>
-				</div>
-			</Dialog.Content>
-		</Dialog.Portal>
-	</Dialog.Root>
+	<Modal
+		bind:open={() => reviewPopupOpen, handleReviewPopupOpenChange}
+		title={`Full review by @${selectedReview.author.handle.replace(/^@/, '')}`}
+		class="max-w-lg bg-base-950 p-5 sm:p-5 [&_h2]:text-sm"
+	>
+		<div class="pr-7">
+			<Review
+				review={selectedReview}
+				viewerDid={data.did}
+				showItem={false}
+				revealSpoilers={true}
+				class="py-0"
+			/>
+		</div>
+	</Modal>
 {/if}

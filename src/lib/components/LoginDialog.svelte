@@ -2,7 +2,9 @@
 	import { page } from '$app/state';
 	import { oauthLogin } from '$lib/atproto/oauth.remote';
 	import { loginDialog } from '$lib/login.svelte';
-	import { AtprotoLoginModal } from '@foxui/social';
+	import { LoginDialog, createActorSearch } from '@atmo-dev/kit';
+
+	const searchActors = createActorSearch();
 
 	$effect(() => {
 		if (page.url.pathname) loginDialog.hide();
@@ -16,4 +18,4 @@
 	}
 </script>
 
-<AtprotoLoginModal bind:open={loginDialog.open} {login} />
+<LoginDialog bind:open={loginDialog.open} {login} {searchActors} persistRecentAccounts />
