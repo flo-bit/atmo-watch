@@ -20,6 +20,17 @@
 			"custom_domain": true
 		}
 	],
+	"d1_databases": [
+		{
+			"binding": "DB",
+			// Retain the existing projection and ordered-source epoch during cutover.
+			"database_name": "atmo-watch-contrail-g20261026",
+			"database_id": "93dbdac8-57a5-4485-b884-f12899122a69"
+		}
+	],
+	"triggers": {
+		"crons": ["*/1 * * * *"]
+	},
 	"kv_namespaces": [
 		{
 			"binding": "OAUTH_SESSIONS",

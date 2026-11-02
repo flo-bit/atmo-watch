@@ -1,3 +1,4 @@
+/// <reference types="@cloudflare/workers-types" />
 // See https://svelte.dev/docs/kit/types#app.d.ts
 import type { OAuthSession } from '@atcute/oauth-node-client';
 import type { Client } from '@atcute/client';
@@ -13,7 +14,13 @@ declare global {
 		}
 		// interface PageData {}
 		// interface PageState {}
-		// interface Platform {}
+		interface Platform {
+			env: {
+				DB: D1Database;
+				CRON_SECRET?: string;
+			};
+			context: ExecutionContext;
+		}
 	}
 }
 

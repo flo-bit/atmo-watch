@@ -2,6 +2,7 @@ import type {} from '@atcute/lexicons';
 import * as v from '@atcute/lexicons/validations';
 import type {} from '@atcute/lexicons/ambient';
 import * as AppBskyActorProfile from "../../../app/bsky/actor/profile.js";
+import * as ComAtprotoLabelDefs from "../../../com/atproto/label/defs.js";
 import * as SocialPopfeedActorProfile from "../../../social/popfeed/actor/profile.js";
 import * as SocialPopfeedFeedList from "../../../social/popfeed/feed/list.js";
 import * as SocialPopfeedFeedListItem from "../../../social/popfeed/feed/listItem.js";
@@ -12,7 +13,7 @@ const _mainSchema = /*#__PURE__*/ v.query(
 		"params": /*#__PURE__*/ v.object(
 			{
 				/**
-				 * Filter by an indexed DID or cached handle
+				 * Filter by DID or handle
 				 */
 				"actor": /*#__PURE__*/ v.optional(/*#__PURE__*/ v.actorIdentifierString()),
 				/**
@@ -102,6 +103,16 @@ const _profileEntrySchema = /*#__PURE__*/ v.object(
 		"did": /*#__PURE__*/ v.didString(),
 		"handle": /*#__PURE__*/ v.optional(/*#__PURE__*/ v.string()),
 		"rkey": /*#__PURE__*/ v.optional(/*#__PURE__*/ v.string()),
+		/**
+		 * Author declarations on this record version, not trusted labeler claims
+		 * @maxLength 10
+		 */
+		get "selfLabels"() {
+			return /*#__PURE__*/ v.optional(/*#__PURE__*/ v.constrain(
+				/*#__PURE__*/ v.array(ComAtprotoLabelDefs.selfLabelSchema),
+				[/*#__PURE__*/ v.arrayLength(0, 10)]
+			))
+		},
 		"uri": /*#__PURE__*/ v.optional(/*#__PURE__*/ v.resourceUriString()),
 		get "value"() {
 			return /*#__PURE__*/ v.optional(/*#__PURE__*/ v.variant([
@@ -121,6 +132,16 @@ const _recordSchema = /*#__PURE__*/ v.object(
 			return /*#__PURE__*/ v.optional(refListRecordSchema)
 		},
 		"rkey": /*#__PURE__*/ v.string(),
+		/**
+		 * Author declarations on this record version, not trusted labeler claims
+		 * @maxLength 10
+		 */
+		get "selfLabels"() {
+			return /*#__PURE__*/ v.optional(/*#__PURE__*/ v.constrain(
+				/*#__PURE__*/ v.array(ComAtprotoLabelDefs.selfLabelSchema),
+				[/*#__PURE__*/ v.arrayLength(0, 10)]
+			))
+		},
 		"time_us": /*#__PURE__*/ v.integer(),
 		"uri": /*#__PURE__*/ v.resourceUriString(),
 		get "value"() {
@@ -135,6 +156,16 @@ const _refListRecordSchema = /*#__PURE__*/ v.object(
 		"collection": /*#__PURE__*/ v.nsidString(),
 		"did": /*#__PURE__*/ v.didString(),
 		"rkey": /*#__PURE__*/ v.string(),
+		/**
+		 * Author declarations on this record version, not trusted labeler claims
+		 * @maxLength 10
+		 */
+		get "selfLabels"() {
+			return /*#__PURE__*/ v.optional(/*#__PURE__*/ v.constrain(
+				/*#__PURE__*/ v.array(ComAtprotoLabelDefs.selfLabelSchema),
+				[/*#__PURE__*/ v.arrayLength(0, 10)]
+			))
+		},
 		"time_us": /*#__PURE__*/ v.integer(),
 		"uri": /*#__PURE__*/ v.resourceUriString(),
 		get "value"() {

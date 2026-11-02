@@ -10,14 +10,7 @@ const gitignorePath = path.resolve(import.meta.dirname, '.gitignore');
 
 export default defineConfig(
 	includeIgnoreFile(gitignorePath),
-	globalIgnores([
-		'contrail.lock.json',
-		'lex.config.js',
-		'src/lib/contrail/**',
-		'api/lex.config.js',
-		'api/lexicons/**',
-		'api/src/lexicon-types/**'
-	]),
+	globalIgnores(['src/lib/contrail/**', 'lexicons/**']),
 	js.configs.recommended,
 	ts.configs.recommended,
 	svelte.configs.recommended,

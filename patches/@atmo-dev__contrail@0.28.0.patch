@@ -1,0 +1,47 @@
+diff --git a/dist/chunk-WZXP42FD.js b/dist/chunk-WZXP42FD.js
+index c7c0d699f6680085b6286a291b139fe6f397969c..2223e7b317f65eaadfb6869cd0908802bb8e4dfd 100644
+--- a/dist/chunk-WZXP42FD.js
++++ b/dist/chunk-WZXP42FD.js
+@@ -3573,6 +3573,12 @@ var JetstreamLiveHistoryExpiredError = class extends Error {
+     this.name = "JetstreamLiveHistoryExpiredError";
+   }
+ };
++var JetstreamFutureCursorError = class extends Error {
++  constructor(message) {
++    super(message);
++    this.name = "JetstreamFutureCursorError";
++  }
++};
+ function isJetstreamTimestampCursor(cursor) {
+   return cursor >= JETSTREAM_V2_SEQ_THRESHOLD;
+ }
+@@ -3718,6 +3724,11 @@ var JetstreamLiveSubscription = class {
+             `Jetstream timestamp cursor is older than the live retention window${info.message ? `: ${info.message}` : ""}`
+           );
+         }
++        if (info.name === "FutureCursor") {
++          throw new JetstreamFutureCursorError(
++            `Jetstream cursor is ahead of the source; history continuity cannot be assumed. Rebuild or resync before replacing the cursor${info.message ? `: ${info.message}` : ""}`
++          );
++        }
+         options.onInfo?.(info);
+       }
+     };
+@@ -3737,7 +3748,7 @@ var JetstreamLiveSubscription = class {
+         yield normalizeLiveEvent(event);
+       }
+     } catch (error) {
+-      if (error instanceof JetstreamLiveHistoryExpiredError) throw error;
++      if (error instanceof JetstreamLiveHistoryExpiredError || error instanceof JetstreamFutureCursorError) throw error;
+       if (preflightComplete && !isJetstreamTimestampCursor(this.cursor) && !options.signal?.aborted) {
+         try {
+           await assertSeqCursorAvailable({
+@@ -7781,7 +7792,7 @@ async function runPersistent(db, config, options) {
+       reconnectAttempts = 0;
+     } catch (err) {
+       if (signal?.aborted) break;
+-      if (err instanceof JetstreamLiveHistoryExpiredError) throw err;
++      if (err instanceof JetstreamLiveHistoryExpiredError || err instanceof JetstreamFutureCursorError) throw err;
+       log.error(`Jetstream connection error: ${err}`);
+       const delay = Math.min(1e3 * Math.pow(2, reconnectAttempts), 3e4);
+       reconnectAttempts++;

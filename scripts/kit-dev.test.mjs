@@ -77,13 +77,13 @@ test('local mode skips only Kit backport patches and preserves other patches and
 		const config = {
 			patchedDependencies: {
 				'@atmo-dev/kit@0.3.0': 'patches/kit.patch',
-				'@atmo-dev/contrail@0.22.0': 'patches/contrail.patch'
+				'@atmo-dev/contrail@0.28.0': 'patches/contrail.patch'
 			},
 			overrides: { other: '1.0.0' }
 		};
 		const updated = localHook.hooks.updateConfig(config);
 		assert.deepEqual(updated.patchedDependencies, {
-			'@atmo-dev/contrail@0.22.0': 'patches/contrail.patch'
+			'@atmo-dev/contrail@0.28.0': 'patches/contrail.patch'
 		});
 		assert.equal(updated.overrides.other, '1.0.0');
 		assert.equal(updated.overrides['@atmo-dev/kit'], `link:${realpathSync(directory)}`);
