@@ -48,7 +48,7 @@
 
 	function mediaBannerUrl(video: MediaVideo) {
 		const mediaUrl = mediaPageUrl(video);
-		return mediaUrl ? `${mediaUrl.replace(/\/$/, '')}/og.png?v=4` : null;
+		return mediaUrl ? `${mediaUrl.replace(/\/$/, '')}/og.jpg?v=5` : null;
 	}
 
 	function thumbnailUrls(video: MediaVideo) {

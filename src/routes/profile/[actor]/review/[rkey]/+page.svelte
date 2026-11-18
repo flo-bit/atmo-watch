@@ -59,7 +59,7 @@
 	let profileUrl = $derived(resolve('/profile/[actor]', { actor: data.review.author.did }));
 	let canonicalUrl = $derived(`${page.url.origin}${page.url.pathname}`);
 	let ogImageUrl = $derived(
-		`${canonicalUrl.replace(/\/$/, '')}/og.png${data.mediaHeader?.artworkRevision ? `?v=${encodeURIComponent(data.mediaHeader.artworkRevision)}` : ''}`
+		`${canonicalUrl.replace(/\/$/, '')}/og.jpg${data.mediaHeader?.artworkRevision ? `?v=${encodeURIComponent(data.mediaHeader.artworkRevision)}` : ''}`
 	);
 	let socialTitle = $derived(
 		reviewText

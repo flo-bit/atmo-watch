@@ -17,6 +17,12 @@ declare global {
 		interface Platform {
 			env: {
 				DB: D1Database;
+				ASSETS?: Fetcher;
+				OG_IMAGES?: R2Bucket;
+				OG_DAILY_GENERATION_LIMIT?: string;
+				OG_DAILY_SOCIAL_RESERVE?: string;
+				OG_CYCLE_GENERATION_LIMIT?: string;
+				OG_BILLING_CYCLE_START_DAY?: string;
 				CRON_SECRET?: string;
 			};
 			context: ExecutionContext;

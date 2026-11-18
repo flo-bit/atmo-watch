@@ -6,7 +6,7 @@ import { searchForWorkspaceRoot } from 'vite';
 import { playwright } from '@vitest/browser-playwright';
 import adapter from '@sveltejs/adapter-cloudflare';
 import { sveltekit } from '@sveltejs/kit/vite';
-import { sveltekitOG } from '@ethercorps/sveltekit-og/plugin';
+import { unwasm } from 'unwasm/plugin';
 
 // Follow the installed package in both registry and explicit kit:local mode.
 const kitRoot = dirname(dirname(createRequire(import.meta.url).resolve('@atmo-dev/kit/theme.css')));
@@ -37,9 +37,14 @@ export default defineConfig({
 			experimental: {
 				remoteFunctions: true
 			}
-		}),
-		sveltekitOG()
+		})
 	],
+	build: {
+		rollupOptions: {
+			// Emits `*.wasm?module` imports (the OG renderer) as Worker WASM modules.
+			plugins: [unwasm({ esmImport: true, lazy: true })]
+		}
+	},
 	test: {
 		expect: { requireAssertions: true },
 		projects: [

@@ -1,0 +1,20 @@
+{
+	"rules": [
+		{
+			"id": "og-images-30-days",
+			"enabled": true,
+			"conditions": { "prefix": "og/" },
+			"deleteObjectsTransition": {
+				"condition": { "type": "Age", "maxAge": 2592000 }
+			}
+		},
+		{
+			"id": "abort-incomplete-multipart-uploads",
+			"enabled": true,
+			"conditions": { "prefix": "" },
+			"abortMultipartUploadsTransition": {
+				"condition": { "type": "Age", "maxAge": 604800 }
+			}
+		}
+	]
+}

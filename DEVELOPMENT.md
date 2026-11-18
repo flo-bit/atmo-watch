@@ -142,14 +142,38 @@ Media artwork can be curated at `/movie/[id]/edit` or `/tv/[id]/edit`. Access is
 
 ## Public response caching
 
-- Movie/TV `og.png` handlers cache rendered PNGs for **24 hours**. Keys use media type, numeric TMDB ID, and saved artwork revision, not slugs or query parameters. Editing artwork selects a new key. Concurrent requests share one render within an isolate, with separate response bodies. Bump the cache version in `src/lib/og-cache.server.ts` when changing the image template. Embedded scores refresh with the image TTL.
+- Preview images (`/movie|tv/[id]/og.jpg` and `/profile/[actor]/review/[rkey]/og.jpg`) are rendered once and stored in R2; see [Preview images](#preview-images). The old `og.png` URLs redirect.
 - Public rating summaries, anonymous media review pages, and submitted video lists use a **60-second** Cache API + per-isolate memory cache. Successful empty results are cached; failures are not. Pagination, media types/IDs, and TV seasons have separate keys. Signed-in catalog loads bypass community caches; authenticated review results and hydrated viewer likes never enter the shared cache.
 - Anonymous catalog loads first check `watch.atmo.review.getCommunityPresence`, cached for **five minutes** by media type/numeric ID. This avoids unnecessary enrichment calls for empty titles and loads only relevant review/video branches. TV presence includes season/episode videos; video and season subpages use the same hint. First-time community content can take up to five minutes to appear anonymously, plus ingestion delay. Signed-in loads bypass the hint. Errors fall back to normal enrichment rather than being cached as empty; nonexistent catalog entries fail before community queries.
 - Healthy homepage results use a **six-hour** cache, including displayed Popfeed ratings; partial/empty results expire after **one minute**. Titles are selected and ordered by ratings from the last 30 days, but displayed scores and counts use all-time summaries. A new rating can take up to six hours to appear on the homepage; underlying TMDB/OMDb data keeps its longer caches.
 
-Cache API storage is best-effort and local to each Cloudflare data center. Cache failures fall back to normal generation/fetching. Outside Cloudflare, public JSON caching still uses memory; finished PNGs are not retained after their in-flight render completes.
+Cache API storage is best-effort and local to each Cloudflare data center. Cache failures fall back to normal generation/fetching. Outside Cloudflare, public JSON caching still uses memory.
 
-Do not enable blanket shared HTML caching: pages contain viewer-specific likes and country-dependent streaming availability. OAuth/session data never enters public caches. Profile-review OG images and intentionally random scene reads do not use the catalog OG/community caches.
+Do not enable blanket shared HTML caching: pages contain viewer-specific likes and country-dependent streaming availability. OAuth/session data never enters public caches. Intentionally random scene reads do not use the community caches.
+
+## Preview images
+
+Code is in `src/lib/server/og/`. Cards are 1200×630 JPEGs rendered by [Takumi](https://takumi.kane.tw) (`@takumi-rs/wasm`, pinned) from the HTML templates in the two `og.jpg` routes. Artwork is downloaded with a 5-second, 2 MiB bound and passed to the renderer as bytes.
+
+A request reads the data-center cache, then the private R2 bucket `atmo-watch-og-images`, and only renders on a miss. Rendering is limited by a global budget in D1 (tables are created on first use):
+
+- `OG_DAILY_GENERATION_LIMIT=300` per UTC day, of which `OG_DAILY_SOCIAL_RESERVE=100` are kept for link unfurlers (Bluesky, Mastodon, Discord, Slack, …).
+- `OG_CYCLE_GENERATION_LIMIT=6000` per billing cycle starting on day `OG_BILLING_CYCLE_START_DAY=13`.
+
+Identified crawlers and `HEAD` requests never render. Over budget, on a failed render, or without the bindings, the route serves the static `/og.png` for 60 seconds; there is no unbudgeted rendering path. Attempts count even when they fail, and a failed image is not retried for 10 minutes.
+
+Storage keys hash everything a card shows. Title cards use media type, TMDB ID, artwork revision and the community score, so IMDb, Rotten Tomatoes and TMDB scores only refresh when the stored image expires. Bump `OG_TEMPLATE_VERSION` in `cache.ts` after changing a template or font.
+
+**R2 cost:** the limits are sized to stay inside R2's free tier, which is shared by every bucket on the account (10 GB, 1M writes, 10M reads per month). Cards are 40–150 KB, so a fully used cycle is under 1 GB and 6,000 writes. `scripts/og-images-lifecycle.json` deletes images after 30 days, which bounds storage at about one cycle. Check account-wide R2 usage before raising the limits or the retention.
+
+One-time setup:
+
+```sh
+cf r2 buckets create --name atmo-watch-og-images --storage-class Standard
+cf r2 buckets lifecycle update atmo-watch-og-images --body="$(cat scripts/og-images-lifecycle.json)" --force
+```
+
+The lifecycle command replaces the bucket's whole policy; only apply it to this bucket. Locally, `pnpm dev` uses a simulated bucket under `.wrangler/state/`.
 
 ## Homepage availability
 
