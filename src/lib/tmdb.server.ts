@@ -33,12 +33,14 @@ import {
 	type WatchProvider as TmdbWatchAvailability,
 	type WatchProviderItem as TmdbWatchProvider
 } from '@lorenzopant/tmdb';
+import type { MixSource } from './mix';
 import type {
 	CastMember,
 	ExternalRating,
 	MediaCredit,
 	MediaDetails,
 	MediaFeature,
+	MediaIdentity,
 	MediaImage,
 	MediaLogo,
 	MediaSummary,
@@ -945,6 +947,42 @@ export async function getReviewRecordMetadata(
 		mainCredit,
 		mainCreditRole
 	};
+}
+
+const MIX_CONCURRENCY = 6;
+
+/** Loads each pick with its recommendations. Unknown ids are dropped quietly. */
+export async function getMixSources(picks: readonly MediaIdentity[]) {
+	const cache = getPublicDataCache(MEDIA_DATA_TTL);
+	const sources: MixSource[] = [];
+	let unavailable = false;
+
+	// Titles share the weekly media cache; batches keep cold loads within the
+	// Worker's simultaneous-connection limit so request deadlines stay meaningful.
+	for (let start = 0; start < picks.length; start += MIX_CONCURRENCY) {
+		const batch = picks.slice(start, start + MIX_CONCURRENCY);
+		const settled = await Promise.allSettled(
+			batch.map((pick) => getMediaSource(pick.tmdbId, pick.creativeWorkType, cache))
+		);
+		settled.forEach((result, index) => {
+			const { creativeWorkType, tmdbId } = batch[index];
+			if (result.status === 'rejected') {
+				if (result.reason instanceof TMDBError && result.reason.http_status_code === 404) return;
+				unavailable = true;
+				console.warn(`Could not load mix pick ${creativeWorkType} ${tmdbId}`, result.reason);
+				return;
+			}
+			sources.push({
+				pick: toMediaSummary(result.value, creativeWorkType),
+				recommendations: result.value.recommendations.results.map((item) => ({
+					...toMediaSummary(item, creativeWorkType),
+					voteCount: item.vote_count
+				}))
+			});
+		});
+	}
+
+	return { sources, unavailable };
 }
 
 export function getPersonPage(personId: number) {

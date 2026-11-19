@@ -2,7 +2,13 @@ import { getAtprotoCdnImageUrl } from '$lib/atproto/images';
 import { contrail } from '$lib/contrail-client.server';
 import type * as ListRecords from '$lib/contrail/types/types/watch/atmo/list/listRecords';
 import type * as ListItemRecords from '$lib/contrail/types/types/watch/atmo/listItem/listRecords';
-import type { ActorSummary, MediaImage, MediaListModel, MediaSummary } from '$lib/types';
+import type {
+	ActorSummary,
+	MediaImage,
+	MediaListModel,
+	MediaSummary,
+	SupportedCreativeWorkType
+} from '$lib/types';
 import type { ActorIdentifier, ResourceUri } from '@atcute/lexicons';
 
 type ListItemRecord = Pick<ListItemRecords.Record, 'uri' | 'did' | 'value'>;
@@ -10,6 +16,17 @@ type ListRecord = Pick<ListRecords.Record, 'uri' | 'did' | 'rkey' | 'value'> & {
 	items?: ListItemRecord[];
 	itemsCount?: number;
 };
+
+export function defaultWatchedListName(creativeWorkType: SupportedCreativeWorkType) {
+	return creativeWorkType === 'movie' ? 'Watched Movies' : 'Watched Shows';
+}
+
+export function isWatchedList(
+	list: { name: string; listType?: string },
+	creativeWorkType: SupportedCreativeWorkType
+) {
+	return list.listType === 'watched' || list.name === defaultWatchedListName(creativeWorkType);
+}
 
 function getPoster(record: ListItemRecord): MediaImage | null {
 	if (record.value.poster) {
@@ -88,7 +105,7 @@ function buildList(
 	};
 }
 
-async function getActorLists(actor: string) {
+export async function getActorLists(actor: string) {
 	const records: ListRecords.Record[] = [];
 	let cursor: string | undefined;
 
@@ -111,7 +128,7 @@ async function getActorLists(actor: string) {
 	return records;
 }
 
-async function getListItems(listUri: ResourceUri) {
+export async function getListItems(listUri: ResourceUri) {
 	const records: ListItemRecord[] = [];
 	let cursor: string | undefined;
 

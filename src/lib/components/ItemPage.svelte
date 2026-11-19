@@ -21,6 +21,7 @@
 	import { backdropUrl, posterUrl, profileUrl } from '$lib/images';
 	import { loadMediaListState, type MediaListState } from '$lib/list-write.remote';
 	import { loginDialog } from '$lib/login.svelte';
+	import { mixSearch } from '$lib/mix';
 	import { reviewDialog } from '$lib/review.svelte';
 	import { slugify, toMediaRouteKind } from '$lib/utils';
 	import { videoDialog } from '$lib/video.svelte';
@@ -473,7 +474,18 @@
 
 			{#if data.recommendations.length > 0}
 				<section class="mt-10 border-t border-white/10 pt-6 text-sm text-white">
-					<h2 class="text-lg font-semibold tracking-tight">Similar</h2>
+					<div class="flex items-baseline justify-between gap-4">
+						<h2 class="text-lg font-semibold tracking-tight">Similar</h2>
+						<!-- eslint-disable svelte/no-navigation-without-resolve -- resolved path plus a query string -->
+						<a
+							href={`${resolve('/tools/mix')}${mixSearch([data.item])}`}
+							rel="nofollow"
+							class="text-xs font-semibold text-accent-400 hover:text-accent-300"
+						>
+							mix with other titles
+						</a>
+						<!-- eslint-enable svelte/no-navigation-without-resolve -->
+					</div>
 					<HorizontalScroller class="mt-4 gap-3 pb-3 lg:hidden" label="Similar titles">
 						{#each data.recommendations as item (`${item.creativeWorkType}:${item.tmdbId}`)}
 							<div class="w-32 shrink-0 snap-start sm:w-36">

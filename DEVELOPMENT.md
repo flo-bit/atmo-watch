@@ -190,6 +190,14 @@ Partial/empty homepage results are cached briefly to prevent a failure storm and
 
 These protections do not repair stalled ingestion. Follow the ingestion recovery guidance above; never reset or jump an expired cursor just to silence a health warning.
 
+## Tools
+
+`/tools` lists small utilities; add new ones as routes under `src/routes/tools/` with a link on the index page.
+
+**Mix** (`/tools/mix?m=603,27205&t=1396`) suggests titles from up to 20 picked movies (`m`) and shows (`t`). It reads each pick's TMDB recommendations from the weekly media cache, so there is no extra TMDB endpoint or cache key. `rankMix` in `src/lib/mix.ts` orders titles by how many picks recommend them, then by their position in those lists. TMDB only recommends movies for movies and shows for shows, so results span both types only when the picks do.
+
+Signed-in viewers do not see titles from their watched lists or titles they have rated, and get up to 40 of their own rated titles (best rating first) as one-click picks. “choose my highest rated” adds the best 15 of those that are not picked yet, or fewer once that would pass the 20-pick limit (`addTopRated`). That lookup (`getViewerLibrary`) reads the embedded index per request and is never cached; if it fails, nothing is hidden or offered. Pick URLs are `noindex` and excluded in `robots.txt`.
+
 ## Catalog crawling and indexing
 
 - [`static/robots.txt`](static/robots.txt) excludes cast filmographies, frontend API routes, artwork editors, and secondary catalog video/season pages. It does not block title pages, profiles, individual community reviews/lists, or individual submitted videos.

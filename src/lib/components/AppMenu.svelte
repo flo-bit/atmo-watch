@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import { Icon } from '@atmo-dev/kit';
-	import { Clapperboard, House } from '@sketchyicons/svelte';
+	import { Clapperboard, House, Wrench } from '@sketchyicons/svelte';
 	import AccountMenuItem from './AccountMenuItem.svelte';
 	import MenuItem from './MenuItem.svelte';
 	import SearchMenuItem from './SearchMenuItem.svelte';
@@ -26,13 +26,17 @@
 			<Icon img={Clapperboard} class="size-5 shrink-0" />
 		</MenuItem>
 
+		<MenuItem href="/tools" label="Tools" active={page.url.pathname.startsWith('/tools')}>
+			<Icon img={Wrench} class="size-5 shrink-0" />
+		</MenuItem>
+
 		<SearchMenuItem {did} />
 		<AccountMenuItem {did} {avatarUrl} />
 	</nav>
 </aside>
 
 <nav
-	class="fixed inset-x-0 bottom-0 z-50 grid w-full grid-cols-4 gap-1 border-t border-white/10 bg-base-950/90 px-1 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] shadow-2xl shadow-black/40 backdrop-blur-xl md:hidden"
+	class="fixed inset-x-0 bottom-0 z-50 grid w-full grid-cols-5 gap-1 border-t border-white/10 bg-base-950/90 px-1 pt-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] shadow-2xl shadow-black/40 backdrop-blur-xl md:hidden"
 	aria-label="Main navigation"
 >
 	<MenuItem href="/" label="Home" active={page.url.pathname === '/'} variant="bottom">
@@ -41,6 +45,15 @@
 
 	<MenuItem href="/videos" label="Videos" active={page.url.pathname === '/videos'} variant="bottom">
 		<Icon img={Clapperboard} class="size-5 shrink-0" />
+	</MenuItem>
+
+	<MenuItem
+		href="/tools"
+		label="Tools"
+		active={page.url.pathname.startsWith('/tools')}
+		variant="bottom"
+	>
+		<Icon img={Wrench} class="size-5 shrink-0" />
 	</MenuItem>
 
 	<SearchMenuItem {did} variant="bottom" />

@@ -14,12 +14,17 @@
 		did,
 		autofocus = true,
 		class: className,
+		placeholder = 'Search movies and TV shows…',
+		onSelect,
 		onReview = (item: MediaSummary) => reviewDialog.show(item),
 		onLoginRequired = () => loginDialog.show()
 	}: {
 		did: string | null;
 		autofocus?: boolean;
 		class?: string;
+		placeholder?: string;
+		/** Pick a title instead of opening its page; hides the review shortcut. */
+		onSelect?: (item: MediaSummary) => void;
 		onReview?: (item: MediaSummary) => void;
 		onLoginRequired?: () => void;
 	} = $props();
@@ -42,6 +47,16 @@
 		}
 
 		onReview(item);
+	}
+
+	function selectItem(item: MediaSummary) {
+		if (!onSelect) {
+			void goto(itemUrl(item));
+			return;
+		}
+
+		onSelect(item);
+		query = '';
 	}
 
 	function itemUrl(item: MediaSummary) {
@@ -164,7 +179,7 @@
 			data-autofocus={autofocus || undefined}
 			autocomplete="off"
 			spellcheck="false"
-			placeholder="Search movies and TV shows…"
+			{placeholder}
 			class="h-full min-w-0 flex-1 border-0 bg-transparent p-0 text-lg font-medium text-white shadow-none ring-0 outline-none placeholder:text-base-500 focus:border-0 focus:ring-0 focus:outline-none"
 		/>
 
@@ -207,7 +222,7 @@
 						<Command.GroupItems class="flex flex-col gap-1">
 							{#each results as item (mediaKey(item))}
 								<Command.Item
-									onSelect={() => void goto(itemUrl(item))}
+									onSelect={() => selectItem(item)}
 									value={`${item.title} ${item.creativeWorkType} ${item.tmdbId}`}
 									keywords={[item.title, item.creativeWorkType]}
 									class="flex cursor-pointer items-center gap-3 rounded-xl p-2 transition-colors outline-none data-selected:bg-white/10"
@@ -228,19 +243,21 @@
 										{item.title}
 									</div>
 
-									<Button
-										variant="secondary"
-										size="sm"
-										type="button"
-										onclick={(event) => {
-											event.stopPropagation();
-											reviewItem(item);
-										}}
-										class="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-white/15 bg-white/10 px-2.5 text-xs font-semibold text-white transition-colors hover:bg-white/15 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70"
-									>
-										<Icon img={Star} class="size-3.5" />
-										review
-									</Button>
+									{#if !onSelect}
+										<Button
+											variant="secondary"
+											size="sm"
+											type="button"
+											onclick={(event) => {
+												event.stopPropagation();
+												reviewItem(item);
+											}}
+											class="inline-flex h-8 shrink-0 items-center gap-1.5 rounded-lg border border-white/15 bg-white/10 px-2.5 text-xs font-semibold text-white transition-colors hover:bg-white/15 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white/70"
+										>
+											<Icon img={Star} class="size-3.5" />
+											review
+										</Button>
+									{/if}
 								</Command.Item>
 							{/each}
 						</Command.GroupItems>

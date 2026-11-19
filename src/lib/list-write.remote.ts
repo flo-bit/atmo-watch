@@ -9,6 +9,7 @@ import { contrail } from '$lib/contrail-client.server';
 import type { Main as ListRecord } from '$lib/contrail/types/types/social/popfeed/feed/list';
 import type { Main as ListItemRecord } from '$lib/contrail/types/types/social/popfeed/feed/listItem';
 import { backdropUrl } from '$lib/images';
+import { defaultWatchedListName, isWatchedList } from '$lib/lists.server';
 import { getReviewRecordMetadata } from '$lib/tmdb.server';
 
 const LIST_COLLECTION = 'social.popfeed.feed.list';
@@ -469,19 +470,6 @@ export const createListWithItem = command(
 		return { uri: list.uri, name: list.name, selected: true };
 	}
 );
-
-function defaultWatchedListName(
-	creativeWorkType: v.InferOutput<typeof mediaIdentitySchema>['creativeWorkType']
-) {
-	return creativeWorkType === 'movie' ? 'Watched Movies' : 'Watched Shows';
-}
-
-function isWatchedList(
-	list: StoredList,
-	creativeWorkType: v.InferOutput<typeof mediaIdentitySchema>['creativeWorkType']
-) {
-	return list.listType === 'watched' || list.name === defaultWatchedListName(creativeWorkType);
-}
 
 export const setWatchedStatus = command(setWatchedSchema, async ({ media, watched }) => {
 	const { client, did } = requireSession();
