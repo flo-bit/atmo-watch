@@ -7,6 +7,8 @@ export const MIX_TOP_RATED = 15;
 
 export type MixSource = {
 	pick: MediaSummary;
+	/** Whose pick this is, when several people's picks are combined. */
+	owner?: string;
 	/** TMDB's recommendations for the pick, best first. */
 	recommendations: Array<MediaSummary & { voteCount: number }>;
 };
@@ -64,7 +66,8 @@ export function mixSearch(picks: readonly MediaIdentity[]) {
 
 /**
  * Titles recommended by more picks come first. Ties fall back to how high the
- * title sits in each pick's own list, then to audience size.
+ * title sits in each pick's own list, then to audience size. When picks have
+ * owners, titles that suit more of those people come before everything else.
  */
 export function rankMix(
 	sources: readonly MixSource[],
@@ -74,17 +77,30 @@ export function rankMix(
 	const picked = new Set(sources.map((source) => mediaKey(source.pick)));
 	const candidates = new Map<
 		string,
-		{ item: MediaSummary; matches: number; weight: number; voteCount: number }
+		{
+			item: MediaSummary;
+			owners: Set<string | undefined>;
+			matches: number;
+			weight: number;
+			voteCount: number;
+		}
 	>();
 
-	for (const { recommendations } of sources) {
+	for (const { recommendations, owner } of sources) {
 		const seen = new Set<string>();
 		recommendations.forEach(({ voteCount, ...item }, index) => {
 			const key = mediaKey(item);
 			if (!item.poster || picked.has(key) || exclude.has(key) || seen.has(key)) return;
 			seen.add(key);
 
-			const candidate = candidates.get(key) ?? { item, matches: 0, weight: 0, voteCount };
+			const candidate = candidates.get(key) ?? {
+				item,
+				owners: new Set(),
+				matches: 0,
+				weight: 0,
+				voteCount
+			};
+			candidate.owners.add(owner);
 			candidate.matches += 1;
 			candidate.weight += 1 - index / recommendations.length;
 			candidates.set(key, candidate);
@@ -94,6 +110,7 @@ export function rankMix(
 	return [...candidates.values()]
 		.sort(
 			(left, right) =>
+				right.owners.size - left.owners.size ||
 				right.matches - left.matches ||
 				right.weight - left.weight ||
 				right.voteCount - left.voteCount

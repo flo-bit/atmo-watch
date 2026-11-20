@@ -1,6 +1,6 @@
 import { parseMixPicks, rankMix } from '$lib/mix';
 import { getMixSources } from '$lib/tmdb.server';
-import { getViewerLibrary } from '$lib/watched.server';
+import { getActorLibrary } from '$lib/watched.server';
 import type { PageServerLoad } from './$types';
 
 const MAX_RATED_SUGGESTIONS = 40;
@@ -9,7 +9,7 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 	const requested = parseMixPicks(url.searchParams);
 	const [{ sources, unavailable }, library] = await Promise.all([
 		getMixSources(requested),
-		locals.did ? getViewerLibrary(locals.did) : null
+		locals.did ? getActorLibrary(locals.did) : null
 	]);
 
 	return {

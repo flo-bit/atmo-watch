@@ -1,11 +1,20 @@
 import type { Did } from '@atcute/lexicons';
 import { contrail } from '$lib/contrail-client.server';
-import { getActorLists, getListItems, isWatchedList } from '$lib/lists.server';
+import {
+	getActorLists,
+	getListItems,
+	isWatchedList,
+	isWatchlist,
+	listItemToMedia
+} from '$lib/lists.server';
 import { toReview } from '$lib/reviews.server';
 import type { MediaSummary } from '$lib/types';
 import { mediaKey } from '$lib/utils';
 
 const MAX_REVIEW_PAGES = 25;
+/** Ratings are out of 10; from here up a title counts as one the person liked. */
+const LIKED_RATING = 7;
+const WATCHED_LIST_TYPES = new Set(['watched_movies', 'watched_tv_shows']);
 
 type RatedMedia = { media: MediaSummary; rating: number; createdAt: string };
 
@@ -17,15 +26,43 @@ function toKey(creativeWorkType: string, rawTmdbId: string | undefined) {
 		: undefined;
 }
 
-async function getWatchedListKeys(did: Did) {
-	const lists = (await getActorLists(did)).filter((list) =>
-		(['movie', 'tv_show'] as const).some((type) => isWatchedList(list.value, type))
-	);
-	const items = (await Promise.all(lists.map((list) => getListItems(list.uri)))).flat();
-	return items.flatMap((item) => {
-		const key = toKey(item.value.creativeWorkType, item.value.identifiers.tmdbId);
-		return key ? [key] : [];
+function unique(items: MediaSummary[]) {
+	const seen = new Set<string>();
+	return items.filter((item) => {
+		const key = mediaKey(item);
+		if (seen.has(key)) return false;
+		seen.add(key);
+		return true;
 	});
+}
+
+async function getListMedia(did: Did) {
+	const lists = await getActorLists(did);
+	const load = async (selected: typeof lists) =>
+		(await Promise.all(selected.map((list) => getListItems(list.uri)))).flat();
+
+	const [watched, watchlist] = await Promise.all([
+		load(
+			lists.filter(
+				(list) =>
+					WATCHED_LIST_TYPES.has(list.value.listType ?? '') ||
+					(['movie', 'tv_show'] as const).some((type) => isWatchedList(list.value, type))
+			)
+		),
+		load(lists.filter((list) => isWatchlist(list.value)))
+	]);
+	return {
+		watched: watched.flatMap((item) => {
+			const key = toKey(item.value.creativeWorkType, item.value.identifiers.tmdbId);
+			return key ? [key] : [];
+		}),
+		watchlist: unique(
+			watchlist.flatMap((item) => {
+				const media = listItemToMedia(item);
+				return media?.poster ? [media] : [];
+			})
+		)
+	};
 }
 
 async function getRatedMedia(did: Did) {
@@ -47,43 +84,41 @@ async function getRatedMedia(did: Did) {
 		cursor = response.data.cursor;
 	} while (cursor && ++pages < MAX_REVIEW_PAGES);
 
-	return rated;
-}
-
-/** Best rating first, newest first within a rating, one entry per title. */
-function orderRated(rated: RatedMedia[]) {
-	const seen = new Set<string>();
-	return [...rated]
-		.sort(
-			(left, right) => right.rating - left.rating || right.createdAt.localeCompare(left.createdAt)
-		)
-		.flatMap(({ media }) => {
-			const key = mediaKey(media);
-			if (seen.has(key)) return [];
-			seen.add(key);
-			return [media];
-		});
+	// Best rating first, newest first within a rating.
+	return rated.sort(
+		(left, right) => right.rating - left.rating || right.createdAt.localeCompare(left.createdAt)
+	);
 }
 
 /**
- * What the viewer has already seen: `watched` holds `mediaKey` values from
- * watched lists and ratings; `rated` lists the rated titles, favourites first.
+ * A person's public watch history, read from the index:
+ * - `watched`: `mediaKey` values from watched lists and ratings
+ * - `rated`: every rated title, favourites first
+ * - `liked`: the rated titles they scored well
+ * - `watchlist`: titles they saved to watch, minus anything already watched
+ *
  * A failed lookup leaves its part empty rather than failing the page.
  */
-export async function getViewerLibrary(did: Did) {
-	const [lists, reviews] = await Promise.allSettled([getWatchedListKeys(did), getRatedMedia(did)]);
+export async function getActorLibrary(did: Did) {
+	const [lists, reviews] = await Promise.allSettled([getListMedia(did), getRatedMedia(did)]);
 	for (const result of [lists, reviews]) {
 		if (result.status === 'rejected') {
 			console.error('Could not load watched titles from Contrail', result.reason);
 		}
 	}
 
-	const rated = reviews.status === 'fulfilled' ? orderRated(reviews.value) : [];
+	const ratings = reviews.status === 'fulfilled' ? reviews.value : [];
+	const rated = unique(ratings.map((entry) => entry.media));
+	const liked = unique(
+		ratings.filter((entry) => entry.rating >= LIKED_RATING).map((entry) => entry.media)
+	);
+	const listMedia = lists.status === 'fulfilled' ? lists.value : { watched: [], watchlist: [] };
+	const watched = new Set([...listMedia.watched, ...rated.map(mediaKey)]);
+
 	return {
-		watched: new Set([
-			...(lists.status === 'fulfilled' ? lists.value : []),
-			...rated.map(mediaKey)
-		]),
-		rated
+		watched,
+		rated,
+		liked,
+		watchlist: listMedia.watchlist.filter((item) => !watched.has(mediaKey(item)))
 	};
 }

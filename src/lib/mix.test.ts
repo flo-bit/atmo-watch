@@ -106,6 +106,20 @@ describe('mix ranking', () => {
 		expect(results.map((item) => item.tmdbId)).toEqual([10]);
 	});
 
+	it('prefers titles that suit more people over titles one person matches often', () => {
+		const owned = (owner: string, pick: MediaSummary, recommendations: MediaSummary[]) => ({
+			...source(pick, recommendations),
+			owner
+		});
+		const results = rankMix([
+			owned('a', media(1), [media(10), media(11)]),
+			owned('a', media(2), [media(10)]),
+			owned('a', media(3), [media(10)]),
+			owned('b', media(4), [media(12), media(11)])
+		]);
+		expect(results.map((item) => item.tmdbId)).toEqual([11, 10, 12]);
+	});
+
 	it('limits the number of results', () => {
 		const many = Array.from({ length: 20 }, (_, index) => media(100 + index));
 		expect(rankMix([source(media(1), many)], new Set(), 5)).toHaveLength(5);

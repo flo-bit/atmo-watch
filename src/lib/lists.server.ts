@@ -28,6 +28,13 @@ export function isWatchedList(
 	return list.listType === 'watched' || list.name === defaultWatchedListName(creativeWorkType);
 }
 
+const WATCHLIST_TYPES = new Set(['watchlist', 'movie_watchlist', 'tv_show_watchlist']);
+
+/** A list of titles someone wants to watch, whichever app created it. */
+export function isWatchlist(list: { name: string; listType?: string }) {
+	return list.listType ? WATCHLIST_TYPES.has(list.listType) : /watchlist/i.test(list.name);
+}
+
 function getPoster(record: ListItemRecord): MediaImage | null {
 	if (record.value.poster) {
 		const url = getAtprotoCdnImageUrl({
@@ -41,7 +48,7 @@ function getPoster(record: ListItemRecord): MediaImage | null {
 	return record.value.posterUrl ? { source: 'remote', url: record.value.posterUrl } : null;
 }
 
-function toMediaSummary(record: ListItemRecord): MediaSummary | undefined {
+export function listItemToMedia(record: ListItemRecord): MediaSummary | undefined {
 	const creativeWorkType = record.value.creativeWorkType;
 	if (creativeWorkType !== 'movie' && creativeWorkType !== 'tv_show') return undefined;
 	if (!record.value.title || !record.value.identifiers.tmdbId) return undefined;
@@ -84,7 +91,7 @@ function buildList(
 	itemCount = records.length
 ): { list: MediaListModel; items: MediaSummary[] } {
 	const items = orderListItems(records, record.value.itemOrder).flatMap((item) => {
-		const media = toMediaSummary(item);
+		const media = listItemToMedia(item);
 		return media ? [media] : [];
 	});
 

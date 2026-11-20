@@ -4,6 +4,7 @@ User-agent: *
 Disallow: /cast/
 Disallow: /api/
 Disallow: /tools/mix?
+Disallow: /tools/together?
 Disallow: /movie/*/edit
 Disallow: /tv/*/edit
 Disallow: /movie/*/videos
